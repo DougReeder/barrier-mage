@@ -1,0 +1,26 @@
+{
+  "name": "barrier-mage",
+  "version": "0.0.1",
+  "description": "A VR game using WebXR and A-Frame. Use your staff to trace magical barriers to constrain creatures.",
+  "browser": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DougReeder/barrier-mage.git"
+  },
+  "keywords": [
+    "VR",
+    "WebVR",
+    "WebXR",
+    "A-Frame",
+    "game"
+  ],
+  "author": "Doug Reeder <reeder.29@gmail.com>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/DougReeder/barrier-mage/issues"
+  },
+  "homepage": "https://github.com/DougReeder/barrier-mage#readme"
+}
