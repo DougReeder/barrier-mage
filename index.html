@@ -12,26 +12,26 @@
     <script src="https://unpkg.com/aframe-aabb-collider-component@^2.2.1/dist/aframe-aabb-collider-component.min.js"></script>
 
     <script src="https://unpkg.com/aframe-simple-sun-sky@^1.2.2/simple-sun-sky.js"></script>
-    <script src="https://unpkg.com/aframe-atoll-terrain@^0.5.2/dist/aframe-atoll-terrain.js"></script>
+    <script src="https://unpkg.com/aframe-atoll-terrain@^0.6.0/dist/aframe-atoll-terrain.js"></script>
     <script src="https://unpkg.com/aframe-glow@^1.0.1/dist/aframe-glow-component.min.js"></script>
-
+    <script src="src/navigation.js"></script>
 <!--    <script src="index.js"></script>-->
     <meta name="monetization" content="$ilp.uphold.com/jU9WUDJZNgQi">
 </head>
 <body>
-<a-scene barriers>
+<a-scene atoll-walk background="color:#398bc5">
     <a-assets>
         <img id="steelGrip" src="assets/TexturesCom_MetalVarious0052_1_M_y.jpg" />
     </a-assets>
 
-    <a-atoll-terrain mean-elevation="5" plateau-radius="15" plateau-elevation="5" middle-radius="100" unit-size="1" far="4000"
+    <a-atoll-terrain mean-elevation="5" plateau-radius="15" plateau-elevation="5" middle-radius="100" unit-size="1" far="750"
                      land-yin-color="#528d04" land-yang-color="#278d53" sea-yin-color="#005e85" sea-yang-color="#2571cf"
                      sun-position="0.8 0.6 0">
     </a-atoll-terrain>
-    <a-simple-sun-sky sun-position="0.8 0.6 0"></a-simple-sun-sky>
+    <a-simple-sun-sky radius="800" sun-position="0.8 0.6 0"></a-simple-sun-sky>
 
-    <a-entity id="armature" position="0 5 0" movement-controls>
-        <a-entity camera position="0 1.6 0" look-controls="pointerLockEnabled: false"></a-entity>
+    <a-entity id="rig" position="0 5 0" movement-controls>
+        <a-entity camera="far:1500; near:0.05" position="0 1.6 0" look-controls="pointerLockEnabled:false"></a-entity>
         <a-entity hand-controls="hand:left"></a-entity>
         <a-entity hand-controls="hand:right"></a-entity>
     </a-entity>
