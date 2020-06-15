@@ -13,15 +13,17 @@
 
     <script src="https://unpkg.com/aframe-simple-sun-sky@^1.2.2/simple-sun-sky.js"></script>
     <script src="https://unpkg.com/aframe-atoll-terrain@^0.6.0/dist/aframe-atoll-terrain.js"></script>
-    <script src="https://unpkg.com/aframe-glow@^1.0.1/dist/aframe-glow-component.min.js"></script>
+<!--    <script src="https://unpkg.com/aframe-glow@^1.0.1/dist/aframe-glow-component.min.js"></script>-->
     <script src="src/navigation.js"></script>
-<!--    <script src="index.js"></script>-->
-    <meta name="monetization" content="$ilp.uphold.com/jU9WUDJZNgQi">
+    <script src="src/state.js"></script>
+    <script src="src/gesture.js"></script>
+
+<!--    <meta name="monetization" content="$ilp.uphold.com/jU9WUDJZNgQi">-->
 </head>
 <body>
 <a-scene atoll-walk background="color:#398bc5">
     <a-assets>
-        <img id="steelGrip" src="assets/TexturesCom_MetalVarious0052_1_M_y.jpg" />
+        <a-asset-item id="staffModel" src="assets/gandalfs_staff_sized.glb"></a-asset-item>
     </a-assets>
 
     <a-atoll-terrain mean-elevation="5" plateau-radius="15" plateau-elevation="5" middle-radius="100" unit-size="1" far="750"
@@ -29,12 +31,16 @@
                      sun-position="0.8 0.6 0">
     </a-atoll-terrain>
     <a-simple-sun-sky radius="800" sun-position="0.8 0.6 0"></a-simple-sun-sky>
+    <a-entity id="ambient" light="type:ambient; color:#fff; intensity:1.1"></a-entity>
+    <a-entity id="directional" light="type:directional; color:#FFF; intensity:1.0" position="0.8 0.6 0"></a-entity>
 
-    <a-entity id="rig" position="0 5 0" movement-controls>
+
+    <a-entity id="rig" position="0 5 0" movement-controls rig-tick-state>
         <a-entity camera="far:1500; near:0.05" position="0 1.6 0" look-controls="pointerLockEnabled:false"></a-entity>
-        <a-entity hand-controls="hand:left"></a-entity>
-        <a-entity hand-controls="hand:right"></a-entity>
+        <a-entity id="leftHand"  hand-controls="hand:left;  color:#555" gesture></a-entity>
+        <a-entity id="rightHand" hand-controls="hand:right; color:#555" gesture></a-entity>
     </a-entity>
+    <a-entity id="staff" gltf-model="#staffModel" position="0 5.95 -3"></a-entity>
 </a-scene>
 </body>
 </html>
