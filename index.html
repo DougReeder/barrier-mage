@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Barrier Mage</title>
-    <meta name="description" content="...">
+    <meta name="description" content="[work in progress]">
 
     <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-state-component@^4.7.0/dist/aframe-state-component.min.js"></script>
@@ -12,7 +12,7 @@
     <script src="https://unpkg.com/aframe-aabb-collider-component@^2.2.1/dist/aframe-aabb-collider-component.min.js"></script>
 
     <script src="https://unpkg.com/aframe-simple-sun-sky@^1.2.2/simple-sun-sky.js"></script>
-    <script src="https://unpkg.com/aframe-atoll-terrain@^0.6.0/dist/aframe-atoll-terrain.js"></script>
+    <script src="https://unpkg.com/aframe-atoll-terrain@^0.6.1/dist/aframe-atoll-terrain.js"></script>
 <!--    <script src="https://unpkg.com/aframe-glow@^1.0.1/dist/aframe-glow-component.min.js"></script>-->
     <script src="src/navigation.js"></script>
     <script src="src/state.js"></script>
@@ -26,7 +26,7 @@
         <a-asset-item id="staffModel" src="assets/gandalfs_staff_sized.glb"></a-asset-item>
     </a-assets>
 
-    <a-atoll-terrain mean-elevation="5" plateau-radius="15" plateau-elevation="5" middle-radius="100" unit-size="1" far="750"
+    <a-atoll-terrain mean-elevation="3" plateau-radius="5" plateau-elevation="5" middle-radius="150" unit-size="1.5" far="750"
                      land-yin-color="#528d04" land-yang-color="#278d53" sea-yin-color="#005e85" sea-yang-color="#2571cf"
                      sun-position="0.8 0.6 0">
     </a-atoll-terrain>
@@ -35,7 +35,7 @@
     <a-entity id="directional" light="type:directional; color:#FFF; intensity:1.0" position="0.8 0.6 0"></a-entity>
 
 
-    <a-entity id="rig" position="0 5 0" movement-controls rig-tick-state>
+    <a-entity id="rig" position="0 5 0" movement-controls="speed:0.2" rig-tick-state>
         <a-entity camera="far:1500; near:0.05" position="0 1.6 0" look-controls="pointerLockEnabled:false"></a-entity>
         <a-entity id="leftHand"  hand-controls="hand:left;  color:#555" gesture></a-entity>
         <a-entity id="rightHand" hand-controls="hand:right; color:#555" gesture></a-entity>
