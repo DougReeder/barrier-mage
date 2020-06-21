@@ -12,6 +12,9 @@ AFRAME.registerState({
     rightHandEl: null,
     staffEl: null,
     staffHandId: "",   // or "leftHand" or "rightHand"
+    tracing: false,
+    tipPosition: null,
+    lastTipPosition: null,
   },
 
   handlers: {
@@ -24,6 +27,8 @@ AFRAME.registerState({
         state.rightHandEl.setAttribute('hand-controls', 'handModelStyle', 'highPoly');
       }
       state.staffEl = document.getElementById('staff');
+      state.tipPosition = new THREE.Vector3();
+      state.lastTipPosition = new THREE.Vector3();
     },
 
     /** event from gesture component on hand */
@@ -44,7 +49,46 @@ AFRAME.registerState({
       state.staffHandId = evt.handId;
     },
 
+    magicBegin: function (state, evt) {
+      if (evt.handId === state.staffHandId) {
+        state.staffEl.object3D.updateMatrixWorld();
+        state.lastTipPosition.set(0, 1.09, 0);
+        state.lastTipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
+        console.log("lastTipPosition:", JSON.stringify(state.lastTipPosition));
+
+        state.tracing = true;
+      } else {
+      }
+      console.log("magicBegin:", evt.handId, state.tracing);
+    },
+
+    magicEnd: function (state, evt) {
+      if (evt.handId === state.staffHandId) {
+        state.tracing = false;
+      } else {
+      }
+      console.log("magicEnd:", evt.handId, state.tracing);
+    },
+
     iterate: function (state, action) {
+      if (state.tracing) {
+        state.staffEl.object3D.updateMatrixWorld();
+        state.tipPosition.set(0, 1.09, 0);
+        state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
+
+        const distSq = state.tipPosition.distanceToSquared(state.lastTipPosition);
+        console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
+        if (distSq >= 0.0016) {
+          const dotEl = document.createElement('a-entity');
+          dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
+          dotEl.setAttribute('material', 'shader:flat; color:red; fog:false;');
+          dotEl.setAttribute('position', state.tipPosition);
+          AFRAME.scenes[0].appendChild(dotEl);
+          console.log("dotEl:", dotEl);
+          // CatmullRomCurve3 or
+          state.lastTipPosition.copy(state.tipPosition);
+        }
+      }
     },
   }
 });

@@ -10,6 +10,7 @@ AFRAME.registerComponent('gesture', {
     // Bind event handlers
     this.gripdown = this.gripdown.bind(this);
     this.triggerdown = this.triggerdown.bind(this);
+    this.triggerup = this.triggerup.bind(this);
   },
 
   // update: function () {
@@ -20,21 +21,25 @@ AFRAME.registerComponent('gesture', {
     console.log(`gesture play: ${this.el.id}: adding event listeners`);
     this.el.addEventListener('gripdown', this.gripdown);
     this.el.addEventListener('triggerdown', this.triggerdown);
+    this.el.addEventListener('triggerup', this.triggerup);
   },
 
   pause: function () {
     console.log("gesture pause: removing event listeners");
     this.el.removeEventListener('gripdown', this.gripdown);
     this.el.removeEventListener('triggerdown', this.triggerdown);
+    this.el.removeEventListener('triggerup', this.triggerup);
   },
 
   gripdown: function (evt) {
-    console.log("gripdown:", this.el.id, arguments);
     AFRAME.scenes[0].emit("grabStaff", {handId: this.el.id});
   },
 
   triggerdown: function (evt) {
-    console.log("triggerdown:", this.el.id, arguments);
+    AFRAME.scenes[0].emit("magicBegin", {handId: this.el.id});
   },
 
+  triggerup: function (evt) {
+    AFRAME.scenes[0].emit("magicEnd", {handId: this.el.id});
+  },
 });
