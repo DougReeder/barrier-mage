@@ -15,6 +15,10 @@ AFRAME.registerState({
     tracing: false,
     tipPosition: null,
     lastTipPosition: null,
+    barriers: [],
+    currentBarrierInd: -1,
+    curve: null,
+    colors: ["red", "orange", "yellow", "green", "blue", "violet"]
   },
 
   handlers: {
@@ -29,6 +33,7 @@ AFRAME.registerState({
       state.staffEl = document.getElementById('staff');
       state.tipPosition = new THREE.Vector3();
       state.lastTipPosition = new THREE.Vector3();
+      state.curve = new THREE.CatmullRomCurve3([], false);
     },
 
     /** event from gesture component on hand */
@@ -55,7 +60,11 @@ AFRAME.registerState({
         state.lastTipPosition.set(0, 1.09, 0);
         state.lastTipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
         console.log("lastTipPosition:", JSON.stringify(state.lastTipPosition));
-
+        state.barriers[++state.currentBarrierInd] = {
+          guidePoints: [state.lastTipPosition.clone()],
+          geometry: new THREE.BufferGeometry(),
+          material: new THREE.LineBasicMaterial({color: state.colors[(state.currentBarrierInd) % state.colors.length]}),
+        };
         state.tracing = true;
       } else {
       }
@@ -73,21 +82,39 @@ AFRAME.registerState({
     iterate: function (state, action) {
       if (state.tracing) {
         state.staffEl.object3D.updateMatrixWorld();
-        state.tipPosition.set(0, 1.09, 0);
+        state.tipPosition.set(0, 1.09, 0);   // relative to hand
         state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
 
         const distSq = state.tipPosition.distanceToSquared(state.lastTipPosition);
-        console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
+        // console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
         if (distSq >= 0.0016) {
-          const dotEl = document.createElement('a-entity');
-          dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
-          dotEl.setAttribute('material', 'shader:flat; color:red; fog:false;');
-          dotEl.setAttribute('position', state.tipPosition);
-          AFRAME.scenes[0].appendChild(dotEl);
-          console.log("dotEl:", dotEl);
-          // CatmullRomCurve3 or
+          updateBarrier();
           state.lastTipPosition.copy(state.tipPosition);
         }
+      }
+
+      function updateBarrier() {
+        const barrier = state.barriers[state.currentBarrierInd];
+        barrier.guidePoints.push(state.tipPosition.clone());
+        state.curve.points = barrier.guidePoints;
+        const points = state.curve.getPoints(Math.max(barrier.guidePoints.length, 100));
+        console.log("points:", points);
+        barrier.geometry.setFromPoints(points);
+        barrier.geometry.computeBoundingSphere();
+
+        if (!barrier.line) {
+          barrier.line = new THREE.Line(barrier.geometry, barrier.material);
+          barrier.el = document.createElement('a-entity');
+          barrier.el.setObject3D('line', barrier.line);
+          AFRAME.scenes[0].appendChild(barrier.el);
+          console.log("barrier.el.object3D:", barrier.el.object3D);
+        }
+
+        const dotEl = document.createElement('a-entity');
+        dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
+        dotEl.setAttribute('material', 'shader:flat; color:white; fog:false;');
+        dotEl.setAttribute('position', state.tipPosition);
+        AFRAME.scenes[0].appendChild(dotEl);
       }
     },
   }

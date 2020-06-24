@@ -6,7 +6,6 @@ AFRAME.registerComponent('gesture', {
   },
 
   init: function () {
-    console.log("gesture init:", this.el.id);
     // Bind event handlers
     this.gripdown = this.gripdown.bind(this);
     this.triggerdown = this.triggerdown.bind(this);
