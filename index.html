@@ -14,7 +14,8 @@
     <script src="https://unpkg.com/aframe-atoll-terrain@^0.6.1/dist/aframe-atoll-terrain.js"></script>
     <script src="https://unpkg.com/aframe-simple-sun-sky@^1.2.2/simple-sun-sky.js"></script>
     <script src="src/moving-sun.js"></script>
-<!--    <script src="https://unpkg.com/aframe-glow@^1.0.1/dist/aframe-glow-component.min.js"></script>-->
+    <script src="https://unpkg.com/aframe-look-at-component@^1.0.0/dist/aframe-look-at-component.min.js"></script>
+    <script src="src/math.js"></script>
     <script src="src/navigation.js"></script>
     <script src="src/state.js"></script>
     <script src="src/gesture.js"></script>
@@ -34,7 +35,6 @@
     <a-simple-sun-sky radius="800" sun-position="0.8 0.6 0"></a-simple-sun-sky>
     <a-entity id="ambient" light="type:ambient; color:#fff; intensity:1.1"></a-entity>
     <a-entity id="directional" light="type:directional; color:#FFF; intensity:1.0" position="0.8 0.6 0"></a-entity>
-
 
     <a-entity id="rig" position="0 5 0" movement-controls="speed:0.2" rig-tick-state>
         <a-entity camera="far:1500; near:0.05" position="0 1.6 0" look-controls="pointerLockEnabled:false"></a-entity>

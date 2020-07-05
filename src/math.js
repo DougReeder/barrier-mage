@@ -60,9 +60,9 @@ function transformToStandard(points) {
   points.forEach(p => p.multiplyScalar(scale))
 }
 
-function angleBetween(first, second) {
-  const dotProd = first.dot(second);
-  return Math.acos(dotProd/first.length()/second.length()) * Math.sign(dotProd);
+function angleDiff(first, second) {
+  const sign = first.dot(second) >= 0 ? 1 : -1;
+  return first.angleTo(second) * sign;
 }
 
 const centeredActual = [];
@@ -73,7 +73,7 @@ function transformTemplateToActual(actual, template) {
     centeredActual[i] = new THREE.Vector3();
   }
   calcCentroid(actual, centroidPt);
-  for (i=0; i<template.length; ++i) {
+  for (let i=0; i<template.length; ++i) {
     centeredActual[i].copy(actual[i]);
     centeredActual[i].sub(centroidPt);
   }
@@ -87,20 +87,29 @@ function transformTemplateToActual(actual, template) {
   rotAxis.crossVectors(zAxis, avgNormal).normalize();
   template.forEach(p => p.applyAxisAngle(rotAxis, angle));
 
-  // rotates about Z so middle point is on positive Y axis
-  const midPoint = Math.round((template.length-1)/2);
-  angle = angleBetween(template[midPoint], centeredActual[midPoint]);
+  // rotates about Z to best align points
+  let angleSum = 0;
+  for (let i=0; i<template.length; ++i) {
+    angleSum += angleDiff(template[i], centeredActual[i]);
+  }
+  angle = angleSum / template.length;
   template.forEach(p => p.applyAxisAngle(avgNormal, angle));
 
   // scale to match
-  const scale = centeredActual[midPoint].length() / template[midPoint].length();
+  let scaleSum = 0;
+  for (let i=0; i<template.length; ++i) {
+    scaleSum += centeredActual[i].length() / template[i].length();
+  }
+  const scale = scaleSum / template.length;
   template.forEach(p => p.multiplyScalar(scale));
 
   // translates
   template.forEach(p => p.add(centroidPt));
+
+  template.scale = scale;
 }
 
-function rms(points, pattPts) {
+function rmsd(points, pattPts) {
   let sum = 0, i;
   for (i=0; i<pattPts.length; ++i) {
     const d = pattPts[i].distanceTo(points[i]);
@@ -114,9 +123,10 @@ try {   // pulled in via require for testing
   module.exports = {
     calcCentroid,
     centerPoints,
+    angleDiff,
     transformToStandard,
     transformTemplateToActual,
-    rms,
+    rmsd,
   }
 } catch (err) {
   // pulled in via script tag

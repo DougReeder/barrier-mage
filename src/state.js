@@ -1,9 +1,14 @@
 // state.js - state model for Barrier Mage
 // Copyright © 2020 P. Douglas Reeder; Licensed under the GNU GPL-3.0
 
+// math.js must be in a script before this.
+
 function isDesktop() {
   return ! (AFRAME.utils.device.isMobile() || AFRAME.utils.device.isMobileVR());
 }
+
+const pentagramTemplate = [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)];
+
 
 AFRAME.registerState({
   initialState: {
@@ -18,7 +23,8 @@ AFRAME.registerState({
     traceStartInd: null,
     barriers: [],
     currentBarrierInd: -1,
-    colors: ["red", "orange", "yellow", "green", "blue", "violet"]
+    colors: ["red", "orange", "yellow", "green", "blue", "violet"],
+    centroidPt: null,
   },
 
   handlers: {
@@ -33,6 +39,7 @@ AFRAME.registerState({
       state.staffEl = document.getElementById('staff');
       state.tipPosition = new THREE.Vector3();
       state.lastTipPosition = new THREE.Vector3();
+      state.centroidPt = new THREE.Vector3();
     },
 
     /** event from gesture component on hand */
@@ -138,11 +145,36 @@ AFRAME.registerState({
         }
       }
 
-      const dotEl = document.createElement('a-entity');
-      dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
-      dotEl.setAttribute('material', 'shader:flat; color:white; fog:false;');
-      dotEl.setAttribute('position', state.tipPosition);
-      AFRAME.scenes[0].appendChild(dotEl);
+      if (barrier.guidePoints.length === pentagramTemplate.length) {   // compare to template
+        const transformedTemplate = pentagramTemplate.map(p => new THREE.Vector3().copy(p));
+        transformTemplateToActual(barrier.guidePoints, transformedTemplate);
+        for (let i=1; i<transformedTemplate.length; ++i) {   // presume closed template
+          const dotEl = document.createElement('a-entity');
+          dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
+          dotEl.setAttribute('material', 'shader:flat; color:white; fog:false;');
+          dotEl.object3D.position.copy(transformedTemplate[i]);
+          AFRAME.scenes[0].appendChild(dotEl);
+
+          const numberEl = document.createElement('a-text');
+          numberEl.setAttribute('value', i + 1);
+          numberEl.object3D.position.copy(transformedTemplate[i]);
+          numberEl.setAttribute('look-at', "[camera]");
+          AFRAME.scenes[0].appendChild(numberEl);
+        }
+
+        const score = 1 / (rmsd(barrier.guidePoints, transformedTemplate) / transformedTemplate.scale);
+        calcCentroid(barrier.guidePoints, state.centroidPt);
+        console.log("score:", score, "   centroid:", JSON.stringify(state.centroidPt));
+        const scoreEl = document.createElement('a-text');
+        scoreEl.setAttribute('value', score.toPrecision(2));
+        scoreEl.object3D.position.copy(state.centroidPt);
+        scoreEl.setAttribute('align', 'center');
+        scoreEl.setAttribute('baseline', 'top');
+        scoreEl.setAttribute('color', 'black');
+        scoreEl.setAttribute('look-at', "[camera]");
+        AFRAME.scenes[0].appendChild(scoreEl);
+      }
+
     }
   }
 });

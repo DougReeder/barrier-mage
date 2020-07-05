@@ -2,7 +2,7 @@
 
 require("./support/three.min");
 // const {AFRAME, componentParam} = require('./aframe-stub');
-const {calcCentroid, centerPoints, transformToStandard, transformTemplateToActual, rms} = require('../src/math');
+const {calcCentroid, centerPoints, angleDiff, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
 
 function fuzz(points, fuzzAmount) {
   points.forEach(p => {
@@ -34,7 +34,7 @@ function expectStdPentagram(points, decimalPlaces) {
   expect(points[4].z).toBeCloseTo(0, decimalPlaces);
 }
 
-describe("centroid", function () {
+describe("calcCentroid", function () {
   it("should calculate centroid of points", () => {
     const points = [new THREE.Vector3(1, 2, 3), new THREE.Vector3(-5, 1, -4), new THREE.Vector3(9, -8, 0), new THREE.Vector3(0, -2, -3)];
 
@@ -44,6 +44,35 @@ describe("centroid", function () {
     expect(centroidPt.x).toEqual(1.25);
     expect(centroidPt.y).toEqual(-1.75);
     expect(centroidPt.z).toEqual(-1);
+  });
+});
+
+describe("angleDiff", () => {
+  it("should equal angleTo when dot product is positive", () => {
+    const first = new THREE.Vector3(1, -2, 1);
+    const second = new THREE.Vector3(2, -1, 3);
+    expect(angleDiff(first, second)).toBeCloseTo(first.angleTo(second), 6);
+    expect(angleDiff(second, first)).toBeCloseTo(second.angleTo(first), 6);
+  });
+
+  it("should be the negative of angleTo when dot product is negative", () => {
+    const first = new THREE.Vector3(1, 2, 1);
+    const second = new THREE.Vector3(2, 0, -3);
+    expect(angleDiff(first, second)).toBeCloseTo(-first.angleTo(second), 6);
+    expect(angleDiff(second, first)).toBeCloseTo(-second.angleTo(first), 6);
+  });
+
+  it("should be symmetric", () => {
+    const first = new THREE.Vector3(1, 2, 1);
+    const second = new THREE.Vector3(2, 0, -3);
+    expect(angleDiff(first, second)).toEqual(angleDiff(second, first));
+  });
+
+  it("should deal with edge cases", () => {
+    const first = new THREE.Vector3(0.58779, -0.80902, 0);
+    const second = new THREE.Vector3(0.58779, -0.8090199999999999, 0);
+    expect(angleDiff(first, second)).toEqual(first.angleTo(second));
+    expect(angleDiff(second, first)).toEqual(second.angleTo(first));
   });
 });
 
@@ -287,15 +316,15 @@ describe("transformToStandard", function () {
 
 const stdPentagramPoints = [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902)];
 
-describe("rms", () => {
+describe("rmsd", () => {
   it("should be zero when comparing points to themselves", () => {
-    expect(rms(stdPentagramPoints,stdPentagramPoints)).toEqual(0);
+    expect(rmsd(stdPentagramPoints,stdPentagramPoints)).toEqual(0);
   });
 
   it("should be sqrt(0.1^2/5) when one point varies by 0.1", () => {
     const points = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     points[1].x += 0.1;
-    expect(rms(points,stdPentagramPoints)).toBeCloseTo(0.04472,4);
+    expect(rmsd(points,stdPentagramPoints)).toBeCloseTo(0.04472,4);
   });
 
   it("should be sqrt((0.1^2+0.1^2)/5) when two points vary by 0.1", () => {
@@ -303,13 +332,13 @@ describe("rms", () => {
     const offset = new THREE.Vector3(1, 1, 1).normalize().multiplyScalar(0.1);
     points[1].add(offset);
     points[3].add(offset);
-    expect(rms(points,stdPentagramPoints)).toBeCloseTo(0.06325,4);
+    expect(rmsd(points,stdPentagramPoints)).toBeCloseTo(0.06325,4);
   });
 
   it("should be small when all points fuzzed", () => {
     const points = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     fuzz(points, 0.1);
-    expect(rms(points,stdPentagramPoints)).toBeLessThan(0.17321);
+    expect(rmsd(points,stdPentagramPoints)).toBeLessThan(0.17321);
   });
 });
 
@@ -325,7 +354,7 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, pointsCopy)).toBeCloseTo(0, 6);
+    expect(rmsd(points, pointsCopy)).toBeCloseTo(0, 6);
   });
 
   it("should transform the template to match the actual (exact, translation)", () => {
@@ -335,7 +364,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
+    expect(template.scale).toBeCloseTo(1, 6);
   });
 
   it("should transform the template to match the actual (exact, large rotation around X & Y)", () => {
@@ -346,7 +376,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
+    expect(template.scale).toBeCloseTo(1, 6);
   });
 
   it("should transform the template to match the actual (exact, small rotation around Z)", () => {
@@ -357,7 +388,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
+    expect(template.scale).toBeCloseTo(1, 6);
   });
 
   it("should transform the template to match the actual (exact, large negative rotation around Z)", () => {
@@ -368,7 +400,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
+    expect(template.scale).toBeCloseTo(1, 6);
   });
 
   it("should transform the template to match the actual (exact, small rotation around X,Y & Z)", () => {
@@ -379,7 +412,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
+    expect(template.scale).toBeCloseTo(1, 6);
   });
 
   it("should transform the template to match the actual (fuzzed, small rotation around X,Y & Z)", () => {
@@ -391,7 +425,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeLessThan(0.30);
+    expect(rmsd(points, template)).toBeLessThan(0.30);
+    expect(Math.abs(template.scale - 1)).toBeLessThan(0.1);
   });
 
   it("should transform the template to match the actual (exact, large rotation around X,Y & Z)", () => {
@@ -402,7 +437,7 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
   });
 
   it("should transform the template to match the actual (exact, large rotation around X,Y & Z) 2", () => {
@@ -413,7 +448,7 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
   });
 
   it("should transform the template to match the actual (exact, translation & large rotation around X,Y & Z)", () => {
@@ -424,7 +459,7 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
   });
 
   it("should transform the template to match the actual (fuzzed, translation & large rotation around X,Y & Z)", () => {
@@ -436,7 +471,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeLessThan(2.5);
+    expect(rmsd(points, template)).toBeLessThan(2.5);
+    expect(Math.abs(template.scale - 1)).toBeLessThan(0.1);
   });
 
   it("should transform the template to match the actual (exact, scaled)", () => {
@@ -445,7 +481,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
+    expect(template.scale).toBeCloseTo(3, 6);
   });
 
   it("should transform the template to match the actual (fuzzed, scaled)", () => {
@@ -455,7 +492,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeLessThan(0.30);
+    expect(rmsd(points, template)).toBeLessThan(0.30);
+    expect(Math.abs(template.scale - 3)).toBeLessThan(0.15);
   });
 
   it("should transform the template to match the actual (exact, scaled, large rotation around X,Y & Z, translated)", () => {
@@ -466,7 +504,8 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeCloseTo(0, 6);
+    expect(rmsd(points, template)).toBeCloseTo(0, 6);
+    expect(template.scale).toBeCloseTo(2.5, 6);
   });
 
   it("should transform the template to match the actual (fuzzed, scaled, large rotation around X,Y & Z, translated)", () => {
@@ -478,6 +517,7 @@ describe("transformTemplateToActual", () => {
     const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     transformTemplateToActual(points, template);
 
-    expect(rms(points, template)).toBeLessThan(5.5);
+    expect(rmsd(points, template)).toBeLessThan(5.5);
+    expect(Math.abs(template.scale - 2.5)).toBeLessThan(0.15);
   });
 });
