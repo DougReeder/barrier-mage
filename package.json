@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/DougReeder/barrier-mage/issues"
   },
-  "homepage": "https://github.com/DougReeder/barrier-mage#readme"
+  "homepage": "https://github.com/DougReeder/barrier-mage#readme",
+  "devDependencies": {
+    "jasmine": "^3.5.0"
+  }
 }

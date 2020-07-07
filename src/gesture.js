@@ -10,6 +10,8 @@ AFRAME.registerComponent('gesture', {
     this.gripdown = this.gripdown.bind(this);
     this.triggerdown = this.triggerdown.bind(this);
     this.triggerup = this.triggerup.bind(this);
+    this.thumbbuttondown = this.thumbbuttondown.bind(this);
+    this.thumbbuttonup = this.thumbbuttonup.bind(this);
   },
 
   // update: function () {
@@ -21,6 +23,12 @@ AFRAME.registerComponent('gesture', {
     this.el.addEventListener('gripdown', this.gripdown);
     this.el.addEventListener('triggerdown', this.triggerdown);
     this.el.addEventListener('triggerup', this.triggerup);
+    this.el.addEventListener('abuttondown', this.thumbbuttondown);
+    this.el.addEventListener('xbuttondown', this.thumbbuttondown);
+    this.el.addEventListener('trackpaddown', this.thumbbuttondown);
+    this.el.addEventListener('abuttonup', this.thumbbuttonup);
+    this.el.addEventListener('xbuttonup', this.thumbbuttonup);
+    this.el.addEventListener('trackpadup', this.thumbbuttonup);
   },
 
   pause: function () {
@@ -28,6 +36,12 @@ AFRAME.registerComponent('gesture', {
     this.el.removeEventListener('gripdown', this.gripdown);
     this.el.removeEventListener('triggerdown', this.triggerdown);
     this.el.removeEventListener('triggerup', this.triggerup);
+    this.el.removeEventListener('abuttondown', this.thumbbuttondown);
+    this.el.removeEventListener('xbuttondown', this.thumbbuttondown);
+    this.el.removeEventListener('trackpaddown', this.thumbbuttondown);
+    this.el.removeEventListener('abuttonup', this.thumbbuttonup);
+    this.el.removeEventListener('xbuttonup', this.thumbbuttonup);
+    this.el.removeEventListener('trackpadup', this.thumbbuttonup);
   },
 
   gripdown: function (evt) {
@@ -38,13 +52,25 @@ AFRAME.registerComponent('gesture', {
 
   triggerdown: function (evt) {
     if (this.el.children.length) {   // contains staff
-      AFRAME.scenes[0].emit("traceBegin", {handId: this.el.id});
+      AFRAME.scenes[0].emit("straightBegin", {handId: this.el.id});
     }
   },
 
   triggerup: function (evt) {
     if (this.el.children.length) {   // contains staff
-      AFRAME.scenes[0].emit("traceEnd", {handId: this.el.id});
+      AFRAME.scenes[0].emit("straightEnd", {handId: this.el.id});
+    }
+  },
+
+  thumbbuttondown: function (evt) {
+    if (this.el.children.length) {   // contains staff
+      AFRAME.scenes[0].emit("curveBegin", {handId: this.el.id});
+    }
+  },
+
+  thumbbuttonup: function (evt) {
+    if (this.el.children.length) {   // contains staff
+      AFRAME.scenes[0].emit("curveEnd", {handId: this.el.id});
     }
   },
 });

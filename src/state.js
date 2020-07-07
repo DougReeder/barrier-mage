@@ -18,9 +18,11 @@ AFRAME.registerState({
     staffEl: null,
     staffHandId: "",   // or "leftHand" or "rightHand"
     tracing: false,
+    curving: false,
     tipPosition: null,
     lastTipPosition: null,
     traceStartInd: null,
+    curveBeginInd: null,
     barriers: [],
     currentBarrierInd: -1,
     colors: ["red", "orange", "yellow", "green", "blue", "violet"],
@@ -68,8 +70,8 @@ AFRAME.registerState({
       };
     },
 
-    traceBegin: function (state, evt) {
-      console.log("traceStart:", evt.handId);
+    straightBegin: function (state, evt) {
+      console.log("straightBegin:", evt.handId);
       state.staffEl.object3D.updateMatrixWorld();
       state.tipPosition.set(0, 1.09, 0);   // relative to hand
       state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
@@ -96,8 +98,8 @@ AFRAME.registerState({
       state.tracing = true;
     },
 
-    traceEnd: function (state, evt) {
-      console.log("traceEnd:", evt.handId);
+    straightEnd: function (state, evt) {
+      console.log("straightEnd:", evt.handId);
       state.tracing = false;
 
       const barrier = state.barriers[state.currentBarrierInd];
@@ -109,19 +111,52 @@ AFRAME.registerState({
       }
     },
 
+    curveBegin: function (state, evt) {
+      console.log("curveStart:", evt.handId);
+
+      state.staffEl.object3D.updateMatrixWorld();
+      state.tipPosition.set(0, 1.09, 0);   // relative to hand
+      state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
+
+      this.updateBarrier(state);
+      state.lastTipPosition.copy(state.tipPosition);
+      const barrier = state.barriers[state.currentBarrierInd];
+      state.curveBeginInd = barrier.guidePoints.length-1;
+
+      state.curving = true;
+    },
+
+    curveEnd: function (state, evt) {
+      console.log("curveEnd:", evt.handId);
+      state.curving = false;
+
+      // smooths the curve
+      const barrier = state.barriers[state.currentBarrierInd];
+      const sampledPoints = [];
+      for (let i=state.curveBeginInd; i<barrier.guidePoints.length; i+=5) {
+        sampledPoints.push(barrier.guidePoints[i]);
+      }
+      sampledPoints.push(barrier.guidePoints[barrier.guidePoints.length-1]);
+      const curve = new THREE.CatmullRomCurve3(sampledPoints);
+      const newPoints = curve.getPoints(barrier.guidePoints.length - state.curveBeginInd);
+      barrier.guidePoints.splice(state.curveBeginInd, barrier.guidePoints.length, ...newPoints);
+      barrier.geometry.setFromPoints(barrier.guidePoints);
+      barrier.geometry.computeBoundingSphere();
+    },
+
     magicEnd: function (state, evt) {
       console.log("magicEnd:", evt.handId);
     },
 
     iterate: function (state, action) {
-      if (state.tracing) {
+      if (state.curving) {
         state.staffEl.object3D.updateMatrixWorld();
         state.tipPosition.set(0, 1.09, 0);   // relative to hand
         state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
 
         const distSq = state.tipPosition.distanceToSquared(state.lastTipPosition);
         // console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
-        if (distSq >= 0.0016) {
+        if (distSq >= 0.0004) {
           this.updateBarrier(state);
           state.lastTipPosition.copy(state.tipPosition);
         }
@@ -155,11 +190,11 @@ AFRAME.registerState({
           dotEl.object3D.position.copy(transformedTemplate[i]);
           AFRAME.scenes[0].appendChild(dotEl);
 
-          const numberEl = document.createElement('a-text');
-          numberEl.setAttribute('value', i + 1);
-          numberEl.object3D.position.copy(transformedTemplate[i]);
-          numberEl.setAttribute('look-at', "[camera]");
-          AFRAME.scenes[0].appendChild(numberEl);
+          // const numberEl = document.createElement('a-text');
+          // numberEl.setAttribute('value', i + 1);
+          // numberEl.object3D.position.copy(transformedTemplate[i]);
+          // numberEl.setAttribute('look-at', "[camera]");
+          // AFRAME.scenes[0].appendChild(numberEl);
         }
 
         const score = 1 / (rmsd(barrier.guidePoints, transformedTemplate) / transformedTemplate.scale);
