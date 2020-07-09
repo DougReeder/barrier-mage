@@ -9,6 +9,9 @@ function isDesktop() {
 
 const pentagramTemplate = [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)];
 
+const STRAIGHT_PROXIMITY_SQ = 0.01;   // when drawing straight sections; square of 0.1 m
+const CURVE_END_PROXIMITY_SQ = 0.0016;   // when beginning/ending curved sections; square of 0.04 m
+const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
 
 AFRAME.registerState({
   initialState: {
@@ -17,14 +20,12 @@ AFRAME.registerState({
     rightHandEl: null,
     staffEl: null,
     staffHandId: "",   // or "leftHand" or "rightHand"
-    tracing: false,
+    straighting: false,
     curving: false,
     tipPosition: null,
     lastTipPosition: null,
-    traceStartInd: null,
-    curveBeginInd: null,
+    inProgress: {},
     barriers: [],
-    currentBarrierInd: -1,
     colors: ["red", "orange", "yellow", "green", "blue", "violet"],
     centroidPt: null,
   },
@@ -41,6 +42,15 @@ AFRAME.registerState({
       state.staffEl = document.getElementById('staff');
       state.tipPosition = new THREE.Vector3();
       state.lastTipPosition = new THREE.Vector3();
+
+      state.inProgress.geometry = new THREE.BufferGeometry();
+      state.inProgress.material = new THREE.LineBasicMaterial({color: 'gray'});
+      state.inProgress.line = new THREE.Line(state.inProgress.geometry, state.inProgress.material);
+      state.inProgress.el = document.createElement('a-entity');
+      state.inProgress.el.setObject3D('line', state.inProgress.line);
+      AFRAME.scenes[0].appendChild(state.inProgress.el);
+      console.log("state.inProgress.el.object3D:", state.inProgress.el.object3D);
+
       state.centroidPt = new THREE.Vector3();
     },
 
@@ -63,65 +73,52 @@ AFRAME.registerState({
 
     magicBegin: function (state, evt) {
       console.log("magicBegin:", evt.handId);
-      state.barriers[++state.currentBarrierInd] = {
-        guidePoints: [],
-        geometry: new THREE.BufferGeometry(),
-        material: new THREE.LineBasicMaterial({color: state.colors[(state.currentBarrierInd) % state.colors.length]}),
-      };
+      state.barriers.push({
+        color: state.colors[(state.barriers.length) % state.colors.length],
+        lines: [],
+      });
     },
 
     straightBegin: function (state, evt) {
       console.log("straightBegin:", evt.handId);
-      state.staffEl.object3D.updateMatrixWorld();
-      state.tipPosition.set(0, 1.09, 0);   // relative to hand
-      state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
 
-      const barrier = state.barriers[state.currentBarrierInd];
-      let closestPoint = new THREE.Vector3();
-      let closestDistanceSq = Number.POSITIVE_INFINITY;
-      barrier.guidePoints.forEach(point => {
-        const distanceSq = state.tipPosition.distanceToSquared(point);
-        if (distanceSq <= 0.01 && distanceSq < closestDistanceSq) {
-          closestPoint.copy(point);
-          closestDistanceSq = distanceSq;
-        }
-      });
-      if (closestDistanceSq <= 0.01) {
-        state.tipPosition.copy(closestPoint);
-        console.log("re-using", JSON.stringify(closestPoint));
-      }
+      this.snapTipPosition(state);
 
-      this.updateBarrier(state);
+      state.inProgress.points = [state.tipPosition.clone(), state.tipPosition.clone()];
+      state.inProgress.geometry.setFromPoints(state.inProgress.points);
+      state.inProgress.geometry.computeBoundingSphere();
+
+      this.createNewLineIfNeeded(state, STRAIGHT_PROXIMITY_SQ);
+
       state.lastTipPosition.copy(state.tipPosition);
-      state.traceStartInd = barrier.guidePoints.length-1;
 
-      state.tracing = true;
+      state.straighting = true;
     },
 
     straightEnd: function (state, evt) {
       console.log("straightEnd:", evt.handId);
-      state.tracing = false;
+      state.straighting = false;
 
-      const barrier = state.barriers[state.currentBarrierInd];
-      const traceStartPosition = barrier.guidePoints[state.traceStartInd];
-      const allNear = barrier.guidePoints.slice(state.traceStartInd).every(point => point.distanceToSquared(traceStartPosition) <= 0.01);
-      if (allNear) {
-        barrier.guidePoints.length = state.traceStartInd+1;
-        console.log("eliminating wiggle points", barrier.guidePoints.length);
-      }
+      this.snapTipPosition(state);
+
+      state.inProgress.points = [state.tipPosition.clone(), state.tipPosition.clone()];
+      state.inProgress.geometry.setFromPoints(state.inProgress.points);
+      state.inProgress.geometry.computeBoundingSphere();
+
+      this.appendTipPositionToBarrier(state);
     },
 
     curveBegin: function (state, evt) {
-      console.log("curveStart:", evt.handId);
+      console.log("curveBegin:", evt.handId);
 
-      state.staffEl.object3D.updateMatrixWorld();
-      state.tipPosition.set(0, 1.09, 0);   // relative to hand
-      state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
+      this.snapTipPosition(state, CURVE_END_PROXIMITY_SQ);
 
-      this.updateBarrier(state);
+      this.createNewLineIfNeeded(state, CURVE_END_PROXIMITY_SQ);
+
       state.lastTipPosition.copy(state.tipPosition);
-      const barrier = state.barriers[state.currentBarrierInd];
-      state.curveBeginInd = barrier.guidePoints.length-1;
+      const barrier = state.barriers[state.barriers.length-1];
+      const line = barrier.lines[barrier.lines.length-1];
+      line.curveBeginInd = line.points.length-1;
 
       state.curving = true;
     },
@@ -130,18 +127,62 @@ AFRAME.registerState({
       console.log("curveEnd:", evt.handId);
       state.curving = false;
 
+      this.snapTipPosition(state, CURVE_END_PROXIMITY_SQ);
+
+      this.appendTipPositionToBarrier(state);
+
       // smooths the curve
-      const barrier = state.barriers[state.currentBarrierInd];
+      const barrier = state.barriers[state.barriers.length-1];
+      const line = barrier.lines[barrier.lines.length-1];
       const sampledPoints = [];
-      for (let i=state.curveBeginInd; i<barrier.guidePoints.length; i+=5) {
-        sampledPoints.push(barrier.guidePoints[i]);
+      for (let i=line.curveBeginInd; i<line.points.length; i+=5) {
+        sampledPoints.push(line.points[i]);
       }
-      sampledPoints.push(barrier.guidePoints[barrier.guidePoints.length-1]);
+      sampledPoints.push(line.points[line.points.length-1]);
       const curve = new THREE.CatmullRomCurve3(sampledPoints);
-      const newPoints = curve.getPoints(barrier.guidePoints.length - state.curveBeginInd);
-      barrier.guidePoints.splice(state.curveBeginInd, barrier.guidePoints.length, ...newPoints);
-      barrier.geometry.setFromPoints(barrier.guidePoints);
-      barrier.geometry.computeBoundingSphere();
+      const newPoints = curve.getPoints(line.points.length - line.curveBeginInd);
+      line.points.splice(line.curveBeginInd, line.points.length, ...newPoints);
+      line.geometry.setFromPoints(line.points);
+      line.geometry.computeBoundingSphere();
+    },
+
+    snapTipPosition: function (state, proximitySq = STRAIGHT_PROXIMITY_SQ) {
+      state.staffEl.object3D.updateMatrixWorld();
+      state.tipPosition.set(0, 1.09, 0);   // relative to hand
+      state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
+
+      const barrier = state.barriers[state.barriers.length - 1];
+      let closestDistanceSq = Number.POSITIVE_INFINITY;
+      barrier.lines.forEach(line => {
+        line.points.forEach(point => {
+          const distanceSq = state.tipPosition.distanceToSquared(point);
+          if (distanceSq <= proximitySq && distanceSq < closestDistanceSq) {
+            state.tipPosition.copy(point);
+            closestDistanceSq = distanceSq;
+          }
+        });
+      });
+    },
+
+    createNewLineIfNeeded: function (state, proximitySq = STRAIGHT_PROXIMITY_SQ) {
+      const barrier = state.barriers[state.barriers.length-1];
+      let distSqToLast = Number.POSITIVE_INFINITY;
+      if (barrier.lines.length > 0) {
+        const points = barrier.lines[barrier.lines.length-1].points;
+        if (points.length > 0) {
+          distSqToLast = state.tipPosition.distanceToSquared(points[points.length-1]);
+        }
+      }
+      if (distSqToLast <= proximitySq) {   // appends to existing line
+        console.log("appending to existing line", barrier.lines.length-1);
+      } else {   // creates new line
+        console.log("creating new line", barrier.lines.length, barrier.color);
+        barrier.lines.push({
+          points: [state.tipPosition.clone()],
+          geometry: new THREE.BufferGeometry(),
+          material: new THREE.LineBasicMaterial({color: barrier.color}),
+        });
+      }
     },
 
     magicEnd: function (state, evt) {
@@ -149,40 +190,45 @@ AFRAME.registerState({
     },
 
     iterate: function (state, action) {
-      if (state.curving) {
-        state.staffEl.object3D.updateMatrixWorld();
-        state.tipPosition.set(0, 1.09, 0);   // relative to hand
-        state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
+      state.staffEl.object3D.updateMatrixWorld();
+      state.tipPosition.set(0, 1.09, 0);   // relative to hand
+      state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
 
+      if (state.straighting) {
+        state.inProgress.points[1].copy(state.tipPosition);
+        state.inProgress.geometry.setFromPoints(state.inProgress.points);
+        state.inProgress.geometry.computeBoundingSphere();
+      } else if (state.curving) {
         const distSq = state.tipPosition.distanceToSquared(state.lastTipPosition);
         // console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
-        if (distSq >= 0.0004) {
-          this.updateBarrier(state);
+        if (distSq >= CURVE_PROXIMITY_SQ) {
+          this.appendTipPositionToBarrier(state);
           state.lastTipPosition.copy(state.tipPosition);
         }
       }
     },
 
-    updateBarrier: function updateBarrier(state) {
-      const barrier = state.barriers[state.currentBarrierInd];
-      barrier.guidePoints.push(state.tipPosition.clone());
+    appendTipPositionToBarrier: function updateBarrier(state) {
+      const barrier = state.barriers[state.barriers.length-1];
+      const line = barrier.lines[barrier.lines.length-1];
+      line.points.push(state.tipPosition.clone());
 
-      if (barrier.guidePoints.length >= 2) {
-        barrier.geometry.setFromPoints(barrier.guidePoints);
-        barrier.geometry.computeBoundingSphere();
+      if (line.points.length >= 2) {   // TODO: when code is complete this should always true by now
+        line.geometry.setFromPoints(line.points);
+        line.geometry.computeBoundingSphere();
 
-        if (!barrier.line) {
-          barrier.line = new THREE.Line(barrier.geometry, barrier.material);
-          barrier.el = document.createElement('a-entity');
-          barrier.el.setObject3D('line', barrier.line);
-          AFRAME.scenes[0].appendChild(barrier.el);
-          console.log("barrier.el.object3D:", barrier.el.object3D);
+        if (!line.line) {
+          line.line = new THREE.Line(line.geometry, line.material);
+          line.el = document.createElement('a-entity');
+          line.el.setObject3D('line', line.line);
+          AFRAME.scenes[0].appendChild(line.el);
+          console.log("line.el.object3D:", line.el.object3D);
         }
       }
 
-      if (barrier.guidePoints.length === pentagramTemplate.length) {   // compare to template
+      if (line.points.length === pentagramTemplate.length) {   // compare to template
         const transformedTemplate = pentagramTemplate.map(p => new THREE.Vector3().copy(p));
-        transformTemplateToActual(barrier.guidePoints, transformedTemplate);
+        transformTemplateToActual(line.points, transformedTemplate);
         for (let i=1; i<transformedTemplate.length; ++i) {   // presume closed template
           const dotEl = document.createElement('a-entity');
           dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
@@ -197,8 +243,8 @@ AFRAME.registerState({
           // AFRAME.scenes[0].appendChild(numberEl);
         }
 
-        const score = 1 / (rmsd(barrier.guidePoints, transformedTemplate) / transformedTemplate.scale);
-        calcCentroid(barrier.guidePoints, state.centroidPt);
+        const score = 1 / (rmsd(line.points, transformedTemplate) / transformedTemplate.scale);
+        calcCentroid(line.points, state.centroidPt);
         console.log("score:", score, "   centroid:", JSON.stringify(state.centroidPt));
         const scoreEl = document.createElement('a-text');
         scoreEl.setAttribute('value', score.toPrecision(2));
