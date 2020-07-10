@@ -7,8 +7,6 @@ function isDesktop() {
   return ! (AFRAME.utils.device.isMobile() || AFRAME.utils.device.isMobileVR());
 }
 
-const pentagramTemplate = [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)];
-
 const STRAIGHT_PROXIMITY_SQ = 0.01;   // when drawing straight sections; square of 0.1 m
 const CURVE_END_PROXIMITY_SQ = 0.0016;   // when beginning/ending curved sections; square of 0.04 m
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
@@ -26,7 +24,6 @@ AFRAME.registerState({
     lastTipPosition: null,
     inProgress: {},
     barriers: [],
-    colors: ["red", "orange", "yellow", "green", "blue", "violet"],
     centroidPt: null,
   },
 
@@ -49,7 +46,6 @@ AFRAME.registerState({
       state.inProgress.el = document.createElement('a-entity');
       state.inProgress.el.setObject3D('line', state.inProgress.line);
       AFRAME.scenes[0].appendChild(state.inProgress.el);
-      console.log("state.inProgress.el.object3D:", state.inProgress.el.object3D);
 
       state.centroidPt = new THREE.Vector3();
     },
@@ -74,7 +70,7 @@ AFRAME.registerState({
     magicBegin: function (state, evt) {
       console.log("magicBegin:", evt.handId);
       state.barriers.push({
-        color: state.colors[(state.barriers.length) % state.colors.length],
+        color: 'white',
         lines: [],
       });
     },
@@ -226,25 +222,15 @@ AFRAME.registerState({
         }
       }
 
-      if (line.points.length === pentagramTemplate.length) {   // compare to template
-        const transformedTemplate = pentagramTemplate.map(p => new THREE.Vector3().copy(p));
-        transformTemplateToActual(line.points, transformedTemplate);
-        for (let i=1; i<transformedTemplate.length; ++i) {   // presume closed template
-          const dotEl = document.createElement('a-entity');
-          dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
-          dotEl.setAttribute('material', 'shader:flat; color:white; fog:false;');
-          dotEl.object3D.position.copy(transformedTemplate[i]);
-          AFRAME.scenes[0].appendChild(dotEl);
+      const [score, template, transformedTemplatePoints] = matchTemplates(line.points);
 
-          // const numberEl = document.createElement('a-text');
-          // numberEl.setAttribute('value', i + 1);
-          // numberEl.object3D.position.copy(transformedTemplate[i]);
-          // numberEl.setAttribute('look-at', "[camera]");
-          // AFRAME.scenes[0].appendChild(numberEl);
-        }
+      if (score >= 1.0) {
+        barrier.color = template.color || 'cyan';
+        barrier.lines.forEach(line => {
+          line.material.color.set(barrier.color);
+        });
 
-        const score = 1 / (rmsd(line.points, transformedTemplate) / transformedTemplate.scale);
-        calcCentroid(line.points, state.centroidPt);
+        calcCentroid(transformedTemplatePoints, state.centroidPt);
         console.log("score:", score, "   centroid:", JSON.stringify(state.centroidPt));
         const scoreEl = document.createElement('a-text');
         scoreEl.setAttribute('value', score.toPrecision(2));
@@ -254,8 +240,21 @@ AFRAME.registerState({
         scoreEl.setAttribute('color', 'black');
         scoreEl.setAttribute('look-at', "[camera]");
         AFRAME.scenes[0].appendChild(scoreEl);
-      }
 
+        for (let i = (template.closed ? 1 : 0); i < transformedTemplatePoints.length; ++i) {   // presume closed template
+          const dotEl = document.createElement('a-entity');
+          dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
+          dotEl.setAttribute('material', 'shader:flat; color:white; fog:false;');
+          dotEl.object3D.position.copy(transformedTemplatePoints[i]);
+          AFRAME.scenes[0].appendChild(dotEl);
+
+          // const numberEl = document.createElement('a-text');
+          // numberEl.setAttribute('value', i + 1);
+          // numberEl.object3D.position.copy(transformedTemplatePoints[i]);
+          // numberEl.setAttribute('look-at', "[camera]");
+          // AFRAME.scenes[0].appendChild(numberEl);
+        }
+      }
     }
   }
 });

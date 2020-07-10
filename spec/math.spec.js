@@ -521,3 +521,62 @@ describe("transformTemplateToActual", () => {
     expect(Math.abs(template.scale - 2.5)).toBeLessThan(0.15);
   });
 });
+
+describe("matchTemplates", () => {
+  it("should match nothing when too short", () => {
+     const points = [new THREE.Vector3(0,1,0)];
+
+     const [score, template, transformedTemplatePoints] = matchTemplates(points);
+
+     expect(template).toBeFalsy();
+     expect(score).toEqual(0);
+     expect(transformedTemplatePoints).toBeFalsy();
+  });
+
+  it("should match pentagram when exact match", () => {
+    const points = [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)];
+
+    const [score, template, transformedTemplatePoints] = matchTemplates(points);
+
+    expect(template).toBeTruthy();
+    expect(template.name).toEqual("pentagram");
+    expect(score).toBeGreaterThan(5.0);
+    expect(transformedTemplatePoints).toBeInstanceOf(Array);
+  });
+
+  it("should match pentagram when last points exactly match", () => {
+    const points = [new THREE.Vector3(1,2,3), new THREE.Vector3(2,3,4), new THREE.Vector3(3,4,5), new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)];
+
+    const [score, template, transformedTemplatePoints] = matchTemplates(points);
+
+    expect(template).toBeTruthy();
+    expect(template.name).toEqual("pentagram");
+    expect(score).toBeGreaterThan(5.0);
+    expect(transformedTemplatePoints).toBeInstanceOf(Array);
+  });
+
+  it("should poorly match pentagram when points in the middle exactly match", () => {
+    const points = [new THREE.Vector3(1,2,3), new THREE.Vector3(2,3,4), new THREE.Vector3(3,4,5), new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0), new THREE.Vector3(3,2,1), new THREE.Vector3(4,3,2)];
+
+    const [score, template, transformedTemplatePoints] = matchTemplates(points);
+
+    expect(template).toBeTruthy();
+    expect(template.name).toEqual("pentagram");
+    expect(score).toBeGreaterThan(0.0);
+    expect(score).toBeLessThan(1.0);
+    expect(transformedTemplatePoints).toBeInstanceOf(Array);
+  });
+
+  it("should match pentagram when fuzzed", () => {
+    const points = [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)];
+    fuzz(points, 0.1);
+
+    const [score, template, transformedTemplatePoints] = matchTemplates(points);
+
+    expect(template).toBeTruthy();
+    expect(template.name).toEqual("pentagram");
+    expect(score).toBeGreaterThan(2.9);
+    expect(transformedTemplatePoints).toBeInstanceOf(Array);
+  });
+
+});

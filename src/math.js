@@ -119,6 +119,41 @@ function rmsd(points, pattPts) {
   return Math.sqrt(sum/points.length);
 }
 
+
+const pentagramTemplate = {
+  name: "pentagram",
+  points: [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)],
+  closed: true,
+  color: 'blue',
+};
+
+const templates = [
+  pentagramTemplate,
+];
+
+matchTemplates = function matchTemplates(drawnPoints) {
+  let score = 0, matchedTemplate = null, matchedTransformedTemplatePoints = null;
+
+  templates.forEach(template => {
+    if (drawnPoints.length < template.points.length) {return}
+
+    const candidatePoints = drawnPoints.slice(-template.points.length);
+    const transformedTemplatePoints = template.points.map(p => new THREE.Vector3().copy(p));
+
+    transformTemplateToActual(candidatePoints, transformedTemplatePoints);
+
+    const templateScore = 1 / (rmsd(candidatePoints, transformedTemplatePoints) / transformedTemplatePoints.scale);
+    if (templateScore > score) {
+      score = templateScore;
+      matchedTemplate = template;
+      matchedTransformedTemplatePoints = transformedTemplatePoints;
+    }
+  });
+
+  return [score, matchedTemplate, matchedTransformedTemplatePoints];
+};
+
+
 try {   // pulled in via require for testing
   module.exports = {
     calcCentroid,
