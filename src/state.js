@@ -130,13 +130,14 @@ AFRAME.registerState({
       // smooths the curve
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      const sampledPoints = [];
-      for (let i=line.curveBeginInd; i<line.points.length; i+=5) {
-        sampledPoints.push(line.points[i]);
-      }
-      sampledPoints.push(line.points[line.points.length-1]);
-      const curve = new THREE.CatmullRomCurve3(sampledPoints);
-      const newPoints = curve.getPoints(line.points.length - line.curveBeginInd);
+      const midInd = line.curveBeginInd + Math.round((line.points.length-1 - line.curveBeginInd) / 2);
+      const curve = new THREE.QuadraticBezierCurve3(
+          line.points[line.curveBeginInd],
+          line.points[midInd],
+          line.points[line.points.length-1]
+      );
+      const numPoints = Math.max(18, Math.round(curve.getLength() / 0.04));
+      const newPoints = curve.getPoints(numPoints);
       line.points.splice(line.curveBeginInd, line.points.length, ...newPoints);
       line.geometry.setFromPoints(line.points);
       line.geometry.computeBoundingSphere();
