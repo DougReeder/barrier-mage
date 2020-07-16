@@ -9,6 +9,107 @@ try {
 }
 
 
+// ignores Z coordinate
+function circleFrom3Points2D(p1, p2, p3) {
+  const x12 = p1.x - p2.x;
+  const x13 = p1.x - p3.x;
+
+  const y12 = p1.y - p2.y;
+  const y13 = p1.y - p3.y;
+
+  const y31 = p3.y - p1.y;
+  const y21 = p2.y - p1.y;
+
+  const x31 = p3.x - p1.x;
+  const x21 = p2.x - p1.x;
+
+  // p1.x^2 - p3.x^2
+  const sx13 = p1.x * p1.x - p3.x * p3.x;
+
+  // p1.y^2 - p3.y^2
+  const sy13 = p1.y * p1.y - p3.y * p3.y;
+
+  const sx21 = p2.x * p2.x - p1.x * p1.x;
+  const sy21 = p2.y * p2.y - p1.y * p1.y;
+
+  const f = ((sx13) * (x12)
+      + (sy13) * (x12)
+      + (sx21) * (x13)
+      + (sy21) * (x13))
+      / (2 * ((y31) * (x12) - (y21) * (x13)));
+  const g = ((sx13) * (y12)
+      + (sy13) * (y12)
+      + (sx21) * (y13)
+      + (sy21) * (y13))
+      / (2 * ((x31) * (y12) - (x21) * (y13)));
+
+  const c = -(p1.x * p1.x) - (p1.y * p1.y) - 2 * g * p1.x - 2 * f * p1.y;
+
+  const h = -g;
+  const k = -f;
+  const sqr_of_r = h * h + k * k - c;
+
+  return [new THREE.Vector2(h, k), Math.sqrt(sqr_of_r)];   // center (2D) and radius
+}
+
+const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+const plane = new THREE.Plane();
+const aRel = new THREE.Vector2();
+const cRel = new THREE.Vector2();
+
+function arcFrom3Points(p1, p2, p3) {
+  a.copy(p1);
+  b.copy(p2);
+  c.copy(p3);
+
+  // Rotates points into a plane parallel to X-Y
+  plane.setFromCoplanarPoints(p1, p2, p3);
+  let rotAngle = plane.normal.angleTo(zAxis);
+
+  rotAxis.crossVectors(plane.normal, zAxis);
+  if (rotAxis.length() > 0.00001) {   // rotates if normals not co-linear
+    rotAxis.normalize();
+    a.applyAxisAngle(rotAxis, rotAngle);
+    b.applyAxisAngle(rotAxis, rotAngle);
+    c.applyAxisAngle(rotAxis, rotAngle);
+  }
+  if (Math.abs(a.z - b.z) > 0.0001 || Math.abs(a.z - c.z) > 0.0001) {
+    console.warn("points not coplanar:" + a + b + c);
+  }
+  const z = a.z;
+
+  let [center2, radius] = circleFrom3Points2D(a, b, c);   // ignores Z coordinate
+
+  aRel.set(a.x, a.y).sub(center2);
+  const startAngle = aRel.angle();
+  cRel.set(c.x, c.y).sub(center2);
+  const endAngle = cRel.angle();
+
+  // TODO: replace EllipseCurve with custom code to generate Vector3s directly
+  const curve = new THREE.EllipseCurve(
+      center2.x,  center2.y,            // ax, aY
+      radius, radius,           // xRadius, yRadius
+      startAngle,  endAngle,  // aStartAngle, aEndAngle
+      false,            // aClockwise; always ccw because plane calculated by right hand rule
+      0                 // aRotation
+  );
+  let arcAngle = endAngle - startAngle;
+  if (arcAngle < 0) { arcAngle += 2 * Math.PI}
+  const numPoints = Math.round(arcAngle * radius / 0.02);
+  const points2D = curve.getPoints(numPoints);
+  const points = points2D.map(p => new THREE.Vector3(p.x, p.y, z));
+
+  const center3 = new THREE.Vector3(center2.x, center2.y, z);
+
+  if (rotAxis.length() > 0.00001) {   // if not co-linear, reverses rotation
+    center3.applyAxisAngle(rotAxis, -rotAngle);
+    points.forEach(p => p.applyAxisAngle(rotAxis, -rotAngle));
+  }
+
+  return {center2, center3, radius, startAngle, endAngle, points};
+}
+
+
 /** Sets 'out' to the mean coordinates of the points */
 function calcCentroid(points, out) {
   out.set(0, 0, 0);
@@ -47,9 +148,10 @@ function transformToStandard(points) {
   let angle = avgNormal.angleTo(zAxis);
 
   rotAxis.crossVectors(avgNormal, zAxis);
-  rotAxis.normalize();
-
-  points.forEach(p => p.applyAxisAngle(rotAxis, angle));
+  if (rotAxis.length() > 0.00001) {   // rotates if normals not co-linear
+    rotAxis.normalize();
+    points.forEach(p => p.applyAxisAngle(rotAxis, angle));
+  }
 
   // rotates about Z so first point is on positive Y axis
   angle = points[0].angleTo(yAxis) * (points[0].x >= 0 ? 1 : -1);
@@ -84,8 +186,11 @@ function transformTemplateToActual(actual, template) {
   avgNormal.copy(plane1.normal).add(plane2.normal).normalize();
 
   let angle = avgNormal.angleTo(zAxis);
-  rotAxis.crossVectors(zAxis, avgNormal).normalize();
-  template.forEach(p => p.applyAxisAngle(rotAxis, angle));
+  rotAxis.crossVectors(zAxis, avgNormal);
+  if (rotAxis.length() > 0.00001) {   // rotates if normals not co-linear
+    rotAxis.normalize();
+    template.forEach(p => p.applyAxisAngle(rotAxis, angle));
+  }
 
   // rotates about Z to best align points
   let angleSum = 0;
@@ -156,6 +261,7 @@ matchTemplates = function matchTemplates(drawnPoints) {
 
 try {   // pulled in via require for testing
   module.exports = {
+    arcFrom3Points,
     calcCentroid,
     centerPoints,
     angleDiff,

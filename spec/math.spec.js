@@ -1,8 +1,180 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-// const {AFRAME, componentParam} = require('./aframe-stub');
-const {calcCentroid, centerPoints, angleDiff, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
+const {arcFrom3Points, calcCentroid, centerPoints, angleDiff, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
+
+const INV_SQRT_2 = 1 / Math.sqrt(2);
+const THREE_SQRT_2 = 3 / Math.sqrt(2);
+
+describe("arcFrom3Points", () => {
+  it("should do first quadrant", () => {
+    const p1 = new THREE.Vector3(0, 1, 0);
+    const p2 = new THREE.Vector3(INV_SQRT_2, INV_SQRT_2, 0);
+    const p3 = new THREE.Vector3(1,0,0);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(0, 6);
+    expect(arc.center3.y).toBeCloseTo(0, 6);
+    expect(arc.center3.z).toBeCloseTo(0, 6);
+    expect(arc.radius).toBeCloseTo(1, 6);
+    expect(arc.startAngle).toBeCloseTo(Math.PI/2, 6);
+    expect(arc.endAngle).toBeCloseTo(0, 6);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    // expect(p2.distanceTo(arc.points[Math.floor(arc.points.length/2)])).toBeCloseTo(0,4);
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+  it("should do spread", () => {
+    const p1 = new THREE.Vector3(2.3,3.4,0);
+    const p2 = new THREE.Vector3(-1.2,-2.1,0);
+    const p3 = new THREE.Vector3(3.2,-0.5,0);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(0.2129, 4);
+    expect(arc.center3.y).toBeCloseTo(0.8645, 4);
+    expect(arc.center3.z).toBeCloseTo(0, 6);
+    expect(arc.radius).toBeCloseTo(3.28401, 4);
+    expect(arc.startAngle).toBeGreaterThan(Math.PI/4);
+    expect(arc.startAngle).toBeLessThan(Math.PI/2);
+    expect(arc.endAngle).toBeGreaterThan(1.75*Math.PI);
+    expect(arc.endAngle).toBeLessThan(2*Math.PI);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    // p2 is not the middle of this arc
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+  it("should handle origin in fourth quadrant", () => {
+    const p1 = new THREE.Vector3(-1.1, 2.2, 0);
+    const p2 = new THREE.Vector3(-5.4, -4.4, 0);
+    const p3 = new THREE.Vector3(3.2, -0.5,0);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(-1.0673, 4);
+    expect(arc.center3.y).toBeCloseTo(-2.522, 4);
+    expect(arc.center3.z).toBeCloseTo(0, 6);
+    expect(arc.radius).toBeCloseTo(4.72216, 4);
+    expect(arc.startAngle).toBeGreaterThan(Math.PI/2);
+    expect(arc.startAngle).toBeLessThan(0.75*Math.PI);
+    expect(arc.endAngle).toBeGreaterThan(0);
+    expect(arc.endAngle).toBeLessThan(Math.PI/4);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    // p2 is not the middle of this arc
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+  it("should handle arc crossing X-axis", () => {
+    const p1 = new THREE.Vector3(0.80, -0.62, 0);
+    const p2 = new THREE.Vector3(-0.97, 0.20, 0.01);
+    const p3 = new THREE.Vector3(0.95, 0.32, 0);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(0, 1);
+    expect(arc.center3.y).toBeCloseTo(0, 1);
+    expect(arc.center3.z).toBeCloseTo(0, 2);
+    expect(arc.radius).toBeCloseTo(1, 3);
+    const arcAngle = (arc.endAngle - arc.startAngle + 2*Math.PI) % 2*Math.PI;
+    expect(arcAngle).toBeGreaterThan(1.25*Math.PI);
+    expect(arcAngle).toBeLessThan(1.75*Math.PI);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    expect(p2.distanceTo(arc.points[Math.floor(arc.points.length/2)])).toBeCloseTo(0,1);
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+  it("should handle in Y-Z plane", () => {
+    const p1 = new THREE.Vector3(9, 1, 0);
+    const p2 = new THREE.Vector3(9, INV_SQRT_2, INV_SQRT_2);
+    const p3 = new THREE.Vector3(9, 0, 1);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(9, 4);
+    expect(arc.center3.y).toBeCloseTo(0, 4);
+    expect(arc.center3.z).toBeCloseTo(0, 6);
+    expect(arc.radius).toBeCloseTo(1, 4);
+    expect(arc.startAngle).toBeCloseTo(Math.PI/2, 6);
+    expect(arc.endAngle).toBeCloseTo(Math.PI, 6);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    expect(p2.distanceTo(arc.points[Math.floor(arc.points.length/2)])).toBeCloseTo(0,1);
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+  it("should handle in other vertical plane", () => {
+    const p1 = new THREE.Vector3(-THREE_SQRT_2, 0, -THREE_SQRT_2);
+    const p2 = new THREE.Vector3(0, 3, 0);
+    const p3 = new THREE.Vector3(THREE_SQRT_2, 0, THREE_SQRT_2);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(0, 4);
+    expect(arc.center3.y).toBeCloseTo(0, 4);
+    expect(arc.center3.z).toBeCloseTo(0, 6);
+    expect(arc.radius).toBeCloseTo(3, 4);
+    expect(arc.startAngle).toBeCloseTo(2*Math.PI, 6);   // p1 rotated 0.75 π onto +X axis
+    expect(arc.endAngle).toBeCloseTo(Math.PI, 6);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    expect(p2.distanceTo(arc.points[Math.floor(arc.points.length/2)])).toBeCloseTo(0,1);
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+  it("should handle in other vertical plane with offset", () => {
+    const p1 = new THREE.Vector3(2-THREE_SQRT_2, 0, 4-THREE_SQRT_2);
+    const p2 = new THREE.Vector3(2, 3, 4);
+    const p3 = new THREE.Vector3(2+THREE_SQRT_2, 0, 4+THREE_SQRT_2);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(2, 4);
+    expect(arc.center3.y).toBeCloseTo(0, 4);
+    expect(arc.center3.z).toBeCloseTo(4, 6);
+    expect(arc.radius).toBeCloseTo(3, 4);
+    expect(arc.startAngle).toBeCloseTo(2*Math.PI, 6);   // p1 rotated 0.75 π onto +X axis
+    expect(arc.endAngle).toBeCloseTo(Math.PI, 6);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    expect(p2.distanceTo(arc.points[Math.floor(arc.points.length/2)])).toBeCloseTo(0,1);
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+  it("should handle in diagonal plane", () => {
+    const p1 = new THREE.Vector3(-THREE_SQRT_2, -THREE_SQRT_2, 0);
+    const p2 = new THREE.Vector3(0, 0, 3);
+    const p3 = new THREE.Vector3(THREE_SQRT_2, THREE_SQRT_2, 0);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(0, 4);
+    expect(arc.center3.y).toBeCloseTo(0, 4);
+    expect(arc.center3.z).toBeCloseTo(0, 6);
+    expect(arc.radius).toBeCloseTo(3, 4);
+    expect(arc.startAngle).toBeCloseTo(1.25*Math.PI, 6);
+    expect(arc.endAngle).toBeCloseTo(Math.PI/4, 6);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    expect(p2.distanceTo(arc.points[Math.floor(arc.points.length/2)])).toBeCloseTo(0,1);
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+  it("should handle diagonal plane with offset", () => {
+    const p1 = new THREE.Vector3(2-THREE_SQRT_2, 4-THREE_SQRT_2, 0);
+    const p2 = new THREE.Vector3(2, 4, 3);
+    const p3 = new THREE.Vector3(2+THREE_SQRT_2, 4+THREE_SQRT_2, 0);
+
+    const arc = arcFrom3Points(p1, p2, p3);
+
+    expect(arc.center3.x).toBeCloseTo(2, 4);
+    expect(arc.center3.y).toBeCloseTo(4, 4);
+    expect(arc.center3.z).toBeCloseTo(0, 6);
+    expect(arc.radius).toBeCloseTo(3, 4);
+    expect(arc.startAngle).toBeCloseTo(1.25*Math.PI, 6);
+    expect(arc.endAngle).toBeCloseTo(Math.PI/4, 6);
+    expect(p1.distanceTo(arc.points[0])).toBeCloseTo(0,4);
+    expect(p2.distanceTo(arc.points[Math.floor(arc.points.length/2)])).toBeCloseTo(0,1);
+    expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
+  });
+
+});
 
 function fuzz(points, fuzzAmount) {
   points.forEach(p => {
@@ -155,7 +327,7 @@ describe("transformToStandard", function () {
 
   it("should transform the points to the X-Y plane (fuzzed, large negative rotation around vertical)", () => {
     const points = [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902)];
-    fuzz(points, 0.015);
+    fuzz(points, 0.010);
     const axis = new THREE.Vector3(0, 1, 0);
     points.forEach(p => p.applyAxisAngle(axis, -3*Math.PI/4));
 
@@ -197,7 +369,7 @@ describe("transformToStandard", function () {
 
   it("should transform the points to the X-Y plane (fuzzed, large negative rotation around diagonal)", () => {
     const points = [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902)];
-    fuzz(points, 0.015);
+    fuzz(points, 0.010);
     const axis = new THREE.Vector3(0.70711, 0.70711, 0);
     points.forEach(p => p.applyAxisAngle(axis, -3*Math.PI/4));
 

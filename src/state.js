@@ -8,7 +8,7 @@ function isDesktop() {
 }
 
 const STRAIGHT_PROXIMITY_SQ = 0.01;   // when drawing straight sections; square of 0.1 m
-const CURVE_END_PROXIMITY_SQ = 0.0016;   // when beginning/ending curved sections; square of 0.04 m
+const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved sections; square of 0.05 m
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
 
 AFRAME.registerState({
@@ -131,14 +131,12 @@ AFRAME.registerState({
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
       const midInd = line.curveBeginInd + Math.round((line.points.length-1 - line.curveBeginInd) / 2);
-      const curve = new THREE.QuadraticBezierCurve3(
+      const arc = arcFrom3Points(
           line.points[line.curveBeginInd],
           line.points[midInd],
           line.points[line.points.length-1]
       );
-      const numPoints = Math.max(18, Math.round(curve.getLength() / 0.04));
-      const newPoints = curve.getPoints(numPoints);
-      line.points.splice(line.curveBeginInd, line.points.length, ...newPoints);
+      line.points.splice(line.curveBeginInd, line.points.length, ...arc.points);
       line.geometry.setFromPoints(line.points);
       line.geometry.computeBoundingSphere();
     },
