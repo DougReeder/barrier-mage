@@ -130,12 +130,24 @@ AFRAME.registerState({
       // smooths the curve
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      const midInd = line.curveBeginInd + Math.round((line.points.length-1 - line.curveBeginInd) / 2);
-      const arc = arcFrom3Points(
-          line.points[line.curveBeginInd],
-          line.points[midInd],
-          line.points[line.points.length-1]
-      );
+      let arc;
+      if (state.tipPosition.distanceToSquared(line.points[line.curveBeginInd]) > STRAIGHT_PROXIMITY_SQ) {
+        const midInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 2);
+        arc = arcFrom3Points(
+            line.points[line.curveBeginInd],
+            line.points[midInd],
+            line.points[line.points.length - 1]
+        );
+      } else {
+        const secondInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 3);
+        const thirdInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) * 2 / 3);
+        arc = arcFrom3Points(
+            line.points[line.curveBeginInd],
+            line.points[secondInd],
+            line.points[thirdInd],
+            true
+        );
+      }
       line.points.splice(line.curveBeginInd, line.points.length, ...arc.points);
       line.geometry.setFromPoints(line.points);
       line.geometry.computeBoundingSphere();

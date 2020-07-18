@@ -174,6 +174,22 @@ describe("arcFrom3Points", () => {
     expect(p3.distanceTo(arc.points[arc.points.length-1])).toBeCloseTo(0,4);
   });
 
+  it("should return circle when 4th arg is truthy", () => {
+    const p1 = new THREE.Vector3(1, -2, 6);
+    const p2 = new THREE.Vector3(1, 13.3, 14.5);
+    const p3 = new THREE.Vector3(1, 13.3, -2.5);
+
+    const arc = arcFrom3Points(p1, p2, p3, true);
+
+    expect(arc.center3.x).toBeCloseTo(1, 4);
+    expect(arc.center3.y).toBeCloseTo(8, 1);
+    expect(arc.center3.z).toBeCloseTo(6, 6);
+    expect(arc.radius).toBeCloseTo(10, 1);
+    expect(arc.endAngle - arc.startAngle).toBeCloseTo(2*Math.PI);
+    expect(arc.points.length).toBeGreaterThan(3141);   // Math.round(10*2*Math.PI/0.02)
+    expect(arc.points.length).toBeLessThan(3147);   // Math.round(10*2*Math.PI/0.02)
+  });
+
 });
 
 function fuzz(points, fuzzAmount) {

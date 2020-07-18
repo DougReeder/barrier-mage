@@ -57,7 +57,16 @@ const plane = new THREE.Plane();
 const aRel = new THREE.Vector2();
 const cRel = new THREE.Vector2();
 
-function arcFrom3Points(p1, p2, p3) {
+/**
+ * When 4th arg is falsy, p1 is start and p3 is end.
+ * When 4th arg is truthy, a circle is returned. (Still need 3 distinct points to determine plane.)
+ * @param p1 (Vector3)
+ * @param p2 (Vector3)
+ * @param p3 (Vector3)
+ * @param isCircle (boolean)
+ * @returns {{startAngle: number, center3: Vector3, endAngle: number, center2: Vector2, radius: number, points: [Vector3]}}
+ */
+function arcFrom3Points(p1, p2, p3, isCircle) {
   a.copy(p1);
   b.copy(p2);
   c.copy(p3);
@@ -82,8 +91,13 @@ function arcFrom3Points(p1, p2, p3) {
 
   aRel.set(a.x, a.y).sub(center2);
   const startAngle = aRel.angle();
-  cRel.set(c.x, c.y).sub(center2);
-  const endAngle = cRel.angle();
+  let endAngle;
+  if (isCircle) {
+    endAngle = startAngle + 2*Math.PI;
+  } else {
+    cRel.set(c.x, c.y).sub(center2);
+    endAngle = cRel.angle();
+  }
 
   // TODO: replace EllipseCurve with custom code to generate Vector3s directly
   const curve = new THREE.EllipseCurve(
