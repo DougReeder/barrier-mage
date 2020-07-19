@@ -153,11 +153,17 @@ const yAxis = new THREE.Vector3(0,1,0);
 function transformToStandard(points) {
   centerPoints(points);
 
+  // rotates about X & Y
+  avgNormal.set(0, 0, 0);
   plane1.setFromCoplanarPoints(points[0], points[2], points[1]);   // ccw
+  if (plane1.normal.lengthSq() > 0) {
+    avgNormal.copy(plane1.normal);
+  }
   plane2.setFromCoplanarPoints(points[points.length-1], points[points.length-2], points[points.length-3]);   // ccw
-  avgNormal.copy(plane1.normal);
-  avgNormal.add(plane2.normal);
-  // We only care about direction, so no need to divide by 2.
+  if (plane2.normal.lengthSq() > 0 && plane1.normal.angleTo(plane2.normal) < Math.PI) {
+    avgNormal.add(plane2.normal);
+  }
+  // We only care about direction, so no need to normalize.
 
   let angle = avgNormal.angleTo(zAxis);
 
@@ -195,9 +201,16 @@ function transformTemplateToActual(actual, template) {
   }
 
   // rotates about X & Y
+  avgNormal.set(0, 0, 0);
   plane1.setFromCoplanarPoints(centeredActual[0], centeredActual[2], centeredActual[1]);   // ccw
+  if (plane1.normal.lengthSq() > 0) {
+    avgNormal.copy(plane1.normal);
+  }
   plane2.setFromCoplanarPoints(centeredActual[centeredActual.length-1], centeredActual[centeredActual.length-2], centeredActual[centeredActual.length-3]);   // ccw
-  avgNormal.copy(plane1.normal).add(plane2.normal).normalize();
+  if (plane2.normal.lengthSq() > 0 && plane1.normal.angleTo(plane2.normal) < Math.PI) {
+    avgNormal.add(plane2.normal);
+  }
+  avgNormal.normalize();
 
   let angle = avgNormal.angleTo(zAxis);
   rotAxis.crossVectors(zAxis, avgNormal);
@@ -254,18 +267,24 @@ matchTemplates = function matchTemplates(drawnPoints) {
   let score = 0, matchedTemplate = null, matchedTransformedTemplatePoints = null;
 
   templates.forEach(template => {
-    if (drawnPoints.length < template.points.length) {return}
+    try {
+      if (drawnPoints.length < template.points.length) {
+        return
+      }
 
-    const candidatePoints = drawnPoints.slice(-template.points.length);
-    const transformedTemplatePoints = template.points.map(p => new THREE.Vector3().copy(p));
+      const candidatePoints = drawnPoints.slice(-template.points.length);
+      const transformedTemplatePoints = template.points.map(p => new THREE.Vector3().copy(p));
 
-    transformTemplateToActual(candidatePoints, transformedTemplatePoints);
+      transformTemplateToActual(candidatePoints, transformedTemplatePoints);
 
-    const templateScore = 1 / (rmsd(candidatePoints, transformedTemplatePoints) / transformedTemplatePoints.scale);
-    if (templateScore > score) {
-      score = templateScore;
-      matchedTemplate = template;
-      matchedTransformedTemplatePoints = transformedTemplatePoints;
+      const templateScore = 1 / (rmsd(candidatePoints, transformedTemplatePoints) / transformedTemplatePoints.scale);
+      if (templateScore > score) {
+        score = templateScore;
+        matchedTemplate = template;
+        matchedTransformedTemplatePoints = transformedTemplatePoints;
+      }
+    } catch (err) {
+      console.error("while matching template:", err);
     }
   });
 
