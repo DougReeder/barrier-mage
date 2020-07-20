@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, calcCentroid, centerPoints, angleDiff, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
+const {arcFrom3Points, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);
 const THREE_SQRT_2 = 3 / Math.sqrt(2);
@@ -285,6 +285,61 @@ describe("centerPoints", function () {
     expect(points[3].x).toEqual(1.75);
     expect(points[3].y).toEqual(7);
     expect(points[3].z).toEqual(-2.25);
+  });
+});
+
+describe("calcPlaneNormal", () => {
+  it("should handle points almost in the X-Z plane", () => {
+    const points = [new THREE.Vector3(1, 0, 1), new THREE.Vector3(2, 0, 2), new THREE.Vector3(3, 0.1, 1), new THREE.Vector3(5, 0, 2), new THREE.Vector3(1, 0, 4)];
+    const normal = new THREE.Vector3();
+
+    calcPlaneNormal(points, normal);
+
+    expect(normal.x).toBeCloseTo(0, 1);
+    expect(Math.abs(normal.y)).toBeCloseTo(1, 2);
+    expect(normal.z).toBeCloseTo(0, 1);
+  });
+
+  it("should handle points almost in a vertical plane", () => {
+    const points = [new THREE.Vector3(THREE_SQRT_2, 0, THREE_SQRT_2), new THREE.Vector3(-THREE_SQRT_2, 0, -THREE_SQRT_2), new THREE.Vector3(0.01, 2, 0), new THREE.Vector3(0, -4, 0)];
+    const normal = new THREE.Vector3();
+
+    calcPlaneNormal(points, normal);
+
+    expect(normal.x).toBeCloseTo(-INV_SQRT_2, 2);
+    expect(normal.y).toBeCloseTo(0, 2);
+    expect(normal.z).toBeCloseTo(INV_SQRT_2, 2);
+  });
+
+  it("should handle beginning points in one plane and end points in a different one", () => {
+    const points = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.0001, 0, 1), new THREE.Vector3(0.0001, 1, 1)];
+    const normal = new THREE.Vector3();
+
+    calcPlaneNormal(points, normal);
+
+    expect(normal.lengthSq()).toBeGreaterThan(0);   // direction is ambiguous
+  });
+
+  it("should work around repeated points", () => {
+    const points = [new THREE.Vector3(0, 1, 2), new THREE.Vector3(0, 2, 1), new THREE.Vector3(0, 1, 2), new THREE.Vector3(0, 2, 3), new THREE.Vector3(0, 2, 3)];
+    const normal = new THREE.Vector3();
+
+    calcPlaneNormal(points, normal);
+
+    expect(Math.abs(normal.x)).toBeCloseTo(1, 2);
+    expect(normal.y).toBeCloseTo(0, 2);
+    expect(normal.z).toBeCloseTo(0, 2);
+  });
+
+  it("should work around many repeated points", () => {
+    const points = [new THREE.Vector3(2, 0, 3), new THREE.Vector3(2, 0, 3), new THREE.Vector3(2, 0, 3), new THREE.Vector3(3, 0, 4), new THREE.Vector3(3, 0, 4), new THREE.Vector3(3, 0, 4), new THREE.Vector3(-4, 0.001, 5)];
+    const normal = new THREE.Vector3();
+
+    calcPlaneNormal(points, normal);
+
+    expect(normal.x).toBeCloseTo(0, 2);
+    expect(Math.abs(normal.y)).toBeCloseTo(1, 2);
+    expect(normal.z).toBeCloseTo(0, 2);
   });
 });
 
@@ -639,17 +694,6 @@ describe("transformTemplateToActual", () => {
     expect(rmsd(points, template)).toBeCloseTo(0, 6);
   });
 
-  it("should transform the template to match the actual (exact, translation & large rotation around X,Y & Z)", () => {
-    const points = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
-    const axis = new THREE.Vector3(3, 2, 1).normalize();
-    points.forEach(p => p.applyAxisAngle(axis, 5*Math.PI/6).addScalar(3));
-
-    const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
-    transformTemplateToActual(points, template);
-
-    expect(rmsd(points, template)).toBeCloseTo(0, 6);
-  });
-
   it("should transform the template to match the actual (fuzzed, translation & large rotation around X,Y & Z)", () => {
     const points = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
     const axis = new THREE.Vector3(3, 2, 1).normalize();
@@ -682,18 +726,6 @@ describe("transformTemplateToActual", () => {
 
     expect(rmsd(points, template)).toBeLessThan(0.30);
     expect(Math.abs(template.scale - 3)).toBeLessThan(0.15);
-  });
-
-  it("should transform the template to match the actual (exact, scaled, large rotation around X,Y & Z, translated)", () => {
-    const points = stdPentagramPoints.map(p => new THREE.Vector3().copy(p).multiplyScalar(2.5));
-    const axis = new THREE.Vector3(3, 2, 1).normalize();
-    points.forEach(p => p.applyAxisAngle(axis, 5*Math.PI/6).addScalar(3));
-
-    const template = stdPentagramPoints.map(p => new THREE.Vector3().copy(p));
-    transformTemplateToActual(points, template);
-
-    expect(rmsd(points, template)).toBeCloseTo(0, 6);
-    expect(template.scale).toBeCloseTo(2.5, 6);
   });
 
   it("should transform the template to match the actual (fuzzed, scaled, large rotation around X,Y & Z, translated)", () => {

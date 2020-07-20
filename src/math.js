@@ -143,6 +143,42 @@ function centerPoints(points) {
 }
 
 
+function calcPlaneNormal(points, normal) {
+  // finds the furthest point from the first
+  let furthestInd = 0;
+  let furthestDistSq = Number.NEGATIVE_INFINITY;
+  points.forEach((point, i) => {
+    let d = points[0].distanceToSquared(point);
+    if (d > furthestDistSq) {
+      furthestDistSq = d;
+      furthestInd = i;
+    }
+  });
+
+  // finds the point farthest off the line
+  const line = new THREE.Line3(points[0], points[furthestInd]);
+  const pointOnLine = new THREE.Vector3();
+  let perpDistSq = Number.NEGATIVE_INFINITY;
+  let thirdPt;
+  points.forEach((point, i) => {
+    if (i > 0 && i !== furthestInd) {
+      line.closestPointToPoint(point, false, pointOnLine);
+      let d = pointOnLine.distanceToSquared(point);
+      if (d > perpDistSq) {
+        perpDistSq = d;
+        thirdPt = point;
+      }
+    }
+  });
+
+  // finds the plane
+  plane.setFromCoplanarPoints(points[0], points[furthestInd], thirdPt);
+
+  normal.copy(plane.normal);
+  return normal;
+}
+
+
 const plane1 = new THREE.Plane();
 const plane2 = new THREE.Plane();
 const avgNormal = new THREE.Vector3();
@@ -297,6 +333,7 @@ try {   // pulled in via require for testing
     arcFrom3Points,
     calcCentroid,
     centerPoints,
+    calcPlaneNormal,
     angleDiff,
     transformToStandard,
     transformTemplateToActual,
