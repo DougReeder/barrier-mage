@@ -102,6 +102,8 @@ AFRAME.registerState({
       state.inProgress.geometry.computeBoundingSphere();
 
       this.appendTipPositionToBarrier(state);
+
+      this.matchAndDisplayTemplates(state);
     },
 
     curveBegin: function (state, evt) {
@@ -151,6 +153,8 @@ AFRAME.registerState({
       line.points.splice(line.curveBeginInd, line.points.length, ...arc.points);
       line.geometry.setFromPoints(line.points);
       line.geometry.computeBoundingSphere();
+
+      this.matchAndDisplayTemplates(state);
     },
 
     snapTipPosition: function (state, proximitySq = STRAIGHT_PROXIMITY_SQ) {
@@ -232,6 +236,11 @@ AFRAME.registerState({
           console.log("line.el.object3D:", line.el.object3D);
         }
       }
+    },
+
+    matchAndDisplayTemplates: function (state) {
+      const barrier = state.barriers[state.barriers.length - 1];
+      const line = barrier.lines[barrier.lines.length - 1];
 
       const [score, template, transformedTemplatePoints] = matchTemplates(line.points);
 
