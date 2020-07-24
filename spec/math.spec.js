@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
+const {arcFrom3Points, newSegmentStraight, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);
 const THREE_SQRT_2 = 3 / Math.sqrt(2);
@@ -192,6 +192,88 @@ describe("arcFrom3Points", () => {
 
 });
 
+/** angle is always returned in the 1st quadrant, because X and Z swap around and reverse as the user turns around. */
+describe("newSegmentStraight", () => {
+  it("should calculate center, length & positive angle when slope is -3/2", ()=> {
+    const a = new THREE.Vector3(3, 10, -1);
+    const b = new THREE.Vector3(7,  4, -1);
+
+    const segment = newSegmentStraight(a, b);
+
+    expect(segment.center.x).toEqual(5);
+    expect(segment.center.y).toEqual(7);
+    expect(segment.center.z).toEqual(-1);
+    expect(segment.length).toBeCloseTo(Math.sqrt(4*4+6*6));
+    expect(segment.angle).toBeCloseTo(Math.asin(3/Math.sqrt(2*2+3*3)), 6);
+  });
+
+  it("should calculate center, length & positive angle when slope is +30 deg", ()=> {
+    const a = new THREE.Vector3(1, 10, -1);
+    const b = new THREE.Vector3(2.73205, 11, -1);
+
+    const segment = newSegmentStraight(a, b);
+
+    expect(segment.center.x).toBeCloseTo(1.86603, 4);
+    expect(segment.center.y).toBeCloseTo(10.5, 4);
+    expect(segment.center.z).toEqual(-1);
+    expect(segment.length).toBeCloseTo(2);
+    expect(segment.angle).toBeCloseTo(0.5236, 4);
+  });
+
+  it("should calculate center, length & positive angle when in Y-Z plane & slope is +30 deg", ()=> {
+    const a = new THREE.Vector3(-2, 10, 1);
+    const b = new THREE.Vector3(-2, 11, 2.73205);
+
+    const segment = newSegmentStraight(a, b);
+
+    expect(segment.center.x).toEqual(-2);
+    expect(segment.center.y).toBeCloseTo(10.5, 4);
+    expect(segment.center.z).toBeCloseTo(1.86603, 4);
+    expect(segment.length).toBeCloseTo(2);
+    expect(segment.angle).toBeCloseTo(0.5236, 4);
+  });
+
+  it("should calculate center, length & positive angle when in other vertical plane & slope is +45 deg", ()=> {
+    const a = new THREE.Vector3(0, 0, 0);
+    const b = new THREE.Vector3(THREE_SQRT_2, 3, THREE_SQRT_2);
+
+    const segment = newSegmentStraight(a, b);
+
+    expect(segment.center.x).toBeCloseTo(THREE_SQRT_2/2, 4);
+    expect(segment.center.y).toBeCloseTo(1.5, 4);
+    expect(segment.center.z).toBeCloseTo(THREE_SQRT_2/2, 4);
+    expect(segment.length).toBeCloseTo(4.24264, 4);
+    expect(segment.angle).toBeCloseTo(Math.PI/4, 4);
+  });
+
+  it("should calculate center, length & positive angle when in other vertical plane & slope is zero", ()=> {
+    const a = new THREE.Vector3(0, 4, 0);
+    const b = new THREE.Vector3(THREE_SQRT_2, 4, THREE_SQRT_2);
+
+    const segment = newSegmentStraight(a, b);
+
+    expect(segment.center.x).toBeCloseTo(THREE_SQRT_2/2, 4);
+    expect(segment.center.y).toBeCloseTo(4, 4);
+    expect(segment.center.z).toBeCloseTo(THREE_SQRT_2/2, 4);
+    expect(segment.length).toBeCloseTo(3, 4);
+    expect(segment.angle).toBeCloseTo(0, 4);
+  });
+
+  it("should calculate center, length & 90 degree angle when vertical", ()=> {
+    const a = new THREE.Vector3(2, 3, 2);
+    const b = new THREE.Vector3(2, 4, 2);
+
+    const segment = newSegmentStraight(a, b);
+
+    expect(segment.center.x).toBeCloseTo(2, 4);
+    expect(segment.center.y).toBeCloseTo(3.5, 4);
+    expect(segment.center.z).toBeCloseTo(2, 4);
+    expect(segment.length).toBeCloseTo(1, 4);
+    expect(segment.angle).toBeCloseTo(Math.PI/2, 4);
+  });
+});
+
+
 function fuzz(points, fuzzAmount) {
   points.forEach(p => {
     p.x += Math.sign(Math.random()-0.5) * fuzzAmount;
@@ -340,6 +422,22 @@ describe("calcPlaneNormal", () => {
     expect(normal.x).toBeCloseTo(0, 2);
     expect(Math.abs(normal.y)).toBeCloseTo(1, 2);
     expect(normal.z).toBeCloseTo(0, 2);
+  });
+});
+
+const brimstoneStraight = [
+  newSegmentStraight(new THREE.Vector3(-15, 26, 0), new THREE.Vector3(15, 26, 0)),
+  newSegmentStraight(new THREE.Vector3(-15, 26, 0), new THREE.Vector3(0, 0, 0)),
+  newSegmentStraight(new THREE.Vector3(15, 26, 0), new THREE.Vector3(0, 0, 0)),
+  newSegmentStraight(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -22, 0)),
+  newSegmentStraight(new THREE.Vector3(-11, -11, 0), new THREE.Vector3(11, -11, 0)),
+];
+
+
+describe("matchSegmentsAgainstTemplates", () => {
+  it("should match brimstone (point down)", () => {
+    // const [score1, template1] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
+
   });
 });
 

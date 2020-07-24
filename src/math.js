@@ -123,6 +123,22 @@ function arcFrom3Points(p1, p2, p3, isCircle) {
   return {center2, center3, radius, startAngle, endAngle, points};
 }
 
+function newSegmentStraight(a, b) {
+  const center = new THREE.Vector3((a.x+b.x)/2, (a.y+b.y)/2, (a.z+b.z)/2);
+
+  let dx = b.x - a.x;
+  let dy = Math.abs(b.y - a.y);
+  let dz = b.z - a.z;
+
+  const length = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+  // As the user turns, X and Z swap around and reverse, so we can't tell sloping up and right
+  // from sloping up and left (equivalently, we can't tell sloping up from sloping down).
+  const angle = Math.asin(dy / length);
+
+  return {center, length, angle};
+}
+
 
 /** Sets 'out' to the mean coordinates of the points */
 function calcCentroid(points, out) {
@@ -331,6 +347,7 @@ matchTemplates = function matchTemplates(drawnPoints) {
 try {   // pulled in via require for testing
   module.exports = {
     arcFrom3Points,
+    newSegmentStraight,
     calcCentroid,
     centerPoints,
     calcPlaneNormal,

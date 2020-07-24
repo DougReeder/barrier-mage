@@ -68,15 +68,17 @@ AFRAME.registerState({
     },
 
     magicBegin: function (state, evt) {
-      console.log("magicBegin:", evt.handId);
+      // console.log("magicBegin:", evt.handId);
       state.barriers.push({
         color: 'white',
         lines: [],
+        segmentsStraight: [],
+        segmentsCurved: [],
       });
     },
 
     straightBegin: function (state, evt) {
-      console.log("straightBegin:", evt.handId);
+      // console.log("straightBegin:", evt.handId);
 
       this.snapTipPosition(state);
 
@@ -92,7 +94,7 @@ AFRAME.registerState({
     },
 
     straightEnd: function (state, evt) {
-      console.log("straightEnd:", evt.handId);
+      // console.log("straightEnd:", evt.handId);
       state.straighting = false;
 
       this.snapTipPosition(state);
@@ -103,11 +105,15 @@ AFRAME.registerState({
 
       this.appendTipPositionToBarrier(state);
 
+      const barrier = state.barriers[state.barriers.length-1];
+      const line = barrier.lines[barrier.lines.length-1];
+      barrier.segmentsStraight.push(newSegmentStraight(line.points[line.points.length-2],line.points[line.points.length-1]));
+
       this.matchAndDisplayTemplates(state);
     },
 
     curveBegin: function (state, evt) {
-      console.log("curveBegin:", evt.handId);
+      // console.log("curveBegin:", evt.handId);
 
       this.snapTipPosition(state, CURVE_END_PROXIMITY_SQ);
 
@@ -122,7 +128,7 @@ AFRAME.registerState({
     },
 
     curveEnd: function (state, evt) {
-      console.log("curveEnd:", evt.handId);
+      // console.log("curveEnd:", evt.handId);
       state.curving = false;
 
       this.snapTipPosition(state, CURVE_END_PROXIMITY_SQ);
@@ -185,9 +191,9 @@ AFRAME.registerState({
         }
       }
       if (distSqToLast <= proximitySq) {   // appends to existing line
-        console.log("appending to existing line", barrier.lines.length-1);
+        // console.log("appending to existing line", barrier.lines.length-1);
       } else {   // creates new line
-        console.log("creating new line", barrier.lines.length, barrier.color);
+        // console.log("creating new line", barrier.lines.length, barrier.color);
         barrier.lines.push({
           points: [state.tipPosition.clone()],
           geometry: new THREE.BufferGeometry(),
@@ -197,7 +203,7 @@ AFRAME.registerState({
     },
 
     magicEnd: function (state, evt) {
-      console.log("magicEnd:", evt.handId);
+      // console.log("magicEnd:", evt.handId);
     },
 
     iterate: function (state, action) {
@@ -233,13 +239,16 @@ AFRAME.registerState({
           line.el = document.createElement('a-entity');
           line.el.setObject3D('line', line.line);
           AFRAME.scenes[0].appendChild(line.el);
-          console.log("line.el.object3D:", line.el.object3D);
+          // console.log("line.el.object3D.position:", line.el.object3D.position);
         }
       }
     },
 
     matchAndDisplayTemplates: function (state) {
       const barrier = state.barriers[state.barriers.length - 1];
+
+      // const [score1, template1] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
+
       const line = barrier.lines[barrier.lines.length - 1];
 
       const [score, template, transformedTemplatePoints] = matchTemplates(line.points);

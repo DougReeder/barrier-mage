@@ -1,46 +1,47 @@
 // aframe-stub.js - allows testing app code that uses A-Frame
 // Copyright © 2017-2020 P. Douglas Reeder; Licensed under the GNU GPL-3.0
 
-var elementParam = {};   // keyed by name
-
-var componentParam = {};   // keyed by name
-
-var geometryParam = {};   // keyed by name
-
-var primitiveParam = {};   // keyed by name
-
-var shaderParam = {};   // keyed by name
-
-var stateParam = null;
-
 AFRAME = {
     scenes: [{
         is: () => false,
-        emit: () => false
+        emit: () => false,
+        appendChild: child => child
     }],
 
+    elementParam: {},   // keyed by name
+
     registerElement: function (name, param) {
-        elementParam[name] = param;
+        this.elementParam[name] = param;
     },
+
+    componentParam: {},   // keyed by name
 
     registerComponent: function (name, param) {
-        componentParam[name] = param;
+        this.componentParam[name] = param;
     },
+
+    geometryParam: {},   // keyed by name
 
     registerGeometry: function (name, param) {
-        geometryParam[name] = param;
+        this.geometryParam[name] = param;
     },
 
+    primitiveParam: {},   // keyed by name
+
     registerPrimitive: function (name, param) {
-        primitiveParam[name] = param;
+        this.primitiveParam[name] = param;
     },
+
+    shaderParam: {},   // keyed by name
 
     registerShader: function (name, param) {
         shaderParam[name] = param;
     },
 
+    stateParam: null,
+
     registerState: function(param) {
-        stateParam = param;
+        this.stateParam = param;
     },
 
     utils: {
@@ -61,6 +62,7 @@ class MockElement {
         } else {
             this._attributes = {};
         }
+        this.object3D = new THREE.Object3D();
     }
 
     setAttribute(name, value) {
@@ -75,13 +77,13 @@ class MockElement {
     }
 }
 
+document = {
+    createElement: function (tagName) {
+        return new MockElement({tagName: tagName});
+    }
+};
+
 module.exports = {
-    elementParam: elementParam,
-    componentParam: componentParam,
-    geometryParam: geometryParam,
-    primitiveParam: primitiveParam,
-    shaderParam: shaderParam,
-    stateParam: stateParam,
     AFRAME: AFRAME,
     MockElement: MockElement
 };
