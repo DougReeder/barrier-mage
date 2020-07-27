@@ -247,42 +247,25 @@ AFRAME.registerState({
     matchAndDisplayTemplates: function (state) {
       const barrier = state.barriers[state.barriers.length - 1];
 
-      // const [score1, template1] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
+      const [score, template, centroid] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
 
-      const line = barrier.lines[barrier.lines.length - 1];
-
-      const [score, template, transformedTemplatePoints] = matchTemplates(line.points);
-
-      if (score >= 1.0) {
+      if (template && score >= template.minScore) {
         barrier.color = template.color || 'cyan';
         barrier.lines.forEach(line => {
           line.material.color.set(barrier.color);
         });
-
-        calcCentroid(transformedTemplatePoints, state.centroidPt);
+      }
+      if (template && score >= template.minScore - 1) {
+        // calcCentroid(transformedTemplatePoints, state.centroidPt);
         console.log("score:", score, "   centroid:", JSON.stringify(state.centroidPt));
         const scoreEl = document.createElement('a-text');
         scoreEl.setAttribute('value', score.toPrecision(2));
-        scoreEl.object3D.position.copy(state.centroidPt);
+        scoreEl.object3D.position.copy(centroid);
         scoreEl.setAttribute('align', 'center');
         scoreEl.setAttribute('baseline', 'top');
         scoreEl.setAttribute('color', 'black');
         scoreEl.setAttribute('look-at', "[camera]");
         AFRAME.scenes[0].appendChild(scoreEl);
-
-        for (let i = (template.closed ? 1 : 0); i < transformedTemplatePoints.length; ++i) {   // presume closed template
-          const dotEl = document.createElement('a-entity');
-          dotEl.setAttribute('geometry', 'primitive:tetrahedron; radius:0.01');
-          dotEl.setAttribute('material', 'shader:flat; color:white; fog:false;');
-          dotEl.object3D.position.copy(transformedTemplatePoints[i]);
-          AFRAME.scenes[0].appendChild(dotEl);
-
-          // const numberEl = document.createElement('a-text');
-          // numberEl.setAttribute('value', i + 1);
-          // numberEl.object3D.position.copy(transformedTemplatePoints[i]);
-          // numberEl.setAttribute('look-at', "[camera]");
-          // AFRAME.scenes[0].appendChild(numberEl);
-        }
       }
     }
   }

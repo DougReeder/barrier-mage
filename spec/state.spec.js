@@ -7,6 +7,7 @@ math = require('../src/math');
 require('../src/state');
 
 global.newSegmentStraight = math.newSegmentStraight;
+global.matchSegmentsAgainstTemplates = math.matchSegmentsAgainstTemplates;
 
 const TIP_LENGTH = 1.09;
 
