@@ -205,13 +205,29 @@ const brimstoneDownTemplate = {
     newSegmentStraight(new THREE.Vector3(-11/24, -17/24, 0), new THREE.Vector3(11/24, -17/24, 0)),
   ],
   segmentsCurved: [],
-  size: 42,   // sum of distances from segment centers to origin
+  size: 42/24,   // sum of distances from segment centers to origin
   minScore: 4.75,
   color: 'red',
 };
 
+const pentagramTemplate = {
+  name: "pentagram",
+  segmentsStraight: [
+    newSegmentStraight(new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0)),
+    newSegmentStraight(new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0)),
+    newSegmentStraight(new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0)),
+    newSegmentStraight(new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902)),
+    newSegmentStraight(new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)),
+  ],
+  segmentsCurved: [],
+  size: 0.30902 * 5,   // sum of distances from segment centers to origin
+  minScore: 1.00,
+  color: 'blue',
+};
+
 const templates = [
   brimstoneDownTemplate,
+  pentagramTemplate,
 ];
 
 function copySegmentStraight(segment) {
@@ -425,7 +441,7 @@ function rmsd(points, pattPts) {
 }
 
 
-const pentagramTemplate = {
+const pentagramPointTemplate = {
   name: "pentagram",
   points: [new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)],
   closed: true,
@@ -433,7 +449,7 @@ const pentagramTemplate = {
 };
 
 const pointTemplates = [
-  pentagramTemplate,
+  pentagramPointTemplate,
 ];
 
 matchTemplates = function matchTemplates(drawnPoints) {
@@ -474,6 +490,7 @@ try {   // pulled in via require for testing
     calcPlaneNormal,
     angleDiff,
     brimstoneDownTemplate,
+    pentagramTemplate,
     copySegmentStraight,
     transformSegmentsToStandard,
     rmsdTemplate,

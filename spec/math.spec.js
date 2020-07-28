@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, newSegmentStraight, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, copySegmentStraight, transformSegmentsToStandard, rmsdTemplate, matchSegmentsAgainstTemplates, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
+const {arcFrom3Points, newSegmentStraight, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, pentagramTemplate, copySegmentStraight, transformSegmentsToStandard, rmsdTemplate, matchSegmentsAgainstTemplates, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);
 const THREE_SQRT_2 = 3 / Math.sqrt(2);
@@ -651,6 +651,47 @@ describe("matchSegmentsAgainstTemplates", () => {
 
     expect(template).toBeNull();
     expect(score).toEqual(Number.NEGATIVE_INFINITY);
+  });
+
+  it("should match pentagram exact", () => {
+    const [score, template, centroidPt] = matchSegmentsAgainstTemplates(pentagramTemplate.segmentsStraight, []);
+
+    expect(template.name).toEqual("pentagram");
+    expect(score).toBeGreaterThan(1000);
+    expect(centroidPt.x).toBeCloseTo(0, 6);
+    expect(centroidPt.y).toBeCloseTo(0, 6);
+    expect(centroidPt.z).toBeCloseTo(0, 6);
+  });
+
+  it("should match pentagram; small difference in center.x", () => {
+    const segmentsStraightFuzzed = [];
+    pentagramTemplate.segmentsStraight.forEach( segment => {
+      segmentsStraightFuzzed.push(copySegmentStraight(segment));
+    });
+    segmentsStraightFuzzed[1].center.x += 0.01;
+
+    const [score, template, centroidPt] = matchSegmentsAgainstTemplates(segmentsStraightFuzzed, []);
+
+    expect(template.name).toEqual("pentagram");
+    expect(score).toBeCloseTo(15, 0);
+    expect(centroidPt.x).toBeCloseTo(0.002, 3);
+    expect(centroidPt.y).toBeCloseTo(0, 6);
+    expect(centroidPt.z).toBeCloseTo(0, 6);
+  });
+
+  it("should match pentagram fuzzed angular", () => {
+    const segmentsStraightFuzzed = [];
+    pentagramTemplate.segmentsStraight.forEach( segment => {
+      segmentsStraightFuzzed.push(fuzzSegmentStraight(segment, 0, 0.001));
+    });
+
+    const [score, template, centroidPt] = matchSegmentsAgainstTemplates(segmentsStraightFuzzed, []);
+
+    expect(template.name).toEqual("pentagram");
+    expect(score).toBeCloseTo(35.4, 1);
+    expect(centroidPt.x).toBeCloseTo(0, 6);
+    expect(centroidPt.y).toBeCloseTo(0, 6);
+    expect(centroidPt.z).toBeCloseTo(0, 6);
   });
 });
 
