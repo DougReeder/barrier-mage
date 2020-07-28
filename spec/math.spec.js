@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, newSegmentStraight, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, pentagramTemplate, copySegmentStraight, transformSegmentsToStandard, rmsdTemplate, matchSegmentsAgainstTemplates, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
+const {arcFrom3Points, newSegmentStraight, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentagramTemplate, copySegmentStraight, transformSegmentsToStandard, rmsdTemplate, matchSegmentsAgainstTemplates, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);
 const THREE_SQRT_2 = 3 / Math.sqrt(2);
@@ -425,6 +425,41 @@ describe("calcPlaneNormal", () => {
 });
 
 
+describe("templates", () => {
+  it("should have brimstone down at origin", () => {
+    const points = brimstoneDownTemplate.segmentsStraight.map(segment => segment.center);
+
+    const centroidPt = new THREE.Vector3();
+    calcCentroid(points, centroidPt);
+
+    expect(centroidPt.x).toEqual(0);
+    expect(centroidPt.y).toEqual(0);
+    expect(centroidPt.z).toEqual(0);
+  });
+
+  it("should have brimstone up at origin", () => {
+    const points = brimstoneUpTemplate.segmentsStraight.map(segment => segment.center);
+
+    const centroidPt = new THREE.Vector3();
+    calcCentroid(points, centroidPt);
+
+    expect(centroidPt.x).toEqual(0);
+    expect(centroidPt.y).toEqual(0);
+    expect(centroidPt.z).toEqual(0);
+  });
+
+  it("should have pentagram at origin", () => {
+    const points = pentagramTemplate.segmentsStraight.map(segment => segment.center);
+
+    const centroidPt = new THREE.Vector3();
+    calcCentroid(points, centroidPt);
+
+    expect(centroidPt.x).toEqual(0);
+    expect(centroidPt.y).toBeCloseTo(0,6);
+    expect(centroidPt.z).toEqual(0);
+  });
+});
+
 function fuzzSegmentStraight(segmentStraight, linearFuzz, angularFuzz = 0) {
   const newCenter = segmentStraight.center.clone().addScaledVector(diagonal, linearFuzz);
   return {
@@ -607,6 +642,12 @@ describe("rmsdTemplate", () => {
 
     expect(diff).toBeLessThan(0.17);
   });
+
+  it("should calculate 0 for exact match of brimstone up", () => {
+    const diff = rmsdTemplate(brimstoneUpTemplate.segmentsStraight, brimstoneUpTemplate.segmentsCurved, brimstoneUpTemplate);
+
+    expect(diff).toEqual(0);
+  });
 });
 
 describe("matchSegmentsAgainstTemplates", () => {
@@ -651,6 +692,21 @@ describe("matchSegmentsAgainstTemplates", () => {
 
     expect(template).toBeNull();
     expect(score).toEqual(Number.NEGATIVE_INFINITY);
+  });
+
+  it("should should match brimstone (point up) fuzzed linear & angular", () => {
+    const segmentsStraightFuzzed = [];
+    brimstoneUpTemplate.segmentsStraight.forEach( segment => {
+      segmentsStraightFuzzed.push(fuzzSegmentStraight(segment, 0.01, 0.001));
+    });
+
+    const [score, template, centroidPt] = matchSegmentsAgainstTemplates(segmentsStraightFuzzed, []);
+
+    expect(template.name).toEqual("brimstone up");
+    expect(score).toBeCloseTo(21.0, 1);
+    expect(centroidPt.x).toBeCloseTo(0, 1);
+    expect(centroidPt.y).toBeCloseTo(0, 1);
+    expect(centroidPt.z).toBeCloseTo(0, 1);
   });
 
   it("should match pentagram exact", () => {

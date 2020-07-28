@@ -194,6 +194,13 @@ function calcPlaneNormal(points, normal) {
   return normal;
 }
 
+function centerTemplate(template) {
+  const centers = template.segmentsStraight.map(segment => segment.center);
+
+  centerPoints(centers);
+
+  return template;
+}
 
 const brimstoneDownTemplate = {
   name: "brimstone down",
@@ -209,6 +216,21 @@ const brimstoneDownTemplate = {
   minScore: 4.75,
   color: 'red',
 };
+
+const brimstoneUpTemplate = centerTemplate({
+  name: "brimstone up",
+  segmentsStraight: [
+    newSegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3(15/24,   0,    0)),
+    newSegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0)),
+    newSegmentStraight(new THREE.Vector3( 15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0)),
+    newSegmentStraight(new THREE.Vector3(  0,      0,    0), new THREE.Vector3( 0,    -22/24, 0)),
+    newSegmentStraight(new THREE.Vector3(-11/24, -11/24, 0), new THREE.Vector3(11/24, -11/24, 0)),
+  ],
+  segmentsCurved: [],
+  size: 42/24,   // sum of distances from segment centers to origin
+  minScore: 4.00,
+  color: 'orange',
+});
 
 const pentagramTemplate = {
   name: "pentagram",
@@ -227,6 +249,7 @@ const pentagramTemplate = {
 
 const templates = [
   brimstoneDownTemplate,
+  brimstoneUpTemplate,
   pentagramTemplate,
 ];
 
@@ -490,6 +513,7 @@ try {   // pulled in via require for testing
     calcPlaneNormal,
     angleDiff,
     brimstoneDownTemplate,
+    brimstoneUpTemplate,
     pentagramTemplate,
     copySegmentStraight,
     transformSegmentsToStandard,
