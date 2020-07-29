@@ -8,6 +8,7 @@ require('../src/state');
 
 global.newSegmentStraight = math.newSegmentStraight;
 global.matchSegmentsAgainstTemplates = math.matchSegmentsAgainstTemplates;
+global.pentagramTemplate = math.pentagramTemplate;
 
 const TIP_LENGTH = 1.09;
 
@@ -33,12 +34,12 @@ describe("straightBegin/straightEnd", () => {
   });
 
   it("should add a new line and a segment when new segment *is not* continuous", () => {
-    AFRAME.stateParam.handlers.magicBegin(state, {});
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
 
 
     state.staffEl.object3D.position.set(1,2,3);
 
-    AFRAME.stateParam.handlers.straightBegin(state, {});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].lines[0].points.length).toEqual(1);
     expect(state.barriers[0].segmentsStraight.length).toEqual(0);
@@ -47,7 +48,7 @@ describe("straightBegin/straightEnd", () => {
 
     state.staffEl.object3D.position.set(1,0.5,3);
 
-    AFRAME.stateParam.handlers.straightEnd(state, {});
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].lines[0].points.length).toEqual(2);
     expect(state.barriers[0].segmentsStraight.length).toEqual(1);
@@ -62,7 +63,7 @@ describe("straightBegin/straightEnd", () => {
 
     state.staffEl.object3D.position.set(2,3,4);
 
-    AFRAME.stateParam.handlers.straightBegin(state, {});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].lines.length).toEqual(2);
     expect(state.barriers[0].lines[1].points.length).toEqual(1);
@@ -72,7 +73,7 @@ describe("straightBegin/straightEnd", () => {
 
     state.staffEl.object3D.position.set(3,2,1);
 
-    AFRAME.stateParam.handlers.straightEnd(state, {});
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].lines[1].points.length).toEqual(2);
     expect(state.barriers[0].segmentsStraight.length).toEqual(2);
@@ -86,12 +87,12 @@ describe("straightBegin/straightEnd", () => {
   });
 
   it("should append to line and add segment when new segment *is* continuous", () => {
-    AFRAME.stateParam.handlers.magicBegin(state, {});
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
 
 
     state.staffEl.object3D.position.set(1,2,3);
 
-    AFRAME.stateParam.handlers.straightBegin(state, {});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].lines[0].points.length).toEqual(1);
     expect(state.barriers[0].segmentsStraight.length).toEqual(0);
@@ -100,7 +101,7 @@ describe("straightBegin/straightEnd", () => {
 
     state.staffEl.object3D.position.set(2,3,4);
 
-    AFRAME.stateParam.handlers.straightEnd(state, {});
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].lines[0].points.length).toEqual(2);
     expect(state.barriers[0].segmentsStraight.length).toEqual(1);
@@ -115,7 +116,7 @@ describe("straightBegin/straightEnd", () => {
 
     state.staffEl.object3D.position.set(2.03, 3.03, 4.03);   // snaps to 2, 3, 4
 
-    AFRAME.stateParam.handlers.straightBegin(state, {});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].lines.length).toEqual(1);
     expect(state.barriers[0].lines[0].points.length).toEqual(2);
@@ -125,7 +126,7 @@ describe("straightBegin/straightEnd", () => {
 
     state.staffEl.object3D.position.set(3, 5, 7);
 
-    AFRAME.stateParam.handlers.straightEnd(state, {});
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].lines[0].points.length).toEqual(3);
     expect(state.barriers[0].segmentsStraight.length).toEqual(2);
@@ -136,5 +137,42 @@ describe("straightBegin/straightEnd", () => {
     expect(segment2.length).toBeCloseTo(3.74166, 4);
     expect(segment2.angle).toBeCloseTo(0.56394, 4);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+  });
+
+
+  it("should end barrier when template recognized", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(0,1,0);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(0.58779,-0.80902,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(-0.95106,0.30902,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(0.95106,0.30902,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(-0.58779,-0.80902,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segmentsStraight.length).toEqual(4);
+    expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+    expect(state.barriers[0].color).toEqual("white");
+
+    state.staffEl.object3D.position.set(0,1,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+
+    expect(state.barriers[0].segmentsStraight.length).toEqual(5);
+    expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+    expect(state.barriers[0].color).toEqual(pentagramTemplate.color);
+    expect(state.barriers.length).toEqual(2);
   });
 });

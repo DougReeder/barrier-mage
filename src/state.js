@@ -24,7 +24,6 @@ AFRAME.registerState({
     lastTipPosition: null,
     inProgress: {},
     barriers: [],
-    centroidPt: null,
   },
 
   handlers: {
@@ -46,8 +45,6 @@ AFRAME.registerState({
       state.inProgress.el = document.createElement('a-entity');
       state.inProgress.el.setObject3D('line', state.inProgress.line);
       AFRAME.scenes[0].appendChild(state.inProgress.el);
-
-      state.centroidPt = new THREE.Vector3();
     },
 
     /** event from gesture component on hand */
@@ -254,10 +251,11 @@ AFRAME.registerState({
         barrier.lines.forEach(line => {
           line.material.color.set(barrier.color);
         });
+        this.magicEnd(state, {handId: state.staffHandId});
+        this.magicBegin(state, {handId: state.staffHandId});
       }
       if (template && score >= template.minScore - 1) {
-        // calcCentroid(transformedTemplatePoints, state.centroidPt);
-        console.log("score:", score, "   centroid:", JSON.stringify(state.centroidPt));
+        console.log("score:", score, "   centroid:", JSON.stringify(centroid));
         const scoreEl = document.createElement('a-text');
         scoreEl.setAttribute('value', score.toPrecision(2));
         scoreEl.object3D.position.copy(centroid);

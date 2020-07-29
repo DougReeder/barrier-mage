@@ -243,7 +243,7 @@ const pentagramTemplate = {
   ],
   segmentsCurved: [],
   size: 0.30902 * 5,   // sum of distances from segment centers to origin
-  minScore: 1.00,
+  minScore: 2.00,
   color: 'blue',
 };
 
