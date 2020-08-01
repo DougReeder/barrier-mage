@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, newSegmentStraight, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentagramTemplate, copySegmentStraight, transformSegmentsToStandard, rmsdTemplate, matchSegmentsAgainstTemplates, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
+const {arcFrom3Points, newSegmentStraight, calcCentroid, centerPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentagramTemplate, dragonsEyeTemplate, copySegmentStraight, transformSegmentsToStandard, rmsdTemplate, matchSegmentsAgainstTemplates, transformToStandard, transformTemplateToActual, rmsd} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);
 const THREE_SQRT_2 = 3 / Math.sqrt(2);
@@ -458,6 +458,17 @@ describe("templates", () => {
     expect(centroidPt.y).toBeCloseTo(0,6);
     expect(centroidPt.z).toEqual(0);
   });
+
+  it("should have dragon's eye at origin", () => {
+    const points = dragonsEyeTemplate.segmentsStraight.map(segment => segment.center);
+
+    const centroidPt = new THREE.Vector3();
+    calcCentroid(points, centroidPt);
+
+    expect(centroidPt.x).toEqual(0);
+    expect(centroidPt.y).toBeCloseTo(0,6);
+    expect(centroidPt.z).toEqual(0);
+  });
 });
 
 function fuzzSegmentStraight(segmentStraight, linearFuzz, angularFuzz = 0) {
@@ -748,6 +759,20 @@ describe("matchSegmentsAgainstTemplates", () => {
     expect(centroidPt.x).toBeCloseTo(0, 6);
     expect(centroidPt.y).toBeCloseTo(0, 6);
     expect(centroidPt.z).toBeCloseTo(0, 6);
+  });
+
+  it("should should match dragon's eye fuzzed linear & angular", () => {
+    const segmentsStraightFuzzed = dragonsEyeTemplate.segmentsStraight.map( segment => {
+      return fuzzSegmentStraight(segment, 0.01, 0.001);
+    });
+
+    const [score, template, centroidPt] = matchSegmentsAgainstTemplates(segmentsStraightFuzzed, []);
+
+    expect(template.name).toEqual("dragon's eye");
+    expect(score).toBeCloseTo(28.1, 1);
+    expect(centroidPt.x).toBeCloseTo(0, 1);
+    expect(centroidPt.y).toBeCloseTo(0, 1);
+    expect(centroidPt.z).toBeCloseTo(0, 1);
   });
 });
 

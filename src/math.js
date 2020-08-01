@@ -247,10 +247,29 @@ const pentagramTemplate = {
   color: 'blue',
 };
 
+const SQRT3_2 = Math.sqrt(3)/2;
+
+const dragonsEyeTemplate = {
+  name: "dragon's eye",
+  segmentsStraight: [
+    newSegmentStraight(new THREE.Vector3(-SQRT3_2, 0.5, 0), new THREE.Vector3(SQRT3_2, 0.5, 0)),
+    newSegmentStraight(new THREE.Vector3(SQRT3_2, 0.5, 0), new THREE.Vector3(0, -1, 0)),
+    newSegmentStraight(new THREE.Vector3(0, -1, 0), new THREE.Vector3(-SQRT3_2, 0.5, 0)),
+    newSegmentStraight(new THREE.Vector3(-SQRT3_2, 0.5, 0), new THREE.Vector3(0, 0, 0)),
+    newSegmentStraight(new THREE.Vector3(0, 0, 0), new THREE.Vector3(SQRT3_2, 0.5, 0)),
+    newSegmentStraight(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -1, 0)),
+  ],
+  segmentsCurved: [],
+  size: 6 * 0.5,
+  minScore: 4.00,
+  color: 'yellow',
+};
+
 const templates = [
   brimstoneDownTemplate,
   brimstoneUpTemplate,
   pentagramTemplate,
+  dragonsEyeTemplate,
 ];
 
 function copySegmentStraight(segment) {
@@ -515,6 +534,7 @@ try {   // pulled in via require for testing
     brimstoneDownTemplate,
     brimstoneUpTemplate,
     pentagramTemplate,
+    dragonsEyeTemplate,
     copySegmentStraight,
     transformSegmentsToStandard,
     rmsdTemplate,
