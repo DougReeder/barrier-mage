@@ -194,15 +194,20 @@ function calcPlaneNormal(points, normal) {
   return normal;
 }
 
-function centerTemplate(template) {
+function centerAndSizeTemplate(template) {
   const centers = template.segmentsStraight.map(segment => segment.center);
 
   centerPoints(centers);
 
+  template.size = template.segmentsStraight.reduce((total, segment) => {
+    return total + segment.center.length() + segment.length;
+  }, 0);
+
+
   return template;
 }
 
-const brimstoneDownTemplate = {
+const brimstoneDownTemplate = centerAndSizeTemplate({
   name: "brimstone down",
   segmentsStraight: [
     newSegmentStraight(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(15/24, 20/24, 0)),
@@ -212,12 +217,12 @@ const brimstoneDownTemplate = {
     newSegmentStraight(new THREE.Vector3(-11/24, -17/24, 0), new THREE.Vector3(11/24, -17/24, 0)),
   ],
   segmentsCurved: [],
-  size: 42/24,   // sum of distances from segment centers to origin
-  minScore: 4.75,
+  size: null,   // sum of distances from segment centers to origin + sum of segment lengths
+  minScore: 13.00,
   color: 'red',
-};
+});
 
-const brimstoneUpTemplate = centerTemplate({
+const brimstoneUpTemplate = centerAndSizeTemplate({
   name: "brimstone up",
   segmentsStraight: [
     newSegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3(15/24,   0,    0)),
@@ -227,12 +232,12 @@ const brimstoneUpTemplate = centerTemplate({
     newSegmentStraight(new THREE.Vector3(-11/24, -11/24, 0), new THREE.Vector3(11/24, -11/24, 0)),
   ],
   segmentsCurved: [],
-  size: 42/24,   // sum of distances from segment centers to origin
-  minScore: 4.00,
+  size: null,
+  minScore: 13.00,
   color: 'orange',
 });
 
-const pentagramTemplate = {
+const pentagramTemplate = centerAndSizeTemplate({
   name: "pentagram",
   segmentsStraight: [
     newSegmentStraight(new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0)),
@@ -242,14 +247,14 @@ const pentagramTemplate = {
     newSegmentStraight(new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)),
   ],
   segmentsCurved: [],
-  size: 0.30902 * 5,   // sum of distances from segment centers to origin
-  minScore: 2.00,
+  size: null,
+  minScore: 15.00,
   color: 'blue',
-};
+});
 
 const SQRT3_2 = Math.sqrt(3)/2;
 
-const dragonsEyeTemplate = {
+const dragonsEyeTemplate = centerAndSizeTemplate({
   name: "dragon's eye",
   segmentsStraight: [
     newSegmentStraight(new THREE.Vector3(-SQRT3_2, 0.5, 0), new THREE.Vector3(SQRT3_2, 0.5, 0)),
@@ -260,10 +265,10 @@ const dragonsEyeTemplate = {
     newSegmentStraight(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -1, 0)),
   ],
   segmentsCurved: [],
-  size: 6 * 0.5,
-  minScore: 4.00,
+  size: null,
+  minScore: 18.00,
   color: 'yellow',
-};
+});
 
 const templates = [
   brimstoneDownTemplate,
@@ -351,19 +356,16 @@ function matchSegmentsAgainstTemplates(segmentsStraight, segmentsCurved) {
 
     // scale to match
     const segmentsSize = segmentsStraightXformed.reduce((total, segment) => {
-      return total + segment.center.length();
+      return total + segment.center.length() + segment.length;
     }, 0);
-    const templateSize = template.segmentsStraight.reduce((total, segment) => {
-      return total + segment.center.length();
-    }, 0);
-    const scale = templateSize / segmentsSize;
+    const scale = template.size / segmentsSize;
     segmentsStraightXformed.forEach(segment => {
       segment.center.multiplyScalar(scale);
       segment.length *= scale;
     });
 
     const diff = rmsdTemplate(segmentsStraightXformed, segmentsCurvedXformed, template);
-    const templateScore = 1 / (diff / templateSize);
+    const templateScore = 1 / (diff / template.size);
     if (templateScore > bestScore) {
       bestScore = templateScore;
       matchedTemplate = template;

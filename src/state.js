@@ -254,7 +254,7 @@ AFRAME.registerState({
         this.magicEnd(state, {handId: state.staffHandId});
         this.magicBegin(state, {handId: state.staffHandId});
       }
-      if (template && score >= template.minScore - 1) {
+      if (template && score >= template.minScore - 5) {   // success or fizzle
         console.log("score:", score, "   centroid:", JSON.stringify(centroid));
         const scoreEl = document.createElement('a-text');
         scoreEl.setAttribute('value', score.toPrecision(2));
