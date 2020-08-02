@@ -220,6 +220,7 @@ const brimstoneDownTemplate = centerAndSizeTemplate({
   size: null,   // sum of distances from segment centers to origin + sum of segment lengths
   minScore: 13.00,
   color: 'red',
+  audioTag: '#flame',
 });
 
 const brimstoneUpTemplate = centerAndSizeTemplate({
@@ -234,7 +235,8 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
   segmentsCurved: [],
   size: null,
   minScore: 13.00,
-  color: 'orange',
+  color: 'red',
+  audioTag: '#flame',
 });
 
 const pentagramTemplate = centerAndSizeTemplate({
@@ -250,6 +252,7 @@ const pentagramTemplate = centerAndSizeTemplate({
   size: null,
   minScore: 15.00,
   color: 'blue',
+  audioTag: '#force',
 });
 
 const SQRT3_2 = Math.sqrt(3)/2;
@@ -267,7 +270,8 @@ const dragonsEyeTemplate = centerAndSizeTemplate({
   segmentsCurved: [],
   size: null,
   minScore: 18.00,
-  color: 'yellow',
+  color: 'blue',
+  audioTag: '#force',
 });
 
 const templates = [

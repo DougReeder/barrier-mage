@@ -253,9 +253,16 @@ AFRAME.registerState({
         });
         this.magicEnd(state, {handId: state.staffHandId});
         this.magicBegin(state, {handId: state.staffHandId});
+
+        console.log("adding sound component:", template.audioTag);
+        const line = barrier.lines[barrier.lines.length-1];
+        line.el.setAttribute('sound', {src: template.audioTag, autoplay: true});
+      } else if (template && score >= template.minScore - 4) {   // fizzle
+        const line = barrier.lines[barrier.lines.length-1];
+        line.el.setAttribute('sound', {src: '#fizzle', autoplay: true});
       }
-      if (template && score >= template.minScore - 5) {   // success or fizzle
-        console.log("score:", score, "   centroid:", JSON.stringify(centroid));
+      if (template && score >= template.minScore - 4) {   // success or fizzle
+        // console.log("score:", score, "   centroid:", JSON.stringify(centroid));
         const scoreEl = document.createElement('a-text');
         scoreEl.setAttribute('value', score.toPrecision(2));
         scoreEl.object3D.position.copy(centroid);
@@ -264,6 +271,9 @@ AFRAME.registerState({
         scoreEl.setAttribute('color', 'black');
         scoreEl.setAttribute('look-at', "[camera]");
         AFRAME.scenes[0].appendChild(scoreEl);
+        setTimeout(() => {
+          scoreEl.parentNode.removeChild(scoreEl);
+        }, 3000);
       }
     }
   }
