@@ -274,11 +274,27 @@ const dragonsEyeTemplate = centerAndSizeTemplate({
   audioTag: '#force',
 });
 
+const dagazTemplate = centerAndSizeTemplate({
+  name: "dagaz",
+  segmentsStraight: [
+    newSegmentStraight(new THREE.Vector3(-2/3, 1), new THREE.Vector3(2/3, -1)),
+    newSegmentStraight(new THREE.Vector3(2/3, -1), new THREE.Vector3(2/3,  1)),
+    newSegmentStraight(new THREE.Vector3(2/3,  1), new THREE.Vector3(-2/3, -1)),
+    newSegmentStraight(new THREE.Vector3(-2/3, -1), new THREE.Vector3(-2/3, 1)),
+  ],
+  segmentsCurved: [],
+  size: null,
+  minScore: 15.00,
+  color: 'yellow',
+  audioTag: '#light',
+});
+
 const templates = [
   brimstoneDownTemplate,
   brimstoneUpTemplate,
   pentagramTemplate,
   dragonsEyeTemplate,
+  dagazTemplate,
 ];
 
 function copySegmentStraight(segment) {
@@ -541,6 +557,8 @@ try {   // pulled in via require for testing
     brimstoneUpTemplate,
     pentagramTemplate,
     dragonsEyeTemplate,
+    dagazTemplate,
+    templates,
     copySegmentStraight,
     transformSegmentsToStandard,
     rmsdTemplate,
