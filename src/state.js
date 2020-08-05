@@ -257,6 +257,32 @@ AFRAME.registerState({
         console.log("adding sound component:", template.audioTag);
         const line = barrier.lines[barrier.lines.length-1];
         line.el.setAttribute('sound', {src: template.audioTag, autoplay: true});
+
+        switch (template.name) {
+          case "dagaz":
+            let lightEl = state.staffEl.querySelector('[light]');
+            if (!lightEl) {
+              // console.log("making staff glow");
+              lightEl = document.createElement('a-entity');
+              lightEl.setAttribute('light', {type: 'point', intensity: 3.0, distance: 20});
+              lightEl.setAttribute('material', {shader: 'flat', color: '#F3E5AB'});
+              lightEl.setAttribute('geometry', {
+                primitive: 'sphere',
+                radius: 0.03,
+                segmentsHeight: 12,
+                segmentsWidth: 24
+              });
+              lightEl.setAttribute('position', '0, 1.18, 0');   // relative to hand
+              state.staffEl.appendChild(lightEl);
+
+              const glowEl = document.createElement('a-entity');
+              glowEl.setAttribute('material', {color: '#F3E5AB', transparent: true, opacity: 0.25});
+              glowEl.setAttribute('geometry', {primitive: 'sphere', radius: 0.10});
+              glowEl.setAttribute('position', '0, 1.18, 0');   // relative to hand
+              state.staffEl.appendChild(glowEl);
+            }
+            break;
+        }
       } else if (template && score >= template.minScore - 4) {   // fizzle
         const line = barrier.lines[barrier.lines.length-1];
         line.el.setAttribute('sound', {src: '#fizzle', autoplay: true});
