@@ -203,6 +203,9 @@ function centerAndSizeTemplate(template) {
     return total + segment.center.length() + segment.length;
   }, 0);
 
+  if (! (template.color instanceof THREE.Color)) {
+    template.color = new THREE.Color(template.color || 'cyan');
+  }
 
   return template;
 }
@@ -218,7 +221,8 @@ const brimstoneDownTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,   // sum of distances from segment centers to origin + sum of segment lengths
-  minScore: 13.00,
+  minScore: 12.00,
+  manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
 });
@@ -234,7 +238,8 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 13.00,
+  minScore: 12.00,
+  manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
 });
@@ -250,7 +255,8 @@ const pentagramTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 15.00,
+  minScore: 14.00,
+  manaUseMultiplier: 1,
   color: 'blue',
   audioTag: '#force',
 });
@@ -270,6 +276,7 @@ const dragonsEyeTemplate = centerAndSizeTemplate({
   segmentsCurved: [],
   size: null,
   minScore: 18.00,
+  manaUseMultiplier: 1,
   color: 'blue',
   audioTag: '#force',
 });
@@ -284,7 +291,8 @@ const dagazTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 15.00,
+  minScore: 14.00,
+  manaUseMultiplier: 15,
   color: 'yellow',
   audioTag: '#light',
 });

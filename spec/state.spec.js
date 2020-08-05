@@ -84,6 +84,7 @@ describe("straightBegin/straightEnd", () => {
     expect(segment2.length).toBeCloseTo(3.31662, 4);
     expect(segment2.angle).toBeCloseTo(0.30628, 4);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+    expect(state.barriers[0].mana).toBeNull();
   });
 
   it("should append to line and add segment when new segment *is* continuous", () => {
@@ -137,8 +138,10 @@ describe("straightBegin/straightEnd", () => {
     expect(segment2.length).toBeCloseTo(3.74166, 4);
     expect(segment2.angle).toBeCloseTo(0.56394, 4);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+    expect(state.barriers[0].mana).toBeNull();
   });
 
+  const WHITE = new THREE.Color('white');
 
   it("should end barrier when template recognized", () => {
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
@@ -165,7 +168,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers.length).toEqual(1);
     expect(state.barriers[0].segmentsStraight.length).toEqual(4);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
-    expect(state.barriers[0].color).toEqual("white");
+    expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
 
     state.staffEl.object3D.position.set(0,1,0);
     AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
@@ -173,6 +176,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].segmentsStraight.length).toEqual(5);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
     expect(state.barriers[0].color).toEqual(pentagramTemplate.color);
+    expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(state.barriers.length).toEqual(2);
   });
 });

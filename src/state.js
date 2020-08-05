@@ -10,6 +10,8 @@ function isDesktop() {
 const STRAIGHT_PROXIMITY_SQ = 0.01;   // when drawing straight sections; square of 0.1 m
 const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved sections; square of 0.05 m
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
+const WHITE = new THREE.Color('white');
+const FADEOUT_DURATION = 15000;
 
 AFRAME.registerState({
   initialState: {
@@ -67,10 +69,11 @@ AFRAME.registerState({
     magicBegin: function (state, evt) {
       // console.log("magicBegin:", evt.handId);
       state.barriers.push({
-        color: 'white',
+        color: WHITE,
         lines: [],
         segmentsStraight: [],
         segmentsCurved: [],
+        mana: null,   // not yet active
       });
     },
 
@@ -166,6 +169,7 @@ AFRAME.registerState({
       state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
 
       const barrier = state.barriers[state.barriers.length - 1];
+      if (!barrier) {return;}
       let closestDistanceSq = Number.POSITIVE_INFINITY;
       barrier.lines.forEach(line => {
         line.points.forEach(point => {
@@ -194,13 +198,17 @@ AFRAME.registerState({
         barrier.lines.push({
           points: [state.tipPosition.clone()],
           geometry: new THREE.BufferGeometry(),
-          material: new THREE.LineBasicMaterial({color: barrier.color}),
+          material: new THREE.LineBasicMaterial({color: barrier.color, transparent: true}),
         });
       }
     },
 
     magicEnd: function (state, evt) {
       // console.log("magicEnd:", evt.handId);
+      const barrier = state.barriers[state.barriers.length-1];
+      if (barrier && ! barrier.template) {
+        this.removeBarrier(state, state.barriers.length-1);
+      }
     },
 
     iterate: function (state, action) {
@@ -220,6 +228,35 @@ AFRAME.registerState({
           state.lastTipPosition.copy(state.tipPosition);
         }
       }
+
+      state.barriers.forEach((barrier, i) => {
+        if (barrier && barrier.mana > 0) {
+          barrier.mana -= action.timeDelta * barrier.template.manaUseMultiplier;
+          const fraction = Math.max(barrier.mana / FADEOUT_DURATION, 0);
+          if (fraction < 1.0) {
+            barrier.color.copy(barrier.template.color);
+            barrier.color.multiplyScalar(fraction);
+            barrier.lines.forEach(line => {
+              line.material.opacity = fraction;
+              line.material.color.set(barrier.color);
+            });
+
+          }
+          if (barrier.mana <= 0) {
+            this.removeBarrier(state, i);
+          }
+        }
+      });
+    },
+
+    removeBarrier: function (state, barrierInd) {
+      const barrier = state.barriers[barrierInd];
+      console.log("removing barrier:", barrier);
+      barrier.lines.forEach(line => {
+        line.el.removeObject3D('line');
+        line.el.parentNode.removeChild(line.el);
+      });
+      state.barriers[barrierInd] = null;  // can't splice out if we're looping
     },
 
     appendTipPositionToBarrier: function updateBarrier(state) {
@@ -247,7 +284,11 @@ AFRAME.registerState({
       const [score, template, centroid] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
 
       if (template && score >= template.minScore) {
-        barrier.color = template.color || 'cyan';
+        barrier.mana = 20000 + (score - template.minScore) * 15000;
+        console.log("score:", score, "   minScore:", template.minScore, "   mana:", barrier.mana);
+
+        barrier.template = template;
+        barrier.color = template.color.clone();
         barrier.lines.forEach(line => {
           line.material.color.set(barrier.color);
         });
@@ -260,6 +301,8 @@ AFRAME.registerState({
 
         switch (template.name) {
           case "dagaz":
+            barrier.mana = FADEOUT_DURATION;
+
             let lightEl = state.staffEl.querySelector('[light]');
             if (!lightEl) {
               // console.log("making staff glow");

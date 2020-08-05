@@ -435,6 +435,8 @@ describe("templates", () => {
     expect(centroidPt.x).toEqual(0);
     expect(centroidPt.y).toEqual(0);
     expect(centroidPt.z).toEqual(0);
+
+    expect(brimstoneDownTemplate.color instanceof THREE.Color)
   });
 
   it("should have brimstone up at origin", () => {
@@ -446,6 +448,8 @@ describe("templates", () => {
     expect(centroidPt.x).toEqual(0);
     expect(centroidPt.y).toEqual(0);
     expect(centroidPt.z).toEqual(0);
+
+    expect(brimstoneUpTemplate.color instanceof THREE.Color)
   });
 
   it("should have pentagram at origin", () => {
@@ -459,6 +463,8 @@ describe("templates", () => {
     expect(centroidPt.z).toEqual(0);
 
     expect(pentagramTemplate.size).toBeCloseTo(5 * 0.30902 + 5 * 1.90212, 4);
+
+    expect(pentagramTemplate.color instanceof THREE.Color)
   });
 
   it("should have dragon's eye at origin", () => {
@@ -472,6 +478,8 @@ describe("templates", () => {
     expect(centroidPt.z).toEqual(0);
 
     expect(dragonsEyeTemplate.size).toBeCloseTo(6 * 0.5 + 3 * 2 * 0.86603 + 3, 4);
+
+    expect(dragonsEyeTemplate.color instanceof THREE.Color)
   });
 
   it("should have dagaz at origin", () => {
@@ -485,6 +493,8 @@ describe("templates", () => {
     expect(centroidPt.z).toEqual(0);
 
     expect(dagazTemplate.size).toBeCloseTo(2*(0+2.4037) + 2*(2/3 + 2), 4);
+
+    expect(dagazTemplate.color instanceof THREE.Color)
   });
 
   it("should contain all templates", () => {
