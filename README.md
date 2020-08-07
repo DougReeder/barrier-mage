@@ -1,10 +1,10 @@
 # Barrier Mage
 In fantasy, a wizard draws mystic symbols to work a magic spell.
-In this demo, you can too!
+In this experience, you can too!
 
 ![pentagram & brimstone screenshot](assets/pentagram-brimstone.jpg)
 
-A VR demo using WebXR and [A-Frame](https://aframe.io) requiring a 6-DOF controller.
+Uses WebXR and [A-Frame](https://aframe.io) and requires a 6-DOF controller.
 
 At present, there are a few sad caveats:
 * The tutorial system is not functional, so you have to observe the shape of the symbols and draw them very neatly: ![mystic symbols](assets/symbols.png)

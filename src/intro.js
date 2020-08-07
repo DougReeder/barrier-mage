@@ -14,6 +14,10 @@ This browser lacks <a href="https://caniuse.com/#search=webxr">native WebXR</a>,
 This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     }
 
+    const mt = atob("ZS1tYWlsOiA8YSBocmVmPSJtYWlsdG86dnJAaG9taW5pZHNvZnR3YXJlLmNvbT9zdWJqZWN0PUJhcnJpZXIlMjBNYWdlJmJvZHk9") +
+        encodeURIComponent("\n\n\n" + navigator.userAgent + "\n\n\n") +
+        atob("Ij52ckBob21pbmlkc29mdHdhcmUuY29tPC9hPg==");
+
     let html = `
 <div class="wrapper">
     <div><b>Barrier Mage</b>: Draw mystic symbols to create barriers!</div>
@@ -25,6 +29,13 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
           Sorry, your browser doesn't support embedded videos.
       </video>
     </div>
+    <div style="font-family:serif; font-size: 0.75rem">
+        <div>${mt}</div>
+        <div><a href="CREDITS.md">Credits</a></div>
+        <div>Uses <a href="https://caniuse.com/#search=webxr">WebXR</a>, and the <a href="https://aframe.io"><nobr>A-Frame</nobr></a> framework.</div>
+        <div>Copyright © 2020 by P. Douglas Reeder; Licensed under the GNU GPL-3.0</div>
+        <div><a href="https://github.com/DougReeder/barrier-mage">View source code and contribute</a> </div>
+      </div>
 </div>
 `;
 
