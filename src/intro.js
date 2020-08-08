@@ -24,7 +24,7 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     ${requirements}
     <img src="assets/symbols.png">
     <div>
-      <video controls height="450">
+      <video controls width="450" height="450">
           <source src="assets/Barrier Mage basic play 1.mp4" type="video/mp4">
           Sorry, your browser doesn't support embedded videos.
       </video>
