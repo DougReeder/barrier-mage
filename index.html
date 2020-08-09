@@ -40,19 +40,21 @@
 <a-scene moving-sun atoll-walk background="color:#398bc5">
     <a-assets>
         <a-asset-item id="staffModel" src="assets/gandalfs_staff_sized.glb"></a-asset-item>
+        <audio id="wind" src="assets/339618__klankbeeld__windy-farmland-march-nl-160310-0868.mp3"></audio>
         <audio id="fizzle" src="assets/455289__zembacraftworks__sad-chime-effect.mp3"></audio>
         <audio id="force" src="assets/340159__flechabr__magic-click.mp3"></audio>
         <audio id="flame" src="assets/331621__hykenfreak__flame-ignition.mp3"></audio>
         <audio id="light" src="assets/349465__vr__magic-bell.mp3"></audio>
     </a-assets>
 
-    <a-atoll-terrain mean-elevation="5" plateau-radius="5" middle-radius="75" unit-size="1.5" far="750"
+    <a-atoll-terrain mean-elevation="5" plateau-radius="5" plateau-elevation-min="0.4" middle-radius="75" unit-size="1.5" far="750"
                      land-yin-color="#528d04" land-yang-color="#278d53" sea-yin-color="#005e85" sea-yang-color="#2571cf"
                      sun-position="0.8 0.6 0">
     </a-atoll-terrain>
     <a-simple-sun-sky radius="800" sun-position="0.8 0.6 0"></a-simple-sun-sky>
     <a-entity id="ambient" light="type:ambient; color:#fff; intensity:0.8"></a-entity>
     <a-entity id="directional" light="type:directional; color:#FFF; intensity:0.7" position="0.8 0.6 0"></a-entity>
+    <a-entity id="environmentSound" sound="src:#wind; loop:true; volume:1.0; positional:false"></a-entity>
 
     <a-entity id="rig" position="0 5 0" movement-controls="speed:0.2" rig-tick-state>
         <a-entity camera="far:1500; near:0.05" position="0 1.6 0" look-controls="pointerLockEnabled:false"></a-entity>

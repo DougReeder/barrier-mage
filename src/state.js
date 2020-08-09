@@ -297,7 +297,7 @@ AFRAME.registerState({
 
         console.log("adding sound component:", template.audioTag);
         const line = barrier.lines[barrier.lines.length-1];
-        line.el.setAttribute('sound', {src: template.audioTag, autoplay: true});
+        line.el.setAttribute('sound', {src: template.audioTag, autoplay: true, refDistance:2.0});
 
         switch (template.name) {
           case "dagaz":
@@ -352,6 +352,15 @@ AFRAME.registerState({
 AFRAME.registerComponent('rig-tick-state', {
   init: function () {
     AFRAME.scenes[0].emit('setRigEl', this.el);
+
+    AFRAME.scenes[0].addEventListener('enter-vr', (event) => {
+      const environmentSound = document.getElementById('environmentSound');
+      environmentSound.components.sound.playSound();
+    });
+    AFRAME.scenes[0].addEventListener('exit-vr', (event) => {
+      const environmentSound = document.getElementById('environmentSound');
+      environmentSound.components.sound.pauseSound();
+    });
   },
 
   tick: function (time, timeDelta) {
