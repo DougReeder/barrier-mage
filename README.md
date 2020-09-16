@@ -4,6 +4,8 @@ In this experience, you can too!
 
 ![pentagram & brimstone screenshot](assets/pentagram-brimstone.jpg)
 
+Live on [github.io](https://dougreeder.github.io/barrier-mage/)
+
 Uses WebXR and [A-Frame](https://aframe.io) and requires a 6-DOF controller.
 
 At present, there are a few sad caveats:

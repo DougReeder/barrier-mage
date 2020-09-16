@@ -73,6 +73,10 @@ class MockElement {
         return this._attributes[name];
     }
 
+    querySelector(selector) {
+        return new MockElement();
+    }
+
     setObject3D() {
     }
 }

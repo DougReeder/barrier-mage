@@ -6,7 +6,7 @@ const {AFRAME, MockElement} = require('./aframe-stub');
 math = require('../src/math');
 require('../src/state');
 
-global.newSegmentStraight = math.newSegmentStraight;
+global.SegmentStraight = math.SegmentStraight;
 global.matchSegmentsAgainstTemplates = math.matchSegmentsAgainstTemplates;
 global.pentagramTemplate = math.pentagramTemplate;
 
@@ -78,11 +78,8 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].lines[1].points.length).toEqual(2);
     expect(state.barriers[0].segmentsStraight.length).toEqual(2);
     const segment2 = state.barriers[0].segmentsStraight[state.barriers[0].segmentsStraight.length-1];
-    expect(segment2.center.x).toBeCloseTo(2.5, 6);
-    expect(segment2.center.y).toBeCloseTo(2.5+TIP_LENGTH, 6);
-    expect(segment2.center.z).toBeCloseTo(2.5, 6);
-    expect(segment2.length).toBeCloseTo(3.31662, 4);
-    expect(segment2.angle).toBeCloseTo(0.30628, 4);
+    expect(segment2.a).toEqual(new THREE.Vector3(2, 3+TIP_LENGTH, 4));
+    expect(segment2.b).toEqual(new THREE.Vector3(3, 2+TIP_LENGTH, 1));
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
     expect(state.barriers[0].mana).toBeNull();
   });
@@ -111,7 +108,7 @@ describe("straightBegin/straightEnd", () => {
     expect(segment.center.y).toBeCloseTo(2.5+TIP_LENGTH, 6);
     expect(segment.center.z).toBeCloseTo(3.5, 6);
     expect(segment.length).toBeCloseTo(Math.sqrt(3), 6);
-    expect(segment.angle).toBeCloseTo(0.61548, 4);
+    // expect(segment.angle).toBeCloseTo(0.61548, 4);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
 
 
@@ -136,7 +133,7 @@ describe("straightBegin/straightEnd", () => {
     expect(segment2.center.y).toBeCloseTo(4+TIP_LENGTH, 6);
     expect(segment2.center.z).toBeCloseTo(5.5, 6);
     expect(segment2.length).toBeCloseTo(3.74166, 4);
-    expect(segment2.angle).toBeCloseTo(0.56394, 4);
+    // expect(segment2.angle).toBeCloseTo(0.56394, 4);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
     expect(state.barriers[0].mana).toBeNull();
   });
@@ -161,6 +158,11 @@ describe("straightBegin/straightEnd", () => {
     AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
     AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
 
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segmentsStraight.length).toEqual(3);
+    expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+    expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+
     state.staffEl.object3D.position.set(-0.58779,-0.80902,0);
     AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
     AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
@@ -175,6 +177,7 @@ describe("straightBegin/straightEnd", () => {
 
     expect(state.barriers[0].segmentsStraight.length).toEqual(5);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+    expect(state.barriers[0].template).toEqual(pentagramTemplate);
     expect(state.barriers[0].color).toEqual(pentagramTemplate.color);
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(state.barriers.length).toEqual(2);

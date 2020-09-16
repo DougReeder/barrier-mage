@@ -123,20 +123,61 @@ function arcFrom3Points(p1, p2, p3, isCircle) {
   return {center2, center3, radius, startAngle, endAngle, points};
 }
 
-function newSegmentStraight(a, b) {
-  const center = new THREE.Vector3((a.x+b.x)/2, (a.y+b.y)/2, (a.z+b.z)/2);
+const PI2 = Math.PI / 2;
 
-  let dx = b.x - a.x;
-  let dy = Math.abs(b.y - a.y);
-  let dz = b.z - a.z;
+/** Angle is not meaningful unless the segment has been rotated into the X-Y plane. */
+class SegmentStraight {
+  constructor(a, b, doReuse) {
+    if (doReuse) {
+      this._a = a;
+      this._b = b;
+    } else {
+      this._a = a.clone();
+      this._b = b.clone();
+    }
+  }
 
-  const length = Math.sqrt(dx*dx + dy*dy + dz*dz);
+  get a() {
+    return this._a;
+  }
 
-  // As the user turns, X and Z swap around and reverse, so we can't tell sloping up and right
-  // from sloping up and left (equivalently, we can't tell sloping up from sloping down).
-  const angle = Math.asin(dy / length);
+  get b() {
+    return this._b;
+  }
 
-  return {center, length, angle};
+  get center() {
+    return new THREE.Vector3((this._a.x + this._b.x) / 2, (this._a.y + this._b.y) / 2, (this._a.z+ this._b.z) / 2)
+  }
+
+  get length() {
+    if (undefined === this._length) {
+      this.calcLengthAndAngle();
+    }
+    return this._length
+  }
+
+  get angle() {
+    if (undefined === this._angle) {
+      this.calcLengthAndAngle();
+    }
+    return this._angle;
+  }
+
+  calcLengthAndAngle() {
+    const dx = this._b.x - this._a.x;
+    const dy = this._b.y - this._a.y;
+    const dz = this._b.z - this._a.z;
+
+    this._length = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+    this._angle = Math.atan2(dy, dx);
+    if (this._angle > PI2) {
+      this._angle -= Math.PI;
+    }
+    if (this._angle <= -PI2) {
+      this._angle += Math.PI;
+    }
+  }
 }
 
 
@@ -191,16 +232,41 @@ function calcPlaneNormal(points, normal) {
   plane.setFromCoplanarPoints(points[0], points[furthestInd], thirdPt);
 
   normal.copy(plane.normal);
+  if (normal.z < 0) {
+    normal.multiplyScalar(-1);
+  }
+  return normal;
+}
+
+function calcPlaneNormalSegments(segmentsStraight) {
+  const points = [];
+  segmentsStraight.forEach(segment => {
+    points.push(segment.a);
+    points.push(segment.b);
+  });
+
+  const normal = new THREE.Vector3();
+  calcPlaneNormal(points, normal);
+
   return normal;
 }
 
 function centerAndSizeTemplate(template) {
-  const centers = template.segmentsStraight.map(segment => segment.center);
+  // centers endpoints
+  const center = new THREE.Vector3(0, 0, 0);
+  template.segmentsStraight.forEach(segment => {
+    center.add(segment.a);
+    center.add(segment.b)
+  });
+  center.divideScalar(template.segmentsStraight.length * 2);
 
-  centerPoints(centers);
+  template.segmentsStraight.forEach(segment => {
+    segment.a.sub(center);
+    segment.b.sub(center);
+  });
 
   template.size = template.segmentsStraight.reduce((total, segment) => {
-    return total + segment.center.length() + segment.length;
+    return total + segment.a.length() + segment.b.length();
   }, 0);
 
   if (! (template.color instanceof THREE.Color)) {
@@ -213,15 +279,15 @@ function centerAndSizeTemplate(template) {
 const brimstoneDownTemplate = centerAndSizeTemplate({
   name: "brimstone down",
   segmentsStraight: [
-    newSegmentStraight(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(15/24, 20/24, 0)),
-    newSegmentStraight(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(0, -6/24, 0)),
-    newSegmentStraight(new THREE.Vector3(15/24, 20/24, 0), new THREE.Vector3(0, -6/24, 0)),
-    newSegmentStraight(new THREE.Vector3(0, -6/24, 0), new THREE.Vector3(0, -28/24, 0)),
-    newSegmentStraight(new THREE.Vector3(-11/24, -17/24, 0), new THREE.Vector3(11/24, -17/24, 0)),
+    new SegmentStraight(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(15/24, 20/24, 0), true),
+    new SegmentStraight(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(0, -6/24, 0), true),
+    new SegmentStraight(new THREE.Vector3(15/24, 20/24, 0), new THREE.Vector3(0, -6/24, 0), true),
+    new SegmentStraight(new THREE.Vector3(0, -6/24, 0), new THREE.Vector3(0, -28/24, 0), true),
+    new SegmentStraight(new THREE.Vector3(-11/24, -17/24, 0), new THREE.Vector3(11/24, -17/24, 0), true),
   ],
   segmentsCurved: [],
-  size: null,   // sum of distances from segment centers to origin + sum of segment lengths
-  minScore: 12.00,
+  size: null,   // sum of distances from segment endpoints to origin
+  minScore: 12.0,
   manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
@@ -230,15 +296,15 @@ const brimstoneDownTemplate = centerAndSizeTemplate({
 const brimstoneUpTemplate = centerAndSizeTemplate({
   name: "brimstone up",
   segmentsStraight: [
-    newSegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3(15/24,   0,    0)),
-    newSegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0)),
-    newSegmentStraight(new THREE.Vector3( 15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0)),
-    newSegmentStraight(new THREE.Vector3(  0,      0,    0), new THREE.Vector3( 0,    -22/24, 0)),
-    newSegmentStraight(new THREE.Vector3(-11/24, -11/24, 0), new THREE.Vector3(11/24, -11/24, 0)),
+    new SegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3(15/24,   0,    0), true),
+    new SegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0), true),
+    new SegmentStraight(new THREE.Vector3( 15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0), true),
+    new SegmentStraight(new THREE.Vector3(  0,      0,    0), new THREE.Vector3( 0,    -22/24, 0), true),
+    new SegmentStraight(new THREE.Vector3(-11/24, -11/24, 0), new THREE.Vector3(11/24, -11/24, 0), true),
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 12.00,
+  minScore: 7.0,
   manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
@@ -247,35 +313,15 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
 const pentagramTemplate = centerAndSizeTemplate({
   name: "pentagram",
   segmentsStraight: [
-    newSegmentStraight(new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0)),
-    newSegmentStraight(new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0)),
-    newSegmentStraight(new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0)),
-    newSegmentStraight(new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902)),
-    newSegmentStraight(new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0)),
+    new SegmentStraight(new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), true),
+    new SegmentStraight(new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), true),
+    new SegmentStraight(new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), true),
+    new SegmentStraight(new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), true),
+    new SegmentStraight(new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0), true),
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 14.00,
-  manaUseMultiplier: 1,
-  color: 'blue',
-  audioTag: '#force',
-});
-
-const SQRT3_2 = Math.sqrt(3)/2;
-
-const dragonsEyeTemplate = centerAndSizeTemplate({
-  name: "dragon's eye",
-  segmentsStraight: [
-    newSegmentStraight(new THREE.Vector3(-SQRT3_2, 0.5, 0), new THREE.Vector3(SQRT3_2, 0.5, 0)),
-    newSegmentStraight(new THREE.Vector3(SQRT3_2, 0.5, 0), new THREE.Vector3(0, -1, 0)),
-    newSegmentStraight(new THREE.Vector3(0, -1, 0), new THREE.Vector3(-SQRT3_2, 0.5, 0)),
-    newSegmentStraight(new THREE.Vector3(-SQRT3_2, 0.5, 0), new THREE.Vector3(0, 0, 0)),
-    newSegmentStraight(new THREE.Vector3(0, 0, 0), new THREE.Vector3(SQRT3_2, 0.5, 0)),
-    newSegmentStraight(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -1, 0)),
-  ],
-  segmentsCurved: [],
-  size: null,
-  minScore: 18.00,
+  minScore: 35.0,
   manaUseMultiplier: 1,
   color: 'blue',
   audioTag: '#force',
@@ -284,14 +330,14 @@ const dragonsEyeTemplate = centerAndSizeTemplate({
 const dagazTemplate = centerAndSizeTemplate({
   name: "dagaz",
   segmentsStraight: [
-    newSegmentStraight(new THREE.Vector3(-2/3, 1), new THREE.Vector3(2/3, -1)),
-    newSegmentStraight(new THREE.Vector3(2/3, -1), new THREE.Vector3(2/3,  1)),
-    newSegmentStraight(new THREE.Vector3(2/3,  1), new THREE.Vector3(-2/3, -1)),
-    newSegmentStraight(new THREE.Vector3(-2/3, -1), new THREE.Vector3(-2/3, 1)),
+    new SegmentStraight(new THREE.Vector3(-2/3, 1), new THREE.Vector3(2/3, -1), true),
+    new SegmentStraight(new THREE.Vector3(2/3, -1), new THREE.Vector3(2/3,  1), true),
+    new SegmentStraight(new THREE.Vector3(2/3,  1), new THREE.Vector3(-2/3, -1), true),
+    new SegmentStraight(new THREE.Vector3(-2/3, -1), new THREE.Vector3(-2/3, 1), true),
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 14.00,
+  minScore: 40.0,
   manaUseMultiplier: 15,
   color: 'yellow',
   audioTag: '#light',
@@ -301,9 +347,56 @@ const templates = [
   brimstoneDownTemplate,
   brimstoneUpTemplate,
   pentagramTemplate,
-  dragonsEyeTemplate,
   dagazTemplate,
 ];
+
+function transformTemplateSegmentsToActual(actualSegmentsStraight, actualSegmentsCurved, template){
+  // calculates center of actual
+  const actualCenter = new THREE.Vector3(0, 0, 0);
+  actualSegmentsStraight.forEach(segment => {
+    actualCenter.add(segment.a);
+    actualCenter.add(segment.b)
+  });
+  actualCenter.divideScalar(actualSegmentsStraight.length * 2);
+  // centers actual segments & collects points
+  const centeredActualSegmentsStraight = [];
+  actualSegmentsStraight.forEach(segment => {
+    const a = segment.a.clone().sub(actualCenter);
+    const b = segment.b.clone().sub(actualCenter);
+    centeredActualSegmentsStraight.push(new SegmentStraight(a, b));
+  });
+
+  const normalActual = calcPlaneNormalSegments(actualSegmentsStraight);
+
+  const templateSegmentsStraightXformed = template.segmentsStraight.map(segment => new SegmentStraight(segment.a, segment.b));
+  const templateSegmentsCurvedXformed = [];
+
+  // rotates plane of template to match actual
+  let rotAngle = normalActual.angleTo(zAxis);
+  rotAxis.crossVectors(zAxis, normalActual);
+  if (rotAxis.length() > 0.00001) {   // rotates if normals not co-linear
+    rotAxis.normalize();
+
+    templateSegmentsStraightXformed.forEach(segment => {
+      segment.a.applyAxisAngle(rotAxis, rotAngle);
+      segment.b.applyAxisAngle(rotAxis, rotAngle);
+    });
+  }
+
+  // scales template to match actual, and moves to its location
+  let scaleSum = 0;
+  for (let i=0; i<templateSegmentsStraightXformed.length; ++i) {
+    scaleSum += centeredActualSegmentsStraight[i].a.length() / templateSegmentsStraightXformed[i].a.length();
+    scaleSum += centeredActualSegmentsStraight[i].b.length() / templateSegmentsStraightXformed[i].b.length();
+  }
+  const scale = scaleSum / (templateSegmentsStraightXformed.length * 2);
+  templateSegmentsStraightXformed.forEach(segment => {
+    segment.a.multiplyScalar(scale).add(actualCenter);
+    segment.b.multiplyScalar(scale).add(actualCenter);
+  });
+
+  return [templateSegmentsStraightXformed, templateSegmentsCurvedXformed, actualCenter];
+}
 
 function copySegmentStraight(segment) {
   return {
@@ -313,64 +406,33 @@ function copySegmentStraight(segment) {
   };
 }
 
-const planeNormal = new THREE.Vector3();
-
-function transformSegmentsToStandard(segmentsStraight, segmentsCurved) {
-  const points = [];
-  segmentsStraight.forEach(segment => {
-    points.push(segment.center)
-  });
-  // TODO: push points from segmentsCurved
-
-  calcCentroid(points, centroidPt);
-
-  const segmentsStraightXformed = [];
-  segmentsStraight.forEach(segment => {
-    segmentsStraightXformed.push({
-      center: segment.center.clone().sub(centroidPt),
-      length: segment.length,
-      angle: segment.angle,
-    });
-  });
-
-  calcPlaneNormal(points, planeNormal);
-
-  let rotAngle = planeNormal.angleTo(zAxis);
-  rotAxis.crossVectors(planeNormal, zAxis);
-  if (rotAxis.length() > 0.00001) {   // rotates if normals not co-linear
-    rotAxis.normalize();
-
-    segmentsStraightXformed.forEach(segment => {
-      segment.center.applyAxisAngle(rotAxis, rotAngle)
-    });
-  }
-
-  return [segmentsStraightXformed, [], centroidPt];
-}
-
-
-function rmsdTemplate(segmentsStraight, segmentsCurved, template) {
+function rmsdSegments(actualSegmentsStraight, actualSegmentsCurved, templateSegmentsStraight, templateSegmentsCurved) {
   let sum = 0;
 
-  template.segmentsStraight.forEach(tSegment => {
-    let smallestD = Number.POSITIVE_INFINITY;
-    segmentsStraight.forEach(segment => {
-      const d = tSegment.center.distanceTo(segment.center) +
-          Math.abs(tSegment.length - segment.length) +
-          Math.abs(tSegment.angle - segment.angle) * tSegment.length;
-      if (d<smallestD) {
-        smallestD = d;
+  templateSegmentsStraight.forEach(tSegment => {
+    let smallestDs = Number.POSITIVE_INFINITY;
+    actualSegmentsStraight.forEach(aSegment => {
+      let ds = (tSegment.a.distanceToSquared(aSegment.a) + tSegment.b.distanceToSquared(aSegment.b));
+      if (ds < smallestDs) {
+        smallestDs = ds;
+      }
+      ds = (tSegment.a.distanceToSquared(aSegment.b) + tSegment.b.distanceToSquared(aSegment.a));
+      if (ds < smallestDs) {
+        smallestDs = ds;
       }
     });
-    sum += smallestD;
+    sum += smallestDs;
   });
 
-  return Math.sqrt(sum/template.segmentsStraight.length);
+  return Math.sqrt(sum/2/templateSegmentsStraight.length);
 }
 
 
 function matchSegmentsAgainstTemplates(segmentsStraight, segmentsCurved) {
-  let bestScore = Number.NEGATIVE_INFINITY, matchedTemplate = null, centroidOfDrawn = null;
+  let bestScore = Number.NEGATIVE_INFINITY,
+      rawScore = Number.NEGATIVE_INFINITY,
+      matchedTemplate = null,
+      centroidOfDrawn = null;
 
   templates.forEach(template => {
     if (segmentsStraight.length < template.segmentsStraight.length ||
@@ -380,28 +442,21 @@ function matchSegmentsAgainstTemplates(segmentsStraight, segmentsCurved) {
     const candidateSegmentsStraight = segmentsStraight.slice(-template.segmentsStraight.length);
     const candidateSegmentsCurved = segmentsCurved.slice(-template.segmentsCurved.length);
 
-    const [segmentsStraightXformed, segmentsCurvedXformed, centroidP] = transformSegmentsToStandard(candidateSegmentsStraight, candidateSegmentsCurved);
+    const [templateSegmentsStraightXformed, templateSegmentsCurvedXformed, centroidP] = transformTemplateSegmentsToActual(candidateSegmentsStraight, candidateSegmentsCurved, template);
 
-    // scale to match
-    const segmentsSize = segmentsStraightXformed.reduce((total, segment) => {
-      return total + segment.center.length() + segment.length;
-    }, 0);
-    const scale = template.size / segmentsSize;
-    segmentsStraightXformed.forEach(segment => {
-      segment.center.multiplyScalar(scale);
-      segment.length *= scale;
-    });
+    const diff = rmsdSegments(candidateSegmentsStraight, candidateSegmentsCurved, templateSegmentsStraightXformed, templateSegmentsCurvedXformed);
+    const rawTemplateScore = 1 / (diff / template.size);
+    const templateScore = rawTemplateScore - template.minScore;
 
-    const diff = rmsdTemplate(segmentsStraightXformed, segmentsCurvedXformed, template);
-    const templateScore = 1 / (diff / template.size);
     if (templateScore > bestScore) {
       bestScore = templateScore;
+      rawScore = rawTemplateScore;
       matchedTemplate = template;
       centroidOfDrawn = centroidP.clone();
     }
   });
 
-  return [bestScore, matchedTemplate, centroidOfDrawn];
+  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn];
 }
 
 const rotAxis = new THREE.Vector3();
@@ -417,20 +472,19 @@ function angleDiff(first, second) {
 try {   // pulled in via require for testing
   module.exports = {
     arcFrom3Points,
-    newSegmentStraight,
+    SegmentStraight,
     calcCentroid,
     centerPoints,
     calcPlaneNormal,
+    calcPlaneNormalSegments,
     angleDiff,
     brimstoneDownTemplate,
     brimstoneUpTemplate,
     pentagramTemplate,
-    dragonsEyeTemplate,
     dagazTemplate,
     templates,
-    copySegmentStraight,
-    transformSegmentsToStandard,
-    rmsdTemplate,
+    transformTemplateSegmentsToActual,
+    rmsdSegments,
     matchSegmentsAgainstTemplates,
   }
 } catch (err) {

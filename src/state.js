@@ -107,7 +107,7 @@ AFRAME.registerState({
 
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      barrier.segmentsStraight.push(newSegmentStraight(line.points[line.points.length-2],line.points[line.points.length-1]));
+      barrier.segmentsStraight.push(new SegmentStraight(line.points[line.points.length-2],line.points[line.points.length-1]));
 
       this.matchAndDisplayTemplates(state);
     },
@@ -281,11 +281,10 @@ AFRAME.registerState({
     matchAndDisplayTemplates: function (state) {
       const barrier = state.barriers[state.barriers.length - 1];
 
-      const [score, template, centroid] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
+      const [score, rawScore, template, centroid] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
 
-      if (template && score >= template.minScore) {
-        barrier.mana = 20000 + (score - template.minScore) * 15000;
-        console.log("score:", score, "   minScore:", template.minScore, "   mana:", barrier.mana);
+      if (template && score >= 0) {
+        barrier.mana = 20000 + score * 15000;
 
         barrier.template = template;
         barrier.color = template.color.clone();
@@ -326,14 +325,14 @@ AFRAME.registerState({
             }
             break;
         }
-      } else if (template && score >= template.minScore - 4) {   // fizzle
+      } else if (template && score >= -3) {   // fizzle
         const line = barrier.lines[barrier.lines.length-1];
-        line.el.setAttribute('sound', {src: '#fizzle', autoplay: true});
+        line.el.setAttribute('sound', {src: '#fizzle', autoplay: true, volume: 0.75});
       }
-      if (template && score >= template.minScore - 4) {   // success or fizzle
-        // console.log("score:", score, "   centroid:", JSON.stringify(centroid));
+      if (template && score >= -3) {   // success or fizzle
+        console.log("name:", template.name, "   score:", score, "   minScore:", template.minScore, "   mana:", Math.round(barrier.mana));
         const scoreEl = document.createElement('a-text');
-        scoreEl.setAttribute('value', score.toPrecision(2));
+        scoreEl.setAttribute('value', rawScore.toFixed(0) + " " + score.toFixed(0));
         scoreEl.object3D.position.copy(centroid);
         scoreEl.setAttribute('align', 'center');
         scoreEl.setAttribute('baseline', 'top');
@@ -342,7 +341,7 @@ AFRAME.registerState({
         AFRAME.scenes[0].appendChild(scoreEl);
         setTimeout(() => {
           scoreEl.parentNode.removeChild(scoreEl);
-        }, 3000);
+        }, 4000);
       }
     }
   }
