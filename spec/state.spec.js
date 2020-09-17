@@ -24,7 +24,8 @@ describe("straightBegin/straightEnd", () => {
       lastTipPosition: new THREE.Vector3(),
       inProgress: {},
       barriers: [],
-      centroidPt: null,
+      trainingEls: [],
+      scoreEls: []
     };
     state.inProgress.geometry = new THREE.BufferGeometry();
     state.inProgress.material = new THREE.LineBasicMaterial({color: 'gray'});

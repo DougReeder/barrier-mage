@@ -337,7 +337,7 @@ const dagazTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 40.0,
+  minScore: 50.0,
   manaUseMultiplier: 15,
   color: 'yellow',
   audioTag: '#light',
@@ -432,7 +432,8 @@ function matchSegmentsAgainstTemplates(segmentsStraight, segmentsCurved) {
   let bestScore = Number.NEGATIVE_INFINITY,
       rawScore = Number.NEGATIVE_INFINITY,
       matchedTemplate = null,
-      centroidOfDrawn = null;
+      centroidOfDrawn = null,
+      bestSegmentsStraightXformed = null;
 
   templates.forEach(template => {
     if (segmentsStraight.length < template.segmentsStraight.length ||
@@ -453,10 +454,11 @@ function matchSegmentsAgainstTemplates(segmentsStraight, segmentsCurved) {
       rawScore = rawTemplateScore;
       matchedTemplate = template;
       centroidOfDrawn = centroidP.clone();
+      bestSegmentsStraightXformed = templateSegmentsStraightXformed;
     }
   });
 
-  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn];
+  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsStraightXformed];
 }
 
 const rotAxis = new THREE.Vector3();

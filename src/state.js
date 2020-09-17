@@ -12,6 +12,8 @@ const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved section
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
 const WHITE = new THREE.Color('white');
 const FADEOUT_DURATION = 15000;
+const TRAINING_DURATION = 5000;
+const TRAINING_FADE_DURATION = 1000;
 
 AFRAME.registerState({
   initialState: {
@@ -26,6 +28,8 @@ AFRAME.registerState({
     lastTipPosition: null,
     inProgress: {},
     barriers: [],
+    trainingEls: [],
+    scoreEls: []
   },
 
   handlers: {
@@ -247,6 +251,43 @@ AFRAME.registerState({
           }
         }
       });
+
+      state.trainingEls.forEach((trainingEl, i) => {
+        if (! trainingEl.hasOwnProperty('fadeRemainingMs')) {
+          return;
+        }
+        trainingEl.fadeRemainingMs -= action.timeDelta;
+        const opacity = Math.max(trainingEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
+        for (let j=0; j<5; ++j) {   // Templates have at most 5 lines.
+          const lineAtrbt = trainingEl.getAttribute('line__'+j);
+          if (lineAtrbt) {
+            Object.assign(lineAtrbt, {opacity: opacity})
+            trainingEl.setAttribute('line__'+j, lineAtrbt);
+          }
+        }
+
+        if (trainingEl.fadeRemainingMs <= 0) {
+          trainingEl.parentNode.removeChild(trainingEl);
+          // Yes, this skips the next element, but on the next iteration things will be fine.
+          state.trainingEls.splice(i, 1);
+        }
+      });
+
+      state.scoreEls.forEach((scoreEl, i) => {
+        if (! scoreEl.hasOwnProperty('fadeRemainingMs')) {
+          return;
+        }
+        scoreEl.fadeRemainingMs -= action.timeDelta;
+        const opacity = Math.max(scoreEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
+        scoreEl.setAttribute('transparent', true);
+        scoreEl.setAttribute('opacity', opacity);
+
+        if (scoreEl.fadeRemainingMs <= 0) {
+          scoreEl.parentNode.removeChild(scoreEl);
+          // Yes, this skips the next element, but on the next iteration things will be fine.
+          state.scoreEls.splice(i, 1);
+        }
+      });
     },
 
     removeBarrier: function (state, barrierInd) {
@@ -281,7 +322,7 @@ AFRAME.registerState({
     matchAndDisplayTemplates: function (state) {
       const barrier = state.barriers[state.barriers.length - 1];
 
-      const [score, rawScore, template, centroid] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
+      const [score, rawScore, template, centroid, bestSegmentsStraightXformed] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
 
       if (template && score >= 0) {
         barrier.mana = 20000 + score * 15000;
@@ -294,7 +335,6 @@ AFRAME.registerState({
         this.magicEnd(state, {handId: state.staffHandId});
         this.magicBegin(state, {handId: state.staffHandId});
 
-        console.log("adding sound component:", template.audioTag);
         const line = barrier.lines[barrier.lines.length-1];
         line.el.setAttribute('sound', {src: template.audioTag, autoplay: true, refDistance:2.0});
 
@@ -331,18 +371,34 @@ AFRAME.registerState({
       }
       if (template && score >= -3) {   // success or fizzle
         console.log("name:", template.name, "   score:", score, "   minScore:", template.minScore, "   mana:", Math.round(barrier.mana));
-        const scoreEl = document.createElement('a-text');
-        scoreEl.setAttribute('value', rawScore.toFixed(0) + " " + score.toFixed(0));
-        scoreEl.object3D.position.copy(centroid);
-        scoreEl.setAttribute('align', 'center');
-        scoreEl.setAttribute('baseline', 'top');
-        scoreEl.setAttribute('color', 'black');
-        scoreEl.setAttribute('look-at', "[camera]");
-        AFRAME.scenes[0].appendChild(scoreEl);
-        setTimeout(() => {
-          scoreEl.parentNode.removeChild(scoreEl);
-        }, 4000);
+
+        this.showTraining(state, bestSegmentsStraightXformed, rawScore, score, centroid, Math.min(barrier.mana/template.manaUseMultiplier, TRAINING_DURATION));
       }
+    },
+
+    showTraining: function (state, bestSegmentsStraightXformed, rawScore, score, centroid, duration) {
+      const trainingEl = document.createElement('a-entity');
+      bestSegmentsStraightXformed.forEach((segment, i) => {
+        trainingEl.setAttribute('line__' + i,
+            {start: segment.a, end: segment.b, color: 'black'});
+      });
+      AFRAME.scenes[0].appendChild(trainingEl);
+      state.trainingEls.push(trainingEl);
+
+      const scoreEl = document.createElement('a-text');
+      scoreEl.setAttribute('value', rawScore.toFixed(0) + "   " + score.toFixed(0));
+      scoreEl.object3D.position.copy(centroid);
+      scoreEl.setAttribute('align', 'center');
+      scoreEl.setAttribute('baseline', 'top');
+      scoreEl.setAttribute('color', 'black');
+      scoreEl.setAttribute('look-at', "#leftHand");
+      AFRAME.scenes[0].appendChild(scoreEl);
+      state.scoreEls.push(scoreEl);
+
+      setTimeout(() => {
+        trainingEl.fadeRemainingMs = TRAINING_FADE_DURATION;
+        scoreEl.fadeRemainingMs = TRAINING_FADE_DURATION;
+      }, duration - TRAINING_FADE_DURATION);
     }
   }
 });
