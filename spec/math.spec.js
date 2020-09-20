@@ -710,28 +710,51 @@ describe("transformTemplateSegmentsToActual", () => {
     }
   });
 
-  // it("should rotate back brimstone (point down) rotated around X and Z", () => {
-  //   const segmentsStraightRotated = [];
-  //   brimstoneDownTemplate.segmentsStraight.forEach( (segment, i) => {
-  //     segmentsStraightRotated.push(fuzzSegmentStraight(segment, 0.01, i))
-  //   });
-  //   const axis = new THREE.Vector3(1, 0, 1);
-  //   segmentsStraightRotated.forEach(segment => {
-  //     segment.a.applyAxisAngle(axis, Math.PI/6);
-  //     segment.b.applyAxisAngle(axis, Math.PI/6);
-  //   });
-  //
-  //   const [templateSegmentsStraightXformed, templateSegmentsCurvedXformed] = transformTemplateSegmentsToActual(segmentsStraightRotated, [], brimstoneDownTemplate);
-  //
-  //   for (let i=0; i<segmentsStraightRotated.length; ++i) {
-  //     expect(templateSegmentsStraightXformed[i].a.x).toBeCloseTo(segmentsStraightRotated[i].a.x, 1);
-  //     expect(templateSegmentsStraightXformed[i].a.y).toBeCloseTo(segmentsStraightRotated[i].a.y, 1);
-  //     expect(templateSegmentsStraightXformed[i].a.z).toBeCloseTo(segmentsStraightRotated[i].a.z, 1);
-  //     expect(templateSegmentsStraightXformed[i].b.x).toBeCloseTo(segmentsStraightRotated[i].b.x, 1);
-  //     expect(templateSegmentsStraightXformed[i].b.y).toBeCloseTo(segmentsStraightRotated[i].b.y, 1);
-  //     expect(templateSegmentsStraightXformed[i].b.z).toBeCloseTo(segmentsStraightRotated[i].b.z, 1);
-  //   }
-  // });
+  it("should rotate back brimstone (point down) rotated around X", () => {
+    const segmentsStraightRotated = [];
+    brimstoneDownTemplate.segmentsStraight.forEach( (segment, i) => {
+      segmentsStraightRotated.push(fuzzSegmentStraight(segment, 0.01, i))
+    });
+    const axis = new THREE.Vector3(1, 0, 0);
+    segmentsStraightRotated.forEach(segment => {
+      segment.a.applyAxisAngle(axis, Math.PI/6);
+      segment.b.applyAxisAngle(axis, Math.PI/6);
+    });
+
+    const [templateSegmentsStraightXformed, templateSegmentsCurvedXformed] = transformTemplateSegmentsToActual(segmentsStraightRotated, [], brimstoneDownTemplate);
+
+    for (let i=0; i<segmentsStraightRotated.length; ++i) {
+      expect(templateSegmentsStraightXformed[i].a.x).toBeCloseTo(segmentsStraightRotated[i].a.x, 1);
+      expect(templateSegmentsStraightXformed[i].a.y).toBeCloseTo(segmentsStraightRotated[i].a.y, 1);
+      expect(templateSegmentsStraightXformed[i].a.z).toBeCloseTo(segmentsStraightRotated[i].a.z, 1);
+      expect(templateSegmentsStraightXformed[i].b.x).toBeCloseTo(segmentsStraightRotated[i].b.x, 1);
+      expect(templateSegmentsStraightXformed[i].b.y).toBeCloseTo(segmentsStraightRotated[i].b.y, 1);
+      expect(templateSegmentsStraightXformed[i].b.z).toBeCloseTo(segmentsStraightRotated[i].b.z, 1);
+    }
+  });
+
+  it("should rotate back brimstone (point down) rotated around X and Y", () => {
+    const segmentsStraightRotated = [];
+    brimstoneDownTemplate.segmentsStraight.forEach( (segment, i) => {
+      segmentsStraightRotated.push(fuzzSegmentStraight(segment, 0.01, i))
+    });
+    const axis = new THREE.Vector3(1, 1, 0);
+    segmentsStraightRotated.forEach(segment => {
+      segment.a.applyAxisAngle(axis, Math.PI/6);
+      segment.b.applyAxisAngle(axis, Math.PI/6);
+    });
+
+    const [templateSegmentsStraightXformed, templateSegmentsCurvedXformed] = transformTemplateSegmentsToActual(segmentsStraightRotated, [], brimstoneDownTemplate);
+
+    for (let i=0; i<segmentsStraightRotated.length; ++i) {
+      expect(templateSegmentsStraightXformed[i].a.x).toBeCloseTo(segmentsStraightRotated[i].a.x, 1);
+      expect(templateSegmentsStraightXformed[i].a.y).toBeCloseTo(segmentsStraightRotated[i].a.y, 1);
+      expect(templateSegmentsStraightXformed[i].a.z).toBeCloseTo(segmentsStraightRotated[i].a.z, 1);
+      expect(templateSegmentsStraightXformed[i].b.x).toBeCloseTo(segmentsStraightRotated[i].b.x, 1);
+      expect(templateSegmentsStraightXformed[i].b.y).toBeCloseTo(segmentsStraightRotated[i].b.y, 1);
+      expect(templateSegmentsStraightXformed[i].b.z).toBeCloseTo(segmentsStraightRotated[i].b.z, 1);
+    }
+  });
 
   it("should resize brimstone (point down) fuzzed", () => {
     const segmentsStraightFuzzed = [];
@@ -864,6 +887,44 @@ describe("matchSegmentsAgainstTemplates", () => {
     expect(score).toBeGreaterThan(brimstoneDownTemplate.minScore);
   });
 
+  it("should match brimstone (point down) fuzzed rotated scaled translated", () => {
+    const segmentsStraightDrawn = [
+      new SegmentStraight(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0)),
+      new SegmentStraight(new THREE.Vector3(1, 1, 0.10), new THREE.Vector3(0, 0, 0)),
+      new SegmentStraight(new THREE.Vector3(-1, 2, 0), new THREE.Vector3(2, 1, 0)),
+      new SegmentStraight(new THREE.Vector3(-2, 0, 0), new THREE.Vector3(1, 1, 0)),
+      new SegmentStraight(new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0, 0)),
+      new SegmentStraight(new THREE.Vector3(0.5, 0.5, 0), new THREE.Vector3(1, -1, 0)),
+    ];
+    const xyDiagonal = new THREE.Vector3(1, 2, 0).normalize();
+    brimstoneDownTemplate.segmentsStraight.forEach( (segment, i) => {
+      const newSegment = fuzzSegmentStraight(segment, 0.01, i);
+      newSegment.a.multiplyScalar(0.3).applyAxisAngle(xyDiagonal, Math.PI/6).addScaledVector(diagonal, 2.0);
+      newSegment.b.multiplyScalar(0.3).applyAxisAngle(xyDiagonal, Math.PI/6).addScaledVector(diagonal, 2.0);
+      segmentsStraightDrawn.push(newSegment);
+    });
+
+    const [score, rawScore, template, centroidOfDrawn, bestSegmentsStraightXformed] = matchSegmentsAgainstTemplates(segmentsStraightDrawn, []);
+
+    expect(template.name).toEqual("brimstone down");
+    expect(score).toBeGreaterThan(brimstoneDownTemplate.minScore);
+    const expectedCenter = diagonal.clone().multiplyScalar(2);
+    expect(centroidOfDrawn.x).toBeCloseTo(expectedCenter.x, 2);
+    expect(centroidOfDrawn.y).toBeCloseTo(expectedCenter.y, 2);
+    expect(centroidOfDrawn.z).toBeCloseTo(expectedCenter.z, 2);
+
+    for (let i=0; i<brimstoneDownTemplate.segmentsStraight.length; ++i) {
+      const expectedA = brimstoneDownTemplate.segmentsStraight[i].a.clone().applyAxisAngle(xyDiagonal, Math.PI/6).multiplyScalar(0.3).addScaledVector(diagonal, 2.0);
+      expect(bestSegmentsStraightXformed[i].a.x).toBeCloseTo(expectedA.x, 2);
+      expect(bestSegmentsStraightXformed[i].a.y).toBeCloseTo(expectedA.y, 2);
+      expect(bestSegmentsStraightXformed[i].a.z).toBeCloseTo(expectedA.z, 2);
+      const expectedB = brimstoneDownTemplate.segmentsStraight[i].b.clone().applyAxisAngle(xyDiagonal, Math.PI/6).multiplyScalar(0.3).addScaledVector(diagonal, 2.0);
+      expect(bestSegmentsStraightXformed[i].b.x).toBeCloseTo(expectedB.x, 2);
+      expect(bestSegmentsStraightXformed[i].b.y).toBeCloseTo(expectedB.y, 2);
+      expect(bestSegmentsStraightXformed[i].b.z).toBeCloseTo(expectedB.z, 2);
+    }
+  });
+
   it("should not crash when too few segments to match template", () => {
     const segmentsStraight = [
       new SegmentStraight(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0)),
@@ -945,7 +1006,6 @@ describe("matchSegmentsAgainstTemplates", () => {
     expect(centroidPt.y).toBeCloseTo(0, 2);
     expect(centroidPt.z).toBeCloseTo(0, 2);
   });
-
 
   it("should match pentagram fuzzed linear after random junk", () => {
     const segmentsStraightFuzzed = [

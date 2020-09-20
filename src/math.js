@@ -287,7 +287,7 @@ const brimstoneDownTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,   // sum of distances from segment endpoints to origin
-  minScore: 12.0,
+  minScore: 50.0,
   manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
@@ -304,7 +304,7 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 7.0,
+  minScore: 50.0,
   manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
@@ -321,7 +321,7 @@ const pentagramTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 35.0,
+  minScore: 50.0,
   manaUseMultiplier: 1,
   color: 'blue',
   audioTag: '#force',
@@ -337,7 +337,7 @@ const dagazTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 50.0,
+  minScore: 65.0,
   manaUseMultiplier: 15,
   color: 'yellow',
   audioTag: '#light',
@@ -384,12 +384,12 @@ function transformTemplateSegmentsToActual(actualSegmentsStraight, actualSegment
   }
 
   // scales template to match actual, and moves to its location
-  let scaleSum = 0;
+  let sizeDrawn = 0;
   for (let i=0; i<templateSegmentsStraightXformed.length; ++i) {
-    scaleSum += centeredActualSegmentsStraight[i].a.length() / templateSegmentsStraightXformed[i].a.length();
-    scaleSum += centeredActualSegmentsStraight[i].b.length() / templateSegmentsStraightXformed[i].b.length();
+    sizeDrawn += centeredActualSegmentsStraight[i].a.length();
+    sizeDrawn += centeredActualSegmentsStraight[i].b.length();
   }
-  const scale = scaleSum / (templateSegmentsStraightXformed.length * 2);
+  const scale = sizeDrawn / template.size;
   templateSegmentsStraightXformed.forEach(segment => {
     segment.a.multiplyScalar(scale).add(actualCenter);
     segment.b.multiplyScalar(scale).add(actualCenter);
