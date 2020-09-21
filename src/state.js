@@ -325,7 +325,7 @@ AFRAME.registerState({
       const [score, rawScore, template, centroid, bestSegmentsStraightXformed] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
 
       if (template && score >= 0) {
-        barrier.mana = 20000 + score * 15000;
+        barrier.mana = 25000 + score * 30000;
 
         barrier.template = template;
         barrier.color = template.color.clone();
@@ -386,7 +386,7 @@ AFRAME.registerState({
       state.trainingEls.push(trainingEl);
 
       const scoreEl = document.createElement('a-text');
-      scoreEl.setAttribute('value', rawScore.toFixed(0) + "   " + score.toFixed(0));
+      scoreEl.setAttribute('value', /* rawScore.toFixed(0) + "   " + */ score.toFixed(0));
       scoreEl.object3D.position.copy(centroid);
       scoreEl.setAttribute('align', 'center');
       scoreEl.setAttribute('baseline', 'top');
