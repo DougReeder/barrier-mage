@@ -287,7 +287,7 @@ const brimstoneDownTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,   // sum of distances from segment endpoints to origin
-  minScore: 50.0,
+  minScore: 6.0,
   manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
@@ -304,7 +304,7 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 50.0,
+  minScore: 5.0,
   manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
@@ -321,7 +321,7 @@ const pentagramTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 50.0,
+  minScore: 5.0,
   manaUseMultiplier: 1,
   color: 'blue',
   audioTag: '#force',
@@ -337,7 +337,7 @@ const dagazTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 65.0,
+  minScore: 8.0,
   manaUseMultiplier: 15,
   color: 'yellow',
   audioTag: '#light',
@@ -446,7 +446,7 @@ function matchSegmentsAgainstTemplates(segmentsStraight, segmentsCurved) {
     const [templateSegmentsStraightXformed, templateSegmentsCurvedXformed, centroidP] = transformTemplateSegmentsToActual(candidateSegmentsStraight, candidateSegmentsCurved, template);
 
     const diff = rmsdSegments(candidateSegmentsStraight, candidateSegmentsCurved, templateSegmentsStraightXformed, templateSegmentsCurvedXformed);
-    const rawTemplateScore = 1 / (diff / template.size);
+    const rawTemplateScore = 1 / diff;
     const templateScore = rawTemplateScore - template.minScore;
 
     if (templateScore > bestScore) {
