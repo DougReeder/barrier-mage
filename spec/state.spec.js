@@ -142,6 +142,8 @@ describe("straightBegin/straightEnd", () => {
   const WHITE = new THREE.Color('white');
 
   it("should end barrier when template recognized", () => {
+    const showTrainingSpy = spyOn(AFRAME.stateParam.handlers, 'showTraining');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
 
     state.staffEl.object3D.position.set(0,1,0);
@@ -172,6 +174,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].segmentsStraight.length).toEqual(4);
     expect(state.barriers[0].segmentsCurved.length).toEqual(0);
     expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(showTrainingSpy).not.toHaveBeenCalled();
 
     state.staffEl.object3D.position.set(0,1,0);
     AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
@@ -182,5 +185,46 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].color).toEqual(pentagramTemplate.color);
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(state.barriers.length).toEqual(2);
+    expect(showTrainingSpy).toHaveBeenCalled();
+    expect(showTrainingSpy.calls.argsFor(0)[5]).toEqual(6000);
+  });
+
+  it("should not end barrier when template match is poor", () => {
+    const showTrainingSpy = spyOn(AFRAME.stateParam.handlers, 'showTraining');
+
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(-0.83,1,0);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(0.83, -1,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(0.83, 1,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(-0.83, -1,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segmentsStraight.length).toEqual(3);
+    expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+    expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(showTrainingSpy).not.toHaveBeenCalled();
+
+    state.staffEl.object3D.position.set(-0.83, 1,0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segmentsStraight.length).toEqual(4);
+    expect(state.barriers[0].segmentsCurved.length).toEqual(0);
+    expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(state.barriers[0].mana).toBeNull();
+    expect(state.barriers[0].lines[state.barriers[0].lines.length-1].el.getAttribute('sound').src).toEqual('#fizzle');
+    expect(showTrainingSpy).toHaveBeenCalled();
+    expect(showTrainingSpy.calls.argsFor(0)[5]).toEqual(6000);
   });
 });

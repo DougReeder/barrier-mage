@@ -337,7 +337,7 @@ const dagazTemplate = centerAndSizeTemplate({
   ],
   segmentsCurved: [],
   size: null,
-  minScore: 8.0,
+  minScore: 9.0,
   manaUseMultiplier: 15,
   color: 'yellow',
   audioTag: '#light',

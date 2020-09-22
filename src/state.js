@@ -12,7 +12,7 @@ const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved section
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
 const WHITE = new THREE.Color('white');
 const FADEOUT_DURATION = 15000;
-const TRAINING_DURATION = 5000;
+const TRAINING_DURATION = 6000;
 const TRAINING_FADE_DURATION = 1000;
 
 AFRAME.registerState({
@@ -365,14 +365,20 @@ AFRAME.registerState({
             }
             break;
         }
-      } else if (template && score >= -3) {   // fizzle
+      } else if (template && score >= -2.5) {   // fizzle
         const line = barrier.lines[barrier.lines.length-1];
         line.el.setAttribute('sound', {src: '#fizzle', autoplay: true, volume: 0.75});
       }
-      if (template && score >= -3) {   // success or fizzle
-        console.log("name:", template.name, "   score:", score, "   minScore:", template.minScore, "   mana:", Math.round(barrier.mana));
+      if (template && score >= -2.5) {   // success or fizzle
+        console.log("name:", template.name, "   score:", score, "   minScore:", template.minScore, "   mana:", barrier.mana ? Math.round(barrier.mana) : barrier.mana);
 
-        this.showTraining(state, bestSegmentsStraightXformed, rawScore, score, centroid, Math.min(barrier.mana/template.manaUseMultiplier, TRAINING_DURATION));
+        let duration;
+        if (barrier.mana) {
+          duration = Math.min(barrier.mana/template.manaUseMultiplier, TRAINING_DURATION);
+        } else {
+          duration = TRAINING_DURATION;
+        }
+        this.showTraining(state, bestSegmentsStraightXformed, rawScore, score, centroid, duration);
       }
     },
 
