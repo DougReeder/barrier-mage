@@ -21,11 +21,11 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     let html = `
 <div class="wrapper">
     <div><b>Barrier Mage</b>: Draw mystic symbols to create barriers!</div>
-    ${requirements}
     <img src="assets/symbols.png">
+    ${requirements}
     <div>
       <video controls width="450" height="450">
-          <source src="assets/Barrier Mage basic play 1.mp4" type="video/mp4">
+          <source src="assets/Barrier Mage basic play 2.mp4" type="video/mp4">
           Sorry, your browser doesn't support embedded videos.
       </video>
     </div>

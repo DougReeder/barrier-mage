@@ -8,9 +8,11 @@ Live on [github.io](https://dougreeder.github.io/barrier-mage/)
 
 Uses WebXR and [A-Frame](https://aframe.io) and requires a 6-DOF controller.
 
-At present, there are a few sad caveats:
-* The tutorial system is not functional, so you have to observe the shape of the symbols and draw them very neatly: ![mystic symbols](assets/symbols.png)
+The three symbols currently supported are:
 
+![mystic symbols](assets/symbols.png)
+
+At present, there are a few sad caveats:
 * The barriers don't actually do anything yet!
 * There are no actual creatures to fend off!
 * My landscape component doesn't respond to point light sources, so the only effect of writing the day rune is to light up your hands and staff.
@@ -20,7 +22,7 @@ At present, there are a few sad caveats:
 Press and release a grip button to move your staff to that hand.
 Press and hold the trigger on your staff hand to draw a straight segment.
 Press and hold the A or X button on your staff hand to draw a circular arc.
-~~Press and hold the trigger on your bare hand to fire sparks.~~
+~~Press and hold the trigger on your empty hand to fire sparks.~~
 
 
 If you're moved to create a fantasy landscape that can use point light sources, I'd much appreciate such a contribution!

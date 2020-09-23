@@ -1,17 +1,16 @@
 ## forum blurb
 
 In fantasy, a wizard draws mystic symbols to work a magic spell.
-In my demo, you can too! 
+In this experice, you can too! 
 
 A 6-DOF controller is required.
 
 At present, there are a few sad caveats:
-* The tutorial system is not functional, so you have to observe the shape of the symbols and draw them very neatly.
 * The barriers don't actually do anything yet!
 * There are no actual creatures to fend off!
 * My landscape component doesn't respond to point light sources, so the only effect of writing the day rune is to light up your hands and staff.
 
-Video at https://dougreeder.github.io/barrier-mage/assets/Barrier%20Mage%20basic%20play%201.mp4
+Video at https://dougreeder.github.io/barrier-mage/assets/Barrier%20Mage%20basic%20play%202gi.mp4
 
 Webapp at https://dougreeder.github.io/barrier-mage/
 
