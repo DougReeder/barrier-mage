@@ -21,7 +21,9 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     let html = `
 <div class="wrapper">
     <div><b>Barrier Mage</b>: Draw mystic symbols to create barriers!</div>
-    <img src="assets/symbols.png">
+    <img src="assets/symbols.png"><br>
+    Grip button: grab staff<br>
+    Trigger: Press and hold to draw straight segment<br>
     ${requirements}
     <div>
       <video controls width="450" height="450">
