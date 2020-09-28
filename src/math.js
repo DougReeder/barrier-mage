@@ -126,7 +126,7 @@ function arcFrom3Points(p1, p2, p3, isCircle) {
 const PI2 = Math.PI / 2;
 
 /** Angle is not meaningful unless the segment has been rotated into the X-Y plane. */
-class SegmentStraight {
+class Segment {
   constructor(a, b, doReuse) {
     if (doReuse) {
       this._a = a;
@@ -238,9 +238,9 @@ function calcPlaneNormal(points, normal) {
   return normal;
 }
 
-function calcPlaneNormalSegments(segmentsStraight) {
+function calcPlaneNormalSegments(segments) {
   const points = [];
-  segmentsStraight.forEach(segment => {
+  segments.forEach(segment => {
     points.push(segment.a);
     points.push(segment.b);
   });
@@ -254,18 +254,18 @@ function calcPlaneNormalSegments(segmentsStraight) {
 function centerAndSizeTemplate(template) {
   // centers endpoints
   const center = new THREE.Vector3(0, 0, 0);
-  template.segmentsStraight.forEach(segment => {
+  template.segments.forEach(segment => {
     center.add(segment.a);
     center.add(segment.b)
   });
-  center.divideScalar(template.segmentsStraight.length * 2);
+  center.divideScalar(template.segments.length * 2);
 
-  template.segmentsStraight.forEach(segment => {
+  template.segments.forEach(segment => {
     segment.a.sub(center);
     segment.b.sub(center);
   });
 
-  template.size = template.segmentsStraight.reduce((total, segment) => {
+  template.size = template.segments.reduce((total, segment) => {
     return total + segment.a.length() + segment.b.length();
   }, 0);
 
@@ -278,14 +278,14 @@ function centerAndSizeTemplate(template) {
 
 const brimstoneDownTemplate = centerAndSizeTemplate({
   name: "brimstone down",
-  segmentsStraight: [
-    new SegmentStraight(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(15/24, 20/24, 0), true),
-    new SegmentStraight(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(0, -6/24, 0), true),
-    new SegmentStraight(new THREE.Vector3(15/24, 20/24, 0), new THREE.Vector3(0, -6/24, 0), true),
-    new SegmentStraight(new THREE.Vector3(0, -6/24, 0), new THREE.Vector3(0, -28/24, 0), true),
-    new SegmentStraight(new THREE.Vector3(-11/24, -17/24, 0), new THREE.Vector3(11/24, -17/24, 0), true),
+  segments: [
+    new Segment(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(15/24, 20/24, 0), true),
+    new Segment(new THREE.Vector3(-15/24, 20/24, 0), new THREE.Vector3(0, -6/24, 0), true),
+    new Segment(new THREE.Vector3(15/24, 20/24, 0), new THREE.Vector3(0, -6/24, 0), true),
+    new Segment(new THREE.Vector3(0, -6/24, 0), new THREE.Vector3(0, -28/24, 0), true),
+    new Segment(new THREE.Vector3(-11/24, -17/24, 0), new THREE.Vector3(11/24, -17/24, 0), true),
   ],
-  segmentsCurved: [],
+  arcs: [],
   size: null,   // sum of distances from segment endpoints to origin
   minScore: 6.0,
   manaUseMultiplier: 1,
@@ -295,14 +295,14 @@ const brimstoneDownTemplate = centerAndSizeTemplate({
 
 const brimstoneUpTemplate = centerAndSizeTemplate({
   name: "brimstone up",
-  segmentsStraight: [
-    new SegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3(15/24,   0,    0), true),
-    new SegmentStraight(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0), true),
-    new SegmentStraight(new THREE.Vector3( 15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0), true),
-    new SegmentStraight(new THREE.Vector3(  0,      0,    0), new THREE.Vector3( 0,    -22/24, 0), true),
-    new SegmentStraight(new THREE.Vector3(-11/24, -11/24, 0), new THREE.Vector3(11/24, -11/24, 0), true),
+  segments: [
+    new Segment(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3(15/24,   0,    0), true),
+    new Segment(new THREE.Vector3(-15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0), true),
+    new Segment(new THREE.Vector3( 15/24,   0,    0), new THREE.Vector3( 0,     26/24, 0), true),
+    new Segment(new THREE.Vector3(  0,      0,    0), new THREE.Vector3( 0,    -22/24, 0), true),
+    new Segment(new THREE.Vector3(-11/24, -11/24, 0), new THREE.Vector3(11/24, -11/24, 0), true),
   ],
-  segmentsCurved: [],
+  arcs: [],
   size: null,
   minScore: 5.0,
   manaUseMultiplier: 1,
@@ -312,14 +312,14 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
 
 const pentagramTemplate = centerAndSizeTemplate({
   name: "pentagram",
-  segmentsStraight: [
-    new SegmentStraight(new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), true),
-    new SegmentStraight(new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), true),
-    new SegmentStraight(new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), true),
-    new SegmentStraight(new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), true),
-    new SegmentStraight(new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0), true),
+  segments: [
+    new Segment(new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), true),
+    new Segment(new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), true),
+    new Segment(new THREE.Vector3(-0.95106,0.30902,0), new THREE.Vector3(0.95106,0.30902,0), true),
+    new Segment(new THREE.Vector3(0.95106,0.30902,0), new THREE.Vector3(-0.58779,-0.80902), true),
+    new Segment(new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0), true),
   ],
-  segmentsCurved: [],
+  arcs: [],
   size: null,
   minScore: 5.0,
   manaUseMultiplier: 1,
@@ -329,13 +329,13 @@ const pentagramTemplate = centerAndSizeTemplate({
 
 const dagazTemplate = centerAndSizeTemplate({
   name: "dagaz",
-  segmentsStraight: [
-    new SegmentStraight(new THREE.Vector3(-2/3, 1), new THREE.Vector3(2/3, -1), true),
-    new SegmentStraight(new THREE.Vector3(2/3, -1), new THREE.Vector3(2/3,  1), true),
-    new SegmentStraight(new THREE.Vector3(2/3,  1), new THREE.Vector3(-2/3, -1), true),
-    new SegmentStraight(new THREE.Vector3(-2/3, -1), new THREE.Vector3(-2/3, 1), true),
+  segments: [
+    new Segment(new THREE.Vector3(-2/3, 1), new THREE.Vector3(2/3, -1), true),
+    new Segment(new THREE.Vector3(2/3, -1), new THREE.Vector3(2/3,  1), true),
+    new Segment(new THREE.Vector3(2/3,  1), new THREE.Vector3(-2/3, -1), true),
+    new Segment(new THREE.Vector3(-2/3, -1), new THREE.Vector3(-2/3, 1), true),
   ],
-  segmentsCurved: [],
+  arcs: [],
   size: null,
   minScore: 9.0,
   manaUseMultiplier: 15,
@@ -350,55 +350,55 @@ const templates = [
   dagazTemplate,
 ];
 
-function transformTemplateSegmentsToActual(actualSegmentsStraight, actualSegmentsCurved, template){
-  // calculates center of actual
-  const actualCenter = new THREE.Vector3(0, 0, 0);
-  actualSegmentsStraight.forEach(segment => {
-    actualCenter.add(segment.a);
-    actualCenter.add(segment.b)
+function transformTemplateSegmentsToDrawn(drawnSegments, drawnArcs, template){
+  // calculates center of drawn
+  const drawnCenter = new THREE.Vector3(0, 0, 0);
+  drawnSegments.forEach(segment => {
+    drawnCenter.add(segment.a);
+    drawnCenter.add(segment.b)
   });
-  actualCenter.divideScalar(actualSegmentsStraight.length * 2);
-  // centers actual segments & collects points
-  const centeredActualSegmentsStraight = [];
-  actualSegmentsStraight.forEach(segment => {
-    const a = segment.a.clone().sub(actualCenter);
-    const b = segment.b.clone().sub(actualCenter);
-    centeredActualSegmentsStraight.push(new SegmentStraight(a, b));
+  drawnCenter.divideScalar(drawnSegments.length * 2);
+  // centers drawn segments & collects points
+  const centeredDrawnSegments = [];
+  drawnSegments.forEach(segment => {
+    const a = segment.a.clone().sub(drawnCenter);
+    const b = segment.b.clone().sub(drawnCenter);
+    centeredDrawnSegments.push(new Segment(a, b));
   });
 
-  const normalActual = calcPlaneNormalSegments(actualSegmentsStraight);
+  const normalDrawn = calcPlaneNormalSegments(drawnSegments);
 
-  const templateSegmentsStraightXformed = template.segmentsStraight.map(segment => new SegmentStraight(segment.a, segment.b));
-  const templateSegmentsCurvedXformed = [];
+  const templateSegmentsXformed = template.segments.map(segment => new Segment(segment.a, segment.b));
+  const templateArcsXformed = [];
 
-  // rotates plane of template to match actual
-  let rotAngle = normalActual.angleTo(zAxis);
-  rotAxis.crossVectors(zAxis, normalActual);
+  // rotates plane of template to match drawn
+  let rotAngle = normalDrawn.angleTo(zAxis);
+  rotAxis.crossVectors(zAxis, normalDrawn);
   if (rotAxis.length() > 0.00001) {   // rotates if normals not co-linear
     rotAxis.normalize();
 
-    templateSegmentsStraightXformed.forEach(segment => {
+    templateSegmentsXformed.forEach(segment => {
       segment.a.applyAxisAngle(rotAxis, rotAngle);
       segment.b.applyAxisAngle(rotAxis, rotAngle);
     });
   }
 
-  // scales template to match actual, and moves to its location
+  // scales template to match drawn, and moves to its location
   let sizeDrawn = 0;
-  for (let i=0; i<templateSegmentsStraightXformed.length; ++i) {
-    sizeDrawn += centeredActualSegmentsStraight[i].a.length();
-    sizeDrawn += centeredActualSegmentsStraight[i].b.length();
+  for (let i=0; i<templateSegmentsXformed.length; ++i) {
+    sizeDrawn += centeredDrawnSegments[i].a.length();
+    sizeDrawn += centeredDrawnSegments[i].b.length();
   }
   const scale = sizeDrawn / template.size;
-  templateSegmentsStraightXformed.forEach(segment => {
-    segment.a.multiplyScalar(scale).add(actualCenter);
-    segment.b.multiplyScalar(scale).add(actualCenter);
+  templateSegmentsXformed.forEach(segment => {
+    segment.a.multiplyScalar(scale).add(drawnCenter);
+    segment.b.multiplyScalar(scale).add(drawnCenter);
   });
 
-  return [templateSegmentsStraightXformed, templateSegmentsCurvedXformed, actualCenter];
+  return [templateSegmentsXformed, templateArcsXformed, drawnCenter];
 }
 
-function copySegmentStraight(segment) {
+function copySegment(segment) {
   return {
     center: segment.center.clone(),
     length: segment.length,
@@ -406,17 +406,17 @@ function copySegmentStraight(segment) {
   };
 }
 
-function rmsdSegments(actualSegmentsStraight, actualSegmentsCurved, templateSegmentsStraight, templateSegmentsCurved) {
+function rmsdSegments(drawnSegments, drawnArcs, templateSegments, templateArcs) {
   let sum = 0;
 
-  templateSegmentsStraight.forEach(tSegment => {
+  templateSegments.forEach(templateSegment => {
     let smallestDs = Number.POSITIVE_INFINITY;
-    actualSegmentsStraight.forEach(aSegment => {
-      let ds = (tSegment.a.distanceToSquared(aSegment.a) + tSegment.b.distanceToSquared(aSegment.b));
+    drawnSegments.forEach(drawnSegment => {
+      let ds = (templateSegment.a.distanceToSquared(drawnSegment.a) + templateSegment.b.distanceToSquared(drawnSegment.b));
       if (ds < smallestDs) {
         smallestDs = ds;
       }
-      ds = (tSegment.a.distanceToSquared(aSegment.b) + tSegment.b.distanceToSquared(aSegment.a));
+      ds = (templateSegment.a.distanceToSquared(drawnSegment.b) + templateSegment.b.distanceToSquared(drawnSegment.a));
       if (ds < smallestDs) {
         smallestDs = ds;
       }
@@ -424,28 +424,28 @@ function rmsdSegments(actualSegmentsStraight, actualSegmentsCurved, templateSegm
     sum += smallestDs;
   });
 
-  return Math.sqrt(sum/2/templateSegmentsStraight.length);
+  return Math.sqrt(sum/2/templateSegments.length);
 }
 
 
-function matchSegmentsAgainstTemplates(segmentsStraight, segmentsCurved) {
+function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
   let bestScore = Number.NEGATIVE_INFINITY,
       rawScore = Number.NEGATIVE_INFINITY,
       matchedTemplate = null,
       centroidOfDrawn = null,
-      bestSegmentsStraightXformed = null;
+      bestSegmentsXformed = null;
 
   templates.forEach(template => {
-    if (segmentsStraight.length < template.segmentsStraight.length ||
-        segmentsCurved.length < template.segmentsCurved.length) {
+    if (drawnSegments.length < template.segments.length ||
+        drawnArcs.length < template.arcs.length) {
       return;
     }
-    const candidateSegmentsStraight = segmentsStraight.slice(-template.segmentsStraight.length);
-    const candidateSegmentsCurved = segmentsCurved.slice(-template.segmentsCurved.length);
+    const candidateSegments = drawnSegments.slice(-template.segments.length);
+    const candidateArcs = drawnArcs.slice(-template.arcs.length);
 
-    const [templateSegmentsStraightXformed, templateSegmentsCurvedXformed, centroidP] = transformTemplateSegmentsToActual(candidateSegmentsStraight, candidateSegmentsCurved, template);
+    const [templateSegmentsXformed, templateArcsXformed, centroidP] = transformTemplateSegmentsToDrawn(candidateSegments, candidateArcs, template);
 
-    const diff = rmsdSegments(candidateSegmentsStraight, candidateSegmentsCurved, templateSegmentsStraightXformed, templateSegmentsCurvedXformed);
+    const diff = rmsdSegments(candidateSegments, candidateArcs, templateSegmentsXformed, templateArcsXformed);
     const rawTemplateScore = 1 / diff;
     const templateScore = rawTemplateScore - template.minScore;
 
@@ -454,11 +454,11 @@ function matchSegmentsAgainstTemplates(segmentsStraight, segmentsCurved) {
       rawScore = rawTemplateScore;
       matchedTemplate = template;
       centroidOfDrawn = centroidP.clone();
-      bestSegmentsStraightXformed = templateSegmentsStraightXformed;
+      bestSegmentsXformed = templateSegmentsXformed;
     }
   });
 
-  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsStraightXformed];
+  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsXformed];
 }
 
 const rotAxis = new THREE.Vector3();
@@ -474,7 +474,7 @@ function angleDiff(first, second) {
 try {   // pulled in via require for testing
   module.exports = {
     arcFrom3Points,
-    SegmentStraight,
+    Segment,
     calcCentroid,
     centerPoints,
     calcPlaneNormal,
@@ -485,9 +485,9 @@ try {   // pulled in via require for testing
     pentagramTemplate,
     dagazTemplate,
     templates,
-    transformTemplateSegmentsToActual,
+    transformTemplateSegmentsToDrawn,
     rmsdSegments,
-    matchSegmentsAgainstTemplates,
+    matchDrawnAgainstTemplates,
   }
 } catch (err) {
   // pulled in via script tag

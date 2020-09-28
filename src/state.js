@@ -75,8 +75,8 @@ AFRAME.registerState({
       state.barriers.push({
         color: WHITE,
         lines: [],
-        segmentsStraight: [],
-        segmentsCurved: [],
+        segments: [],
+        arcs: [],
         mana: null,   // not yet active
       });
     },
@@ -111,7 +111,7 @@ AFRAME.registerState({
 
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      barrier.segmentsStraight.push(new SegmentStraight(line.points[line.points.length-2],line.points[line.points.length-1]));
+      barrier.segments.push(new Segment(line.points[line.points.length-2],line.points[line.points.length-1]));
 
       this.matchAndDisplayTemplates(state);
     },
@@ -322,7 +322,7 @@ AFRAME.registerState({
     matchAndDisplayTemplates: function (state) {
       const barrier = state.barriers[state.barriers.length - 1];
 
-      const [score, rawScore, template, centroid, bestSegmentsStraightXformed] = matchSegmentsAgainstTemplates(barrier.segmentsStraight, barrier.segmentsCurved);
+      const [score, rawScore, template, centroid, bestSegmentsXformed] = matchDrawnAgainstTemplates(barrier.segments, barrier.arcs);
 
       if (template && score >= 0) {
         barrier.mana = 25000 + score * 30000;
@@ -378,13 +378,13 @@ AFRAME.registerState({
         } else {
           duration = TRAINING_DURATION;
         }
-        this.showTraining(state, bestSegmentsStraightXformed, rawScore, score, centroid, duration);
+        this.showTraining(state, bestSegmentsXformed, rawScore, score, centroid, duration);
       }
     },
 
-    showTraining: function (state, bestSegmentsStraightXformed, rawScore, score, centroid, duration) {
+    showTraining: function (state, bestSegmentsXformed, rawScore, score, centroid, duration) {
       const trainingEl = document.createElement('a-entity');
-      bestSegmentsStraightXformed.forEach((segment, i) => {
+      bestSegmentsXformed.forEach((segment, i) => {
         trainingEl.setAttribute('line__' + i,
             {start: segment.a, end: segment.b, color: 'black'});
       });
