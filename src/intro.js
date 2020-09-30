@@ -21,7 +21,7 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     let html = `
 <div class="wrapper">
     <div><b>Barrier Mage</b>: Draw mystic symbols to create barriers!</div>
-    <img src="assets/symbols.png"><br>
+    <img src="assets/symbols.png" alt="pentagram, brimstone and day-rune"><br>
     Grip button: grab staff<br>
     Trigger: Press and hold to draw straight segment<br>
     ${requirements}
@@ -34,7 +34,7 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     <div style="font-family:serif; font-size: 0.75rem">
         <div>${mt}</div>
         <div><a href="CREDITS.md">Credits</a></div>
-        <div>Uses <a href="https://caniuse.com/#search=webxr">WebXR</a>, and the <a href="https://aframe.io"><nobr>A-Frame</nobr></a> framework.</div>
+        <div>Uses <a href="https://caniuse.com/#search=webxr">WebXR</a>, and the <a href="https://aframe.io" style="white-space: nowrap;">A-Frame</a> framework.</div>
         <div>Copyright © 2020 by P. Douglas Reeder; Licensed under the GNU GPL-3.0</div>
         <div><a href="https://github.com/DougReeder/barrier-mage">View source code and contribute</a> </div>
       </div>

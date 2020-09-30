@@ -60,13 +60,13 @@ const cRel = new THREE.Vector2();
 /**
  * When 4th arg is falsy, p1 is start and p3 is end.
  * When 4th arg is truthy, a circle is returned. (Still need 3 distinct points to determine plane.)
- * @param p1 (Vector3)
- * @param p2 (Vector3)
- * @param p3 (Vector3)
- * @param isCircle (boolean)
+ * @param {THREE.Vector3} p1
+ * @param {THREE.Vector3} p2
+ * @param {THREE.Vector3} p3
+ * @param {boolean} isCircle
  * @returns {{startAngle: number, center3: Vector3, endAngle: number, center2: Vector2, radius: number, points: [Vector3]}}
  */
-function arcFrom3Points(p1, p2, p3, isCircle) {
+function arcFrom3Points(p1, p2, p3, isCircle = false) {
   a.copy(p1);
   b.copy(p2);
   c.copy(p3);
@@ -127,7 +127,7 @@ const PI2 = Math.PI / 2;
 
 /** Angle is not meaningful unless the segment has been rotated into the X-Y plane. */
 class Segment {
-  constructor(a, b, doReuse) {
+  constructor(a, b, doReuse=false) {
     if (doReuse) {
       this._a = a;
       this._b = b;
@@ -428,7 +428,17 @@ function rmsdSegments(drawnSegments, drawnArcs, templateSegments, templateArcs) 
 }
 
 
+/**
+ * Finds the template that best matches drawn segments and arcs.
+ *
+ * @param {Segment[]} drawnSegments
+ * @param {Arc[]} drawnArcs
+ */
 function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
+  if (!(drawnSegments instanceof Array) || !(drawnArcs instanceof Array)) {
+    throw new Error("must pass both segments and arcs to matchDrawnAgainstTemplates");
+  }
+
   let bestScore = Number.NEGATIVE_INFINITY,
       rawScore = Number.NEGATIVE_INFINITY,
       matchedTemplate = null,
