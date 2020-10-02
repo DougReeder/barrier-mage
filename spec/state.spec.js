@@ -7,31 +7,39 @@ math = require('../src/math');
 require('../src/state');
 
 global.Segment = math.Segment;
+global.arcFrom3Points = math.arcFrom3Points;
 global.matchDrawnAgainstTemplates = math.matchDrawnAgainstTemplates;
 global.pentagramTemplate = math.pentagramTemplate;
+global.triquetraTemplate = math.triquetraTemplate;
 
 const TIP_LENGTH = 1.09;
+const WHITE = new THREE.Color('white');
+
+class MockState {
+  constructor() {
+    this.staffEl = new MockElement({});
+    this.straighting = false;
+    this.curving = false;
+    this.tipPosition = new THREE.Vector3();
+    this.lastTipPosition = new THREE.Vector3();
+    this.inProgress = {
+      geometry: new THREE.BufferGeometry(),
+      material: new THREE.LineBasicMaterial({color: 'gray'}),
+      el: new MockElement({}),
+    };
+    this.barriers = [];
+    this.trainingEls = [];
+    this.scoreEls = [];
+
+    this.inProgress.line = new THREE.Line(this.inProgress.geometry, this.inProgress.material);
+  }
+}
 
 describe("straightBegin/straightEnd", () => {
   let state;
 
   beforeEach(() => {
-    state = {
-      staffEl: new MockElement({}),
-      straighting: false,
-      curving: false,
-      tipPosition: new THREE.Vector3(),
-      lastTipPosition: new THREE.Vector3(),
-      inProgress: {},
-      barriers: [],
-      trainingEls: [],
-      scoreEls: []
-    };
-    state.inProgress.geometry = new THREE.BufferGeometry();
-    state.inProgress.material = new THREE.LineBasicMaterial({color: 'gray'});
-    state.inProgress.line = new THREE.Line(state.inProgress.geometry, state.inProgress.material);
-    state.inProgress.el = new MockElement({});
-    state.inProgress.el.setObject3D('line', state.inProgress.line);
+    state = new MockState();
   });
 
   it("should add a new line and a segment when new segment *is not* continuous", () => {
@@ -139,8 +147,6 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].mana).toBeNull();
   });
 
-  const WHITE = new THREE.Color('white');
-
   it("should end barrier when template recognized", () => {
     const showTrainingSpy = spyOn(AFRAME.stateParam.handlers, 'showTraining');
 
@@ -226,5 +232,74 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].lines[state.barriers[0].lines.length-1].el.getAttribute('sound').src).toEqual('#fizzle');
     expect(showTrainingSpy).toHaveBeenCalled();
     expect(showTrainingSpy.calls.argsFor(0)[5]).toEqual(6000);
+  });
+});
+
+describe("curveBegin/curveEnd", () => {
+  const HALF_SQRT3 = Math.sqrt(3) / 2;
+  let state;
+
+  beforeEach(() => {
+    state = new MockState();
+  });
+
+  it("should end barrier when template w/ arcs recognized", () => {
+    const showTrainingSpy = spyOn(AFRAME.stateParam.handlers, 'showTraining');
+
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+
+    state.staffEl.object3D.position.set(0, 1,0);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(0,0,0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+
+    state.staffEl.object3D.position.set(0, -0.5, -HALF_SQRT3);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(1);
+    expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(showTrainingSpy).not.toHaveBeenCalled();
+
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(1);
+    expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(showTrainingSpy).not.toHaveBeenCalled();
+
+    state.staffEl.object3D.position.set(0,0,0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+
+    state.staffEl.object3D.position.set(0, -0.5, HALF_SQRT3);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(2);
+    expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(showTrainingSpy).not.toHaveBeenCalled();
+
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(0,0,0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+
+    state.staffEl.object3D.position.set(0, 1, 0);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(3);
+    expect(state.barriers[0].template).toEqual(triquetraTemplate);
+    expect(state.barriers[0].color).toEqual(triquetraTemplate.color);
+    expect(state.barriers[0].mana).toBeGreaterThan(15000);
+    expect(showTrainingSpy).toHaveBeenCalled();
+    expect(showTrainingSpy.calls.argsFor(0)[5]).toEqual(6000);
+    expect(state.barriers.length).toEqual(2);
   });
 });

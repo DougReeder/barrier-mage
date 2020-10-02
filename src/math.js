@@ -64,7 +64,7 @@ const cRel = new THREE.Vector2();
  * @param {THREE.Vector3} p2
  * @param {THREE.Vector3} p3
  * @param {boolean} isCircle
- * @returns {{startAngle: number, center3: Vector3, endAngle: number, center2: Vector2, radius: number, points: [Vector3]}}
+ * @returns {{Arc, THREE.Vector3[], THREE.Vector3, number, number}}
  */
 function arcFrom3Points(p1, p2, p3, isCircle = false) {
   a.copy(p1);
@@ -120,7 +120,13 @@ function arcFrom3Points(p1, p2, p3, isCircle = false) {
     points.forEach(p => p.applyAxisAngle(rotAxis, -rotAngle));
   }
 
-  return {center2, center3, radius, startAngle, endAngle, points};
+  const midpoint = (points.length % 2 === 1) ?
+      points[Math.floor(points.length/2)].clone() :
+      points[points.length/2-1].clone().add(points[points.length/2]).divideScalar(2);
+
+  const arc = new Arc(p1, midpoint, p3);
+
+  return {arc, points, center:center3, startAngle, endAngle};
 }
 
 const PI2 = Math.PI / 2;
@@ -181,6 +187,39 @@ class Segment {
 }
 
 
+class Arc {
+  constructor(end1, midpoint, end2, doReuse = false) {
+    if (!end1 || !midpoint || !end2) {
+      throw new Error("end1, midpoint & end2 required");
+    }
+    if ('boolean' !== typeof doReuse) {
+      throw new Error("4th argument to Arc must be boolean");
+    }
+    if (doReuse) {
+      this._end1 = end1;
+      this._midpoint = midpoint;
+      this._end2 = end2;
+    } else {
+      this._end1 = end1.clone();
+      this._midpoint = midpoint.clone();
+      this._end2 = end2.clone();
+    }
+  }
+
+  get end1() {
+    return this._end1;
+  }
+
+  get midpoint() {
+    return this._midpoint;
+  }
+
+  get end2() {
+    return this._end2
+  }
+}
+
+
 /** Sets 'out' to the mean coordinates of the points */
 function calcCentroid(points, out) {
   out.set(0, 0, 0);
@@ -200,7 +239,10 @@ function centerPoints(points) {
 }
 
 
-function calcPlaneNormal(points, normal) {
+function calcPlaneNormalPoints(points, normal) {
+  if (points.length < 3) {
+    throw new Error("Three points are required to determine a plane");
+  }
   // finds the furthest point from the first
   let furthestInd = 0;
   let furthestDistSq = Number.NEGATIVE_INFINITY;
@@ -238,35 +280,56 @@ function calcPlaneNormal(points, normal) {
   return normal;
 }
 
-function calcPlaneNormalSegments(segments) {
+function calcPlaneNormal(segments, arcs) {
+  if (!(segments instanceof Array) || !(arcs instanceof Array)) {
+    throw new Error("must pass array of segments and array of arcs to calcPlaneNormal");
+  }
   const points = [];
   segments.forEach(segment => {
     points.push(segment.a);
     points.push(segment.b);
   });
+  arcs.forEach(arc => {
+    points.push(arc.end1);
+    points.push(arc.midpoint);
+    points.push(arc.end2);
+  });
 
   const normal = new THREE.Vector3();
-  calcPlaneNormal(points, normal);
+  calcPlaneNormalPoints(points, normal);
 
   return normal;
 }
 
 function centerAndSizeTemplate(template) {
-  // centers endpoints
+  // centers guidepoints
   const center = new THREE.Vector3(0, 0, 0);
   template.segments.forEach(segment => {
     center.add(segment.a);
-    center.add(segment.b)
+    center.add(segment.b);
   });
-  center.divideScalar(template.segments.length * 2);
+  template.arcs.forEach(arc => {
+    center.add(arc.end1);
+    center.add(arc.midpoint);
+    center.add(arc.end2);
+  })
+  center.divideScalar(template.segments.length * 2 + template.arcs.length * 3);
 
   template.segments.forEach(segment => {
     segment.a.sub(center);
     segment.b.sub(center);
   });
+  template.arcs.forEach(arc => {
+    arc.end1.sub(center);
+    arc.midpoint.sub(center);
+    arc.end2.sub(center);
+  });
 
   template.size = template.segments.reduce((total, segment) => {
     return total + segment.a.length() + segment.b.length();
+  }, 0);
+  template.size += template.arcs.reduce((total, arc) => {
+    return total + arc.end1.length() + arc.midpoint.length() + arc.end2.length();
   }, 0);
 
   if (! (template.color instanceof THREE.Color)) {
@@ -327,6 +390,23 @@ const pentagramTemplate = centerAndSizeTemplate({
   audioTag: '#force',
 });
 
+const HALF_SQRT3 = Math.sqrt(3)/2;
+
+const triquetraTemplate = centerAndSizeTemplate({
+  name: "triquetra",
+  segments: [],
+  arcs: [
+    new Arc(new THREE.Vector3(-HALF_SQRT3, -0.5, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(HALF_SQRT3, -0.5, 0)),
+    new Arc(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(HALF_SQRT3, -0.5, 0)),
+    new Arc(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(-HALF_SQRT3, -0.5, 0))
+  ],
+  size: null,
+  minScore: 5.0,
+  manaUseMultiplier: 1,
+  color: 'forestgreen',
+  audioTag: '#bind',
+});
+
 const dagazTemplate = centerAndSizeTemplate({
   name: "dagaz",
   segments: [
@@ -347,29 +427,43 @@ const templates = [
   brimstoneDownTemplate,
   brimstoneUpTemplate,
   pentagramTemplate,
+  triquetraTemplate,
   dagazTemplate,
 ];
 
-function transformTemplateSegmentsToDrawn(drawnSegments, drawnArcs, template){
+function transformTemplateToDrawn(drawnSegments, drawnArcs, template){
   // calculates center of drawn
   const drawnCenter = new THREE.Vector3(0, 0, 0);
   drawnSegments.forEach(segment => {
     drawnCenter.add(segment.a);
-    drawnCenter.add(segment.b)
+    drawnCenter.add(segment.b);
   });
-  drawnCenter.divideScalar(drawnSegments.length * 2);
-  // centers drawn segments & collects points
+  drawnArcs.forEach(arc => {
+    drawnCenter.add(arc.end1);
+    drawnCenter.add(arc.midpoint);
+    drawnCenter.add(arc.end2);
+  })
+  drawnCenter.divideScalar(drawnSegments.length * 2 + drawnArcs.length * 3);
+
+  // centers drawn segments & arcs & collects points
   const centeredDrawnSegments = [];
   drawnSegments.forEach(segment => {
     const a = segment.a.clone().sub(drawnCenter);
     const b = segment.b.clone().sub(drawnCenter);
-    centeredDrawnSegments.push(new Segment(a, b));
+    centeredDrawnSegments.push(new Segment(a, b, true));
   });
+  const centeredDrawnArcs = [];
+  drawnArcs.forEach(arc => {
+    const end1 = arc.end1.clone().sub(drawnCenter);
+    const midpoint = arc.midpoint.clone().sub(drawnCenter);
+    const end2 = arc.end2.clone().sub(drawnCenter);
+    centeredDrawnArcs.push(new Arc(end1, midpoint, end2, true));
+  })
 
-  const normalDrawn = calcPlaneNormalSegments(drawnSegments);
+  const normalDrawn = calcPlaneNormal(drawnSegments, drawnArcs);
 
   const templateSegmentsXformed = template.segments.map(segment => new Segment(segment.a, segment.b));
-  const templateArcsXformed = [];
+  const templateArcsXformed = template.arcs.map(arc => new Arc(arc.end1, arc.midpoint, arc.end2));
 
   // rotates plane of template to match drawn
   let rotAngle = normalDrawn.angleTo(zAxis);
@@ -381,6 +475,11 @@ function transformTemplateSegmentsToDrawn(drawnSegments, drawnArcs, template){
       segment.a.applyAxisAngle(rotAxis, rotAngle);
       segment.b.applyAxisAngle(rotAxis, rotAngle);
     });
+    templateArcsXformed.forEach(arc => {
+      arc.end1.applyAxisAngle(rotAxis, rotAngle);
+      arc.midpoint.applyAxisAngle(rotAxis, rotAngle);
+      arc.end2.applyAxisAngle(rotAxis, rotAngle);
+    });
   }
 
   // scales template to match drawn, and moves to its location
@@ -389,24 +488,27 @@ function transformTemplateSegmentsToDrawn(drawnSegments, drawnArcs, template){
     sizeDrawn += centeredDrawnSegments[i].a.length();
     sizeDrawn += centeredDrawnSegments[i].b.length();
   }
+  for (let i=0; i<templateArcsXformed.length; ++i) {
+    sizeDrawn += centeredDrawnArcs[i].end1.length();
+    sizeDrawn += centeredDrawnArcs[i].midpoint.length();
+    sizeDrawn += centeredDrawnArcs[i].end2.length();
+  }
   const scale = sizeDrawn / template.size;
+
   templateSegmentsXformed.forEach(segment => {
     segment.a.multiplyScalar(scale).add(drawnCenter);
     segment.b.multiplyScalar(scale).add(drawnCenter);
   });
+  templateArcsXformed.forEach(arc => {
+    arc.end1.multiplyScalar(scale).add(drawnCenter);
+    arc.midpoint.multiplyScalar(scale).add(drawnCenter);
+    arc.end2.multiplyScalar(scale).add(drawnCenter);
+  })
 
   return [templateSegmentsXformed, templateArcsXformed, drawnCenter];
 }
 
-function copySegment(segment) {
-  return {
-    center: segment.center.clone(),
-    length: segment.length,
-    angle: segment.angle,
-  };
-}
-
-function rmsdSegments(drawnSegments, drawnArcs, templateSegments, templateArcs) {
+function rmsd(drawnSegments, drawnArcs, templateSegments, templateArcs) {
   let sum = 0;
 
   templateSegments.forEach(templateSegment => {
@@ -424,7 +526,26 @@ function rmsdSegments(drawnSegments, drawnArcs, templateSegments, templateArcs) 
     sum += smallestDs;
   });
 
-  return Math.sqrt(sum/2/templateSegments.length);
+  templateArcs.forEach(templateArc => {
+    let smallestDs = Number.POSITIVE_INFINITY;
+    drawnArcs.forEach(drawnArc => {
+      let ds = (templateArc.midpoint.distanceToSquared(drawnArc.midpoint) +
+          templateArc.end1.distanceToSquared(drawnArc.end1) +
+          templateArc.end2.distanceToSquared(drawnArc.end2));
+      if (ds < smallestDs) {
+        smallestDs = ds;
+      }
+      ds = (templateArc.midpoint.distanceToSquared(drawnArc.midpoint) +
+          templateArc.end1.distanceToSquared(drawnArc.end2) +
+          templateArc.end2.distanceToSquared(drawnArc.end1));
+      if (ds < smallestDs) {
+        smallestDs = ds;
+      }
+    });
+    sum += smallestDs;
+  });
+
+  return Math.sqrt(sum/(2*templateSegments.length + 3*templateArcs.length));
 }
 
 
@@ -443,7 +564,8 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
       rawScore = Number.NEGATIVE_INFINITY,
       matchedTemplate = null,
       centroidOfDrawn = null,
-      bestSegmentsXformed = null;
+      bestSegmentsXformed = null,
+      bestArcsXformed = null;
 
   templates.forEach(template => {
     if (drawnSegments.length < template.segments.length ||
@@ -453,9 +575,9 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
     const candidateSegments = drawnSegments.slice(-template.segments.length);
     const candidateArcs = drawnArcs.slice(-template.arcs.length);
 
-    const [templateSegmentsXformed, templateArcsXformed, centroidP] = transformTemplateSegmentsToDrawn(candidateSegments, candidateArcs, template);
+    const [templateSegmentsXformed, templateArcsXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, template);
 
-    const diff = rmsdSegments(candidateSegments, candidateArcs, templateSegmentsXformed, templateArcsXformed);
+    const diff = rmsd(candidateSegments, candidateArcs, templateSegmentsXformed, templateArcsXformed);
     const rawTemplateScore = 1 / diff;
     const templateScore = rawTemplateScore - template.minScore;
 
@@ -465,10 +587,11 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
       matchedTemplate = template;
       centroidOfDrawn = centroidP.clone();
       bestSegmentsXformed = templateSegmentsXformed;
+      bestArcsXformed = templateArcsXformed;
     }
   });
 
-  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsXformed];
+  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed];
 }
 
 const rotAxis = new THREE.Vector3();
@@ -485,18 +608,20 @@ try {   // pulled in via require for testing
   module.exports = {
     arcFrom3Points,
     Segment,
+    Arc,
     calcCentroid,
     centerPoints,
+    calcPlaneNormalPoints,
     calcPlaneNormal,
-    calcPlaneNormalSegments,
     angleDiff,
     brimstoneDownTemplate,
     brimstoneUpTemplate,
     pentagramTemplate,
+    triquetraTemplate,
     dagazTemplate,
     templates,
-    transformTemplateSegmentsToDrawn,
-    rmsdSegments,
+    transformTemplateToDrawn,
+    rmsd,
     matchDrawnAgainstTemplates,
   }
 } catch (err) {

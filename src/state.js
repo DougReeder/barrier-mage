@@ -142,27 +142,29 @@ AFRAME.registerState({
       // smooths the curve
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      let arc;
+      let arc, points;
       if (state.tipPosition.distanceToSquared(line.points[line.curveBeginInd]) > STRAIGHT_PROXIMITY_SQ) {
         const midInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 2);
-        arc = arcFrom3Points(
+        ({arc, points} = arcFrom3Points(
             line.points[line.curveBeginInd],
             line.points[midInd],
             line.points[line.points.length - 1]
-        );
+        ));
       } else {
         const secondInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 3);
         const thirdInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) * 2 / 3);
-        arc = arcFrom3Points(
+        ({arc, points} = arcFrom3Points(
             line.points[line.curveBeginInd],
             line.points[secondInd],
             line.points[thirdInd],
             true
-        );
+        ));
       }
-      line.points.splice(line.curveBeginInd, line.points.length, ...arc.points);
+      line.points.splice(line.curveBeginInd, line.points.length, ...points);
       line.geometry.setFromPoints(line.points);
       line.geometry.computeBoundingSphere();
+
+      barrier.arcs.push(arc);
 
       this.matchAndDisplayTemplates(state);
     },
@@ -322,7 +324,7 @@ AFRAME.registerState({
     matchAndDisplayTemplates: function (state) {
       const barrier = state.barriers[state.barriers.length - 1];
 
-      const [score, rawScore, template, centroid, bestSegmentsXformed] = matchDrawnAgainstTemplates(barrier.segments, barrier.arcs);
+      const [score, rawScore, template, centroid, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(barrier.segments, barrier.arcs);
 
       if (template && score >= 0) {
         barrier.mana = 25000 + score * 30000;
