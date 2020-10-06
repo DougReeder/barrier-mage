@@ -260,11 +260,18 @@ AFRAME.registerState({
         }
         trainingEl.fadeRemainingMs -= action.timeDelta;
         const opacity = Math.max(trainingEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
-        for (let j=0; j<5; ++j) {   // Templates have at most 5 lines.
+        for (let j=0; j<5; ++j) {   // Templates have at most 5 segments.
           const lineAtrbt = trainingEl.getAttribute('line__'+j);
           if (lineAtrbt) {
             Object.assign(lineAtrbt, {opacity: opacity})
             trainingEl.setAttribute('line__'+j, lineAtrbt);
+          }
+        }
+        for (let j=0; j<5; ++j) {   // Templates have at most 5 arcs.
+          const linesAtrbt = trainingEl.getAttribute('lines__'+j);
+          if (linesAtrbt) {
+            Object.assign(linesAtrbt, {opacity: opacity})
+            trainingEl.setAttribute('lines__'+j, linesAtrbt);
           }
         }
 
@@ -380,15 +387,21 @@ AFRAME.registerState({
         } else {
           duration = TRAINING_DURATION;
         }
-        this.showTraining(state, bestSegmentsXformed, rawScore, score, centroid, duration);
+        this.showTraining(state, bestSegmentsXformed, bestArcsXformed, rawScore, score, centroid, duration);
       }
     },
 
-    showTraining: function (state, bestSegmentsXformed, rawScore, score, centroid, duration) {
+    showTraining: function (state, bestSegmentsXformed, bestArcsXformed, rawScore, score, centroid, duration) {
       const trainingEl = document.createElement('a-entity');
       bestSegmentsXformed.forEach((segment, i) => {
         trainingEl.setAttribute('line__' + i,
             {start: segment.a, end: segment.b, color: 'black'});
+      });
+      bestArcsXformed.forEach((arc, i) => {
+        const {points} = arcFrom3Points(arc.end1, arc.midpoint, arc.end2);
+        const pointData = points.map(point => point.x.toFixed(3) + ' ' + point.y.toFixed(3) + ' ' + point.z.toFixed(3)).join(',');
+        trainingEl.setAttribute('lines__' + i,
+            {points: pointData, color: 'black'});
       });
       AFRAME.scenes[0].appendChild(trainingEl);
       state.trainingEls.push(trainingEl);

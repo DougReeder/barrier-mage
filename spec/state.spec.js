@@ -192,7 +192,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(state.barriers.length).toEqual(2);
     expect(showTrainingSpy).toHaveBeenCalled();
-    expect(showTrainingSpy.calls.argsFor(0)[5]).toEqual(6000);
+    expect(showTrainingSpy.calls.argsFor(0)[6]).toEqual(6000);
   });
 
   it("should not end barrier when template match is poor", () => {
@@ -231,7 +231,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].mana).toBeNull();
     expect(state.barriers[0].lines[state.barriers[0].lines.length-1].el.getAttribute('sound').src).toEqual('#fizzle');
     expect(showTrainingSpy).toHaveBeenCalled();
-    expect(showTrainingSpy.calls.argsFor(0)[5]).toEqual(6000);
+    expect(showTrainingSpy.calls.argsFor(0)[6]).toEqual(6000);
   });
 });
 
@@ -299,7 +299,7 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].color).toEqual(triquetraTemplate.color);
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(showTrainingSpy).toHaveBeenCalled();
-    expect(showTrainingSpy.calls.argsFor(0)[5]).toEqual(6000);
+    expect(showTrainingSpy.calls.argsFor(0)[6]).toEqual(6000);
     expect(state.barriers.length).toEqual(2);
   });
 });
