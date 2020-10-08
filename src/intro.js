@@ -24,6 +24,7 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     <img src="assets/symbols.png" alt="pentagram, brimstone and day-rune"><br>
     Grip button: grab staff<br>
     Trigger: Press and hold to draw straight segment<br>
+    A or X Button: Press and hold to draw arc<br>
     ${requirements}
     <div>
       <video controls width="450" height="450">

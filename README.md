@@ -1,6 +1,6 @@
 # Barrier Mage
 In fantasy, a wizard draws mystic symbols to work a magic spell.
-In this experience, you can too!
+In this VR experience, you can too!
 
 ![pentagram & brimstone screenshot](assets/pentagram-brimstone.jpg)
 
@@ -10,7 +10,6 @@ Uses WebXR and [A-Frame](https://aframe.io) and requires a 6-DOF controller.
 
 The four symbols currently supported are:
 ![mystic symbols](assets/symbols.png)
-and the triquetra.
 
 At present, there are a few sad caveats:
 * The barriers don't actually do anything yet!
