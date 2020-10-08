@@ -8,9 +8,9 @@ Live on [github.io](https://dougreeder.github.io/barrier-mage/)
 
 Uses WebXR and [A-Frame](https://aframe.io) and requires a 6-DOF controller.
 
-The three symbols currently supported are:
-
+The four symbols currently supported are:
 ![mystic symbols](assets/symbols.png)
+and the triquetra.
 
 At present, there are a few sad caveats:
 * The barriers don't actually do anything yet!

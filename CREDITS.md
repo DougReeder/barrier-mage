@@ -19,3 +19,6 @@ by FletchaBr is licensed under Creative Commons Attribution
 
 331621__hykenfreak__flame-ignition.mp3 (https://freesound.org/people/hykenfreak/sounds/331621/)
 by "hykenfreak" is licensed under Creative Commons Attribution
+
+178318__robinhood76__04099-magic-string-spell.mp3 (https://freesound.org/people/Robinhood76/sounds/178318/)
+by "Robinhood76" is licensed under Creative Commons Attribution
