@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, Segment, Arc, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentagramTemplate, triquetraTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
+const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentagramTemplate, triquetraTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);   // 0.70711
 const INV_SQRT_3 = 1 / Math.sqrt(3);   // 0.57735
@@ -27,6 +27,7 @@ describe("arcFrom3Points", () => {
     expect(p1.distanceTo(points[0])).toBeCloseTo(0,4);
     // expect(p2.distanceTo(points[Math.floor(points.length/2)])).toBeCloseTo(0,4);
     expect(p3.distanceTo(points[points.length-1])).toBeCloseTo(0,4);
+    expect(arc).toBeInstanceOf(Arc);
     expect(arc.midpoint.x).toBeCloseTo(p2.x, 3);
     expect(arc.midpoint.y).toBeCloseTo(p2.y, 3);
     expect(arc.midpoint.z).toBeCloseTo(p2.z, 6);
@@ -233,23 +234,111 @@ describe("arcFrom3Points", () => {
     expect(arc.midpoint.y).toBeCloseTo(p2.y, 3);
     expect(arc.midpoint.z).toBeCloseTo(p2.z, 3);
   });
+});
 
-  it("should return circle when 4th arg is truthy", () => {
+describe("circleFrom3Points", () => {
+  it("should return circle in Y-Z plane", () => {
     const p1 = new THREE.Vector3(1, -2, 6);
     const p2 = new THREE.Vector3(1, 13.3, 14.5);
     const p3 = new THREE.Vector3(1, 13.3, -2.5);
 
-    const {arc, points, center, startAngle, endAngle} = arcFrom3Points(p1, p2, p3, true);
+    const {circle, points} = circleFrom3Points(p1, p2, p3);
 
-    expect(center.x).toBeCloseTo(1, 4);
-    expect(center.y).toBeCloseTo(8, 1);
-    expect(center.z).toBeCloseTo(6, 6);
-    expect(center.clone().sub(arc.end1).length()).toBeCloseTo(10, 1);
-    expect(endAngle - startAngle).toBeCloseTo(2*Math.PI);
+    expect(circle).toBeInstanceOf(Circle);
+    expect(circle.center.x).toBeCloseTo(1, 4);
+    expect(circle.center.y).toBeCloseTo(8, 1);
+    expect(circle.center.z).toBeCloseTo(6, 6);
+    expect(circle.radius).toBeCloseTo(10, 1);
+    expect(circle.normal.x).toBeCloseTo(1, 6);
+    expect(circle.normal.y).toBeCloseTo(0, 6);
+    expect(circle.normal.z).toBeCloseTo(0, 6);
     expect(points.length).toBeGreaterThan(3141);   // Math.round(10*2*Math.PI/0.02)
     expect(points.length).toBeLessThan(3147);   // Math.round(10*2*Math.PI/0.02)
-    expect(arc.midpoint.x).toBeCloseTo(p2.x, 6);
   });
+
+  it("should return circle in X-Y plane", () => {
+    const p1 = new THREE.Vector3( 6, -2,  20);
+    const p2 = new THREE.Vector3(14.5, 13.3, 20);
+    const p3 = new THREE.Vector3( -2.5, 13.3, 20);
+
+    const {circle, points} = circleFrom3Points(p1, p2, p3);
+
+    expect(circle).toBeInstanceOf(Circle);
+    expect(circle.center.x).toBeCloseTo(6, 4);
+    expect(circle.center.y).toBeCloseTo(8, 1);
+    expect(circle.center.z).toBeCloseTo(20, 6);
+    expect(circle.radius).toBeCloseTo(10, 1);
+    expect(circle.normal.x).toBeCloseTo(0, 6);
+    expect(circle.normal.y).toBeCloseTo(0, 6);
+    expect(circle.normal.z).toBeCloseTo(1, 6);
+    expect(points.length).toBeGreaterThan(3141);   // Math.round(10*2*Math.PI/0.02)
+    expect(points.length).toBeLessThan(3147);   // Math.round(10*2*Math.PI/0.02)
+  });
+
+  it("should return circle for arbitrary guide points vertical", () => {
+    let p1 = new THREE.Vector3();
+    let p2 = new THREE.Vector3();
+    let p3 = new THREE.Vector3();
+    for (let i=0; i<3; ++i) {
+      const center = new THREE.Vector3(Math.random()*10, Math.random()*10, Math.random()*10);
+      const radius = Math.random()*3;
+      p1.setFromSphericalCoords(radius, Math.random() * Math.PI, 0).add(center);
+      p2.setFromSphericalCoords(radius, Math.random() * Math.PI, 0).add(center);
+      p3.setFromSphericalCoords(radius, Math.random() * Math.PI, 0).add(center);
+
+      const {circle, points} = circleFrom3Points(p1, p2, p3);
+
+      expect(circle.center.x).toBeCloseTo(center.x, 6);
+      expect(circle.center.y).toBeCloseTo(center.y, 6);
+      expect(circle.center.z).toBeCloseTo(center.z, 6);
+      expect(circle.radius).toBeCloseTo(radius, 6);
+      expect(circle.normal.x).toBeCloseTo(1, 6);
+      expect(circle.normal.y).toBeCloseTo(0, 6);
+      expect(circle.normal.z).toBeCloseTo(0, 6);
+      expect(points.length).toBeCloseTo(Math.round(radius*2*Math.PI/0.02), -1);
+    }
+  });
+
+  it("should return circle for arbitrary guide points horizontal", () => {
+    let p1 = new THREE.Vector3();
+    let p2 = new THREE.Vector3();
+    let p3 = new THREE.Vector3();
+    for (let i=0; i<3; ++i) {
+      const center = new THREE.Vector3(Math.random()*10, Math.random()*10, Math.random()*10);
+      const radius = Math.random()*3;
+      p1.setFromSphericalCoords(radius, Math.PI/2, Math.random() * 2 * Math.PI).add(center);
+      p2.setFromSphericalCoords(radius, Math.PI/2, Math.random() * 2 * Math.PI).add(center);
+      p3.setFromSphericalCoords(radius, Math.PI/2, Math.random() * 2 * Math.PI).add(center);
+
+      const {circle, points} = circleFrom3Points(p1, p2, p3);
+
+      expect(circle.center.x).toBeCloseTo(center.x, 6);
+      expect(circle.center.y).toBeCloseTo(center.y, 6);
+      expect(circle.center.z).toBeCloseTo(center.z, 6);
+      expect(circle.radius).toBeCloseTo(radius, 6)
+      expect(circle.normal.x).toBeCloseTo(0, 6);
+      expect(circle.normal.y).toBeCloseTo(1, 6);
+      expect(circle.normal.z).toBeCloseTo(0, 6);
+      expect(points.length).toBeCloseTo(Math.round(radius*2*Math.PI/0.02), -1);
+    }
+  });
+
+  it("should return a different object for center and normal each time", () => {
+    const p1 = new THREE.Vector3(1, -2, 6);
+    const p2 = new THREE.Vector3(1, 13.3, 14.5);
+    const p3 = new THREE.Vector3(1, 13.3, -2.5);
+
+    const {circle:circleA} = circleFrom3Points(p1, p2, p3);
+
+    const p4 = new THREE.Vector3(2, 6, 8);
+    const p5 = new THREE.Vector3(-1, 6, 7);
+    const p6 = new THREE.Vector3(4, 6, 5);
+
+    const {circle:circleB} = circleFrom3Points(p4, p5, p6);
+
+    expect(circleA.center === circleB.center).toBeFalsy();
+    expect(circleA.normal === circleB.normal).toBeFalsy();
+  })
 });
 
 describe("Segment", () => {
@@ -452,6 +541,122 @@ describe("Arc", () => {
     arc.end2 = new THREE.Vector3(1, 2, 3);
 
     expect(arc.end2).toEqual(end2);
+  });
+});
+
+describe("Circle", () => {
+  it("should copy points by default", () => {
+    const center = new THREE.Vector3(0, -1, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(2, 1, 1).normalize();
+
+    const circle = new Circle(center, radius, normal);
+
+    expect(circle.center).toEqual(center);
+    expect(circle.center === center).toBeFalsy();
+    expect(circle.radius).toEqual(radius);
+    expect(circle.normal).toEqual(normal);
+    expect(circle.normal === normal).toBeFalsy();
+  });
+
+  it("should reuse points when 4th arg is true", () => {
+    const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(1, 2, 1).normalize();
+
+    const circle = new Circle(center, radius, normal, true);
+
+    expect(circle.center).toEqual(center);
+    expect(circle.center === center).toBeTruthy();
+    expect(circle.radius).toEqual(radius);
+    expect(circle.radius === radius).toBeTruthy();
+    expect(circle.normal).toEqual(normal);
+    expect(circle.normal === normal).toBeTruthy();
+  });
+
+  it("should throw if center not Vector3", () => {
+    const center = 17;
+    const radius = 22;
+    const normal = new THREE.Vector3(2, 1, 1).normalize();
+
+    try {
+      new Circle(center, radius, normal);
+      fail("should have thrown");
+    } catch (err) {
+      expect(err.message).toMatch(/center/);
+    }
+  });
+
+  it("should throw if radius not finite", () => {
+    const center = new THREE.Vector3(2, 1.5, 7);
+    const radius = Number.POSITIVE_INFINITY;
+    const normal = new THREE.Vector3(2, 1, 1).normalize();
+
+    try {
+      new Circle(center, radius, normal);
+      fail("should have thrown");
+    } catch (err) {
+      expect(err.message).toMatch(/radius/);
+    }
+  });
+
+  it("should throw if radius negative", () => {
+    const center = new THREE.Vector3(2, 1.5, 7);
+    const radius = -7;
+    const normal = new THREE.Vector3(2, 1, 1).normalize();
+
+    try {
+      new Circle(center, radius, normal);
+      fail("should have thrown");
+    } catch (err) {
+      expect(err.message).toMatch(/radius/);
+    }
+  });
+
+  it("should throw if normal not Vector3", () => {
+    const center = new THREE.Vector3(1, -1, 1);
+    const radius = 22;
+    const normal = true;
+
+    try {
+      new Circle(center, radius, normal);
+      fail("should have thrown");
+    } catch (err) {
+      expect(err.message).toMatch(/normal/);
+    }
+  });
+
+  it("should not allow overwriting center", () => {
+    const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(1, 1, 2).normalize();
+    const circle = new Circle(center, radius, normal);
+
+    circle.center = new THREE.Vector3(1, 2, 3);
+
+    expect(circle.center).toEqual(center);
+  });
+
+  it("should not allow overwriting radius", () => {
+    const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(-1, 1, 1).normalize();
+    const circle = new Circle(center, radius, normal);
+
+    circle.radius = 42;
+
+    expect(circle.radius).toEqual(radius);
+  });
+
+  it("should not allow overwriting normal", () => {
+    const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(1, 1, 2).normalize();
+    const circle = new Circle(center, radius, normal);
+
+    circle.normal = new THREE.Vector3(1, 2, 3);
+
+    expect(circle.normal).toEqual(normal);
   });
 });
 

@@ -64,9 +64,9 @@ const cRel = new THREE.Vector2();
  * @param {THREE.Vector3} p2
  * @param {THREE.Vector3} p3
  * @param {boolean} isCircle
- * @returns {{Arc, THREE.Vector3[], THREE.Vector3, number, number}}
+ * @returns {{THREE.Vector3[], THREE.Vector3, number, number, number, THREE.Vector3}}
  */
-function arcFrom3Points(p1, p2, p3, isCircle = false) {
+function _curveFrom3Points(p1, p2, p3, isCircle = false) {
   a.copy(p1);
   b.copy(p2);
   c.copy(p3);
@@ -120,13 +120,46 @@ function arcFrom3Points(p1, p2, p3, isCircle = false) {
     points.forEach(p => p.applyAxisAngle(rotAxis, -rotAngle));
   }
 
+  return {points, center:center3, startAngle, endAngle, radius, normal: plane.normal};
+}
+
+/**
+ * @param {THREE.Vector3} p1
+ * @param {THREE.Vector3} p2
+ * @param {THREE.Vector3} p3
+ * @returns {{Arc, THREE.Vector3[], THREE.Vector3, number, number}}
+ */
+function arcFrom3Points(p1, p2, p3) {
+  const {points, center, startAngle, endAngle} = _curveFrom3Points(p1, p2, p3);
+
   const midpoint = (points.length % 2 === 1) ?
       points[Math.floor(points.length/2)].clone() :
       points[points.length/2-1].clone().add(points[points.length/2]).divideScalar(2);
 
   const arc = new Arc(p1, midpoint, p3);
 
-  return {arc, points, center:center3, startAngle, endAngle};
+  return {arc, points, center, startAngle, endAngle};
+}
+
+/**
+ * @param {THREE.Vector3} p1
+ * @param {THREE.Vector3} p2
+ * @param {THREE.Vector3} p3
+ * @returns {{Circle, THREE.Vector3[]}}
+ */
+function circleFrom3Points(p1, p2, p3) {
+  const {points, center, radius, normal} = _curveFrom3Points(p1, p2, p3, true);
+  if (normal.z < 0) {
+    normal.negate();
+  } else if (normal.z === 0 && normal.y < 0) {
+    normal.negate();
+  } else if (normal.z === 0 && normal.y === 0 && normal.x < 0) {
+    normal.negate();
+  }
+
+  const circle = new Circle(center, radius, normal);
+
+  return {circle, points}
 }
 
 const PI2 = Math.PI / 2;
@@ -216,6 +249,55 @@ class Arc {
 
   get end2() {
     return this._end2
+  }
+}
+
+
+class Circle {
+  /**
+   * Creates a Circle object.
+   * @param {THREE.Vector3} center
+   * @param {number} radius
+   * @param {THREE.Vector3} normal
+   * @param {boolean} doReuse
+   */
+  constructor(center, radius, normal, doReuse = false) {
+    if (!(center instanceof THREE.Vector3)) {
+      throw new Error("center must be Vector3");
+    }
+    if (!Number.isFinite(radius) || !(radius >= 0)) {
+      throw new Error("radius must be finite & non-negative");
+    }
+    if ('boolean' !== typeof doReuse) {
+      throw new Error("doReuse must be boolean");
+    }
+    if (!(normal instanceof THREE.Vector3)) {
+      throw new Error("normal must be Vector3");
+    }
+    if (doReuse) {
+      this._center = center;
+      this._radius = radius;
+      this._normal = normal;
+    } else {
+      this._center = center.clone();
+      this._radius = radius;
+      this._normal = normal.clone();
+    }
+  }
+
+  /** @return {THREE.Vector3} the center point */
+  get center() {
+    return this._center;
+  }
+
+  /** @return {number} the radius */
+  get radius() {
+    return this._radius;
+  }
+
+  /** @return {THREE.Vector3} the normal to the plane */
+  get normal() {
+    return this._normal;
   }
 }
 
@@ -607,8 +689,10 @@ function angleDiff(first, second) {
 try {   // pulled in via require for testing
   module.exports = {
     arcFrom3Points,
+    circleFrom3Points,
     Segment,
     Arc,
+    Circle,
     calcCentroid,
     centerPoints,
     calcPlaneNormalPoints,

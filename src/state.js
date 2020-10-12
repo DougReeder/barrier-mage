@@ -142,29 +142,30 @@ AFRAME.registerState({
       // smooths the curve
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      let arc, points;
+      let points;
       if (state.tipPosition.distanceToSquared(line.points[line.curveBeginInd]) > STRAIGHT_PROXIMITY_SQ) {
         const midInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 2);
+        let arc;
         ({arc, points} = arcFrom3Points(
             line.points[line.curveBeginInd],
             line.points[midInd],
             line.points[line.points.length - 1]
         ));
-      } else {
+
+        barrier.arcs.push(arc);
+      } else {   // circle
         const secondInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 3);
         const thirdInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) * 2 / 3);
-        ({arc, points} = arcFrom3Points(
+        let circle;
+        ({circle, points} = circleFrom3Points(
             line.points[line.curveBeginInd],
             line.points[secondInd],
-            line.points[thirdInd],
-            true
+            line.points[thirdInd]
         ));
       }
       line.points.splice(line.curveBeginInd, line.points.length, ...points);
       line.geometry.setFromPoints(line.points);
       line.geometry.computeBoundingSphere();
-
-      barrier.arcs.push(arc);
 
       this.matchAndDisplayTemplates(state);
     },
