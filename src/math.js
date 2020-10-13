@@ -158,6 +158,7 @@ function circleFrom3Points(p1, p2, p3) {
   }
 
   const circle = new Circle(center, radius, normal);
+  circle.setGuidePoints(p1, p2, p3);
 
   return {circle, points}
 }
@@ -299,6 +300,14 @@ class Circle {
   get normal() {
     return this._normal;
   }
+
+  setGuidePoints(p1, p2, p3) {
+    this._guidePoints = [p1.clone(), p2.clone(), p3.clone()];
+  }
+
+  get guidePoints() {
+    return this._guidePoints;
+  }
 }
 
 
@@ -362,7 +371,7 @@ function calcPlaneNormalPoints(points, normal) {
   return normal;
 }
 
-function calcPlaneNormal(segments, arcs) {
+function calcPlaneNormal(segments, arcs, circles) {
   if (!(segments instanceof Array) || !(arcs instanceof Array)) {
     throw new Error("must pass array of segments and array of arcs to calcPlaneNormal");
   }
@@ -376,6 +385,9 @@ function calcPlaneNormal(segments, arcs) {
     points.push(arc.midpoint);
     points.push(arc.end2);
   });
+  circles.forEach(circle => {
+    points.push(...circle.guidePoints);
+  })
 
   const normal = new THREE.Vector3();
   calcPlaneNormalPoints(points, normal);
@@ -513,7 +525,7 @@ const templates = [
   dagazTemplate,
 ];
 
-function transformTemplateToDrawn(drawnSegments, drawnArcs, template){
+function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, template){
   // calculates center of drawn
   const drawnCenter = new THREE.Vector3(0, 0, 0);
   drawnSegments.forEach(segment => {
@@ -542,7 +554,7 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, template){
     centeredDrawnArcs.push(new Arc(end1, midpoint, end2, true));
   })
 
-  const normalDrawn = calcPlaneNormal(drawnSegments, drawnArcs);
+  const normalDrawn = calcPlaneNormal(drawnSegments, drawnArcs, drawnCircles);
 
   const templateSegmentsXformed = template.segments.map(segment => new Segment(segment.a, segment.b));
   const templateArcsXformed = template.arcs.map(arc => new Arc(arc.end1, arc.midpoint, arc.end2));
@@ -657,7 +669,7 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
     const candidateSegments = drawnSegments.slice(-template.segments.length);
     const candidateArcs = drawnArcs.slice(-template.arcs.length);
 
-    const [templateSegmentsXformed, templateArcsXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, template);
+    const [templateSegmentsXformed, templateArcsXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, [], template);
 
     const diff = rmsd(candidateSegments, candidateArcs, templateSegmentsXformed, templateArcsXformed);
     const rawTemplateScore = 1 / diff;
