@@ -602,7 +602,27 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
   return [templateSegmentsXformed, templateArcsXformed, drawnCenter];
 }
 
-function rmsd(drawnSegments, drawnArcs, templateSegments, templateArcs) {
+/**
+ * Calculates root-mean-square difference.
+ * @param {Segment[]} drawnSegments
+ * @param {Arc[]} drawnArcs
+ * @param {Circle[]} drawnCircles
+ * @param {Segment[]} templateSegments
+ * @param {Arc[]} templateArcs
+ * @param {Circle[]} templateCircles
+ * @return {number}
+ */
+function rmsd(drawnSegments, drawnArcs, drawnCircles, templateSegments, templateArcs, templateCircles) {
+  if (!Array.isArray(drawnSegments) || !Array.isArray(templateSegments)) {
+    throw new Error("must pass arrays of segments");
+  }
+  if (!Array.isArray(drawnArcs) || !Array.isArray(templateArcs)) {
+    throw new Error("must pass arrays of arcs");
+  }
+  if (!Array.isArray(drawnCircles) || !Array.isArray(templateCircles)) {
+    throw new Error("must pass arrays of circles");
+  }
+
   let sum = 0;
 
   templateSegments.forEach(templateSegment => {
@@ -639,7 +659,21 @@ function rmsd(drawnSegments, drawnArcs, templateSegments, templateArcs) {
     sum += smallestDs;
   });
 
-  return Math.sqrt(sum/(2*templateSegments.length + 3*templateArcs.length));
+  templateCircles.forEach(templateCircle => {
+    let smallestDs = Number.POSITIVE_INFINITY;
+    drawnCircles.forEach(drawnCircle => {
+      let radiusDiff = drawnCircle.radius - templateCircle.radius;
+      let ds = templateCircle.center.distanceToSquared(drawnCircle.center) +
+          radiusDiff*radiusDiff +
+          templateCircle.normal.distanceToSquared(drawnCircle.normal);
+      if (ds < smallestDs) {
+        smallestDs = ds;
+      }
+    });
+    sum += smallestDs;
+  });
+
+  return Math.sqrt(sum/(2*templateSegments.length + 3*templateArcs.length + 3*templateCircles.length));
 }
 
 
@@ -671,7 +705,7 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
 
     const [templateSegmentsXformed, templateArcsXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, [], template);
 
-    const diff = rmsd(candidateSegments, candidateArcs, templateSegmentsXformed, templateArcsXformed);
+    const diff = rmsd(candidateSegments, candidateArcs, [], templateSegmentsXformed, templateArcsXformed, []);
     const rawTemplateScore = 1 / diff;
     const templateScore = rawTemplateScore - template.minScore;
 

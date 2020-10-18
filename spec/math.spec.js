@@ -1096,6 +1096,18 @@ function fuzzArc(arc, fuzz = 0, offset = 0) {
   );
 }
 
+function fuzzCircle(circle, fuzz = 0, offset = 0) {
+  const direction1 = (new THREE.Vector3( INV_SQRT_3, INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(xAxis, offset);
+  const direction2 = (new THREE.Vector3(-INV_SQRT_3, INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(yAxis, offset);
+
+  return new Circle(
+      circle.center.clone().addScaledVector(direction1, fuzz),
+      circle.radius + fuzz,
+      circle.normal.clone().addScaledVector(direction2, fuzz).normalize(),
+      true
+  );
+}
+
 describe("transformTemplateToDrawn", () => {
   it("should not transform brimstone (point down) exact", () => {
     const [segmentsXformed, arcsXformed] = transformTemplateToDrawn(brimstoneDownTemplate.segments, [], [], brimstoneDownTemplate);
@@ -1374,7 +1386,7 @@ describe("transformTemplateToDrawn", () => {
 
 describe("rmsd", () => {
   it("should calculate 0 for exact match", () => {
-    const diff = rmsd(brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs);
+    const diff = rmsd(brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, [], brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, []);
 
     expect(diff).toEqual(0);
   });
@@ -1387,7 +1399,7 @@ describe("rmsd", () => {
     segmentsFuzzed[1].a.addScaledVector (diagonal, 0.01);
     segmentsFuzzed[2].a.addScaledVector (diagonal, 0.02);
 
-    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs);
+    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, [], brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(Math.sqrt((0.01*0.01+0.02*0.02)/2/5), 6);
   });
@@ -1399,7 +1411,7 @@ describe("rmsd", () => {
     });
     segmentsFuzzed[1].b.addScaledVector (diagonal, 0.01);
 
-    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs);
+    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, [], brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(Math.sqrt((0.01*0.01)/2/5), 4);
   });
@@ -1407,7 +1419,7 @@ describe("rmsd", () => {
   it("should allow for a and b being reversed", () => {
     const segmentReversed = brimstoneDownTemplate.segments.map(segment => new Segment(segment.b, segment.a));
 
-    const diff = rmsd(segmentReversed, [], brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs);
+    const diff = rmsd(segmentReversed, [], [], brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, []);
 
     expect(diff).toEqual(0);
   });
@@ -1419,7 +1431,7 @@ describe("rmsd", () => {
     });
     segmentsFuzzed[1].b.addScaledVector (diagonal, 0.01);
 
-    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs);
+    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, [], brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(Math.sqrt((0.01*0.01)/2/5), 4);
   });
@@ -1430,7 +1442,7 @@ describe("rmsd", () => {
       segmentsFuzzed.push(fuzzSegment(segment, 0.01, i));
     });
 
-    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs);
+    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, [], brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(0.01, 6);
   });
@@ -1441,13 +1453,13 @@ describe("rmsd", () => {
       segmentsFuzzed.push(fuzzSegment(segment, 0.1, i));
     });
 
-    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs);
+    const diff = rmsd(segmentsFuzzed, brimstoneDownTemplate.arcs, [], brimstoneDownTemplate.segments, brimstoneDownTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(0.1, 6);
   });
 
   it("should calculate 0 for exact match of arcs", () => {
-    const diff = rmsd(triquetraTemplate.segments, triquetraTemplate.arcs, triquetraTemplate.segments, triquetraTemplate.arcs);
+    const diff = rmsd(triquetraTemplate.segments, triquetraTemplate.arcs, [], triquetraTemplate.segments, triquetraTemplate.arcs, []);
 
     expect(diff).toEqual(0);
   });
@@ -1460,7 +1472,7 @@ describe("rmsd", () => {
     arcsMutated[1].end1.addScaledVector (diagonal, 0.02);
     arcsMutated[2].end2.addScaledVector (diagonal, 0.03);
 
-    const diff = rmsd(triquetraTemplate.segments, arcsMutated, triquetraTemplate.segments, triquetraTemplate.arcs);
+    const diff = rmsd(triquetraTemplate.segments, arcsMutated, [], triquetraTemplate.segments, triquetraTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(Math.sqrt((0.01*0.01+0.02*0.02+0.03*0.03)/3/3), 6);
   });
@@ -1468,7 +1480,7 @@ describe("rmsd", () => {
   it("should allow for end1 and end2 being reversed", () => {
     const arcsReversed = triquetraTemplate.arcs.map(arc => new Arc(arc.end2, arc.midpoint, arc.end1));
 
-    const diff = rmsd([], arcsReversed, triquetraTemplate.segments, triquetraTemplate.arcs);
+    const diff = rmsd([], arcsReversed, [], triquetraTemplate.segments, triquetraTemplate.arcs, []);
 
     expect(diff).toEqual(0);
   });
@@ -1480,7 +1492,7 @@ describe("rmsd", () => {
     });
     arcsFuzzed[1].end1.addScaledVector (diagonal, 0.01);
 
-    const diff = rmsd(triquetraTemplate.segments, arcsFuzzed, triquetraTemplate.segments, triquetraTemplate.arcs);
+    const diff = rmsd(triquetraTemplate.segments, arcsFuzzed, [], triquetraTemplate.segments, triquetraTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(Math.sqrt((0.01*0.01)/3/3), 4);
   });
@@ -1490,7 +1502,7 @@ describe("rmsd", () => {
         (arc, i) => fuzzArc(arc, 0.01, i)
     );
 
-    const diff = rmsd(triquetraTemplate.segments, arcsFuzzed, triquetraTemplate.segments, triquetraTemplate.arcs);
+    const diff = rmsd(triquetraTemplate.segments, arcsFuzzed, [], triquetraTemplate.segments, triquetraTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(0.01, 6);
   });
@@ -1500,9 +1512,92 @@ describe("rmsd", () => {
         (arc, i) => fuzzArc(arc, 0.1, i)
     );
 
-    const diff = rmsd(triquetraTemplate.segments, arcsFuzzed, triquetraTemplate.segments, triquetraTemplate.arcs);
+    const diff = rmsd(triquetraTemplate.segments, arcsFuzzed, [], triquetraTemplate.segments, triquetraTemplate.arcs, []);
 
     expect(diff).toBeCloseTo(0.1, 6);
+  });
+
+  it("should calculate 0 for exact match of circles", () => {
+    const circles = [
+      new Circle(new THREE.Vector3(2, 3, 4), 1.5, new THREE.Vector3(-1, -1, -1).normalize()),
+      new Circle(new THREE.Vector3(-1, 6, -3), 0.99, new THREE.Vector3(5, -1, 6).normalize()),
+    ]
+
+    const diff = rmsd([], [], circles, [], [], circles);
+
+    expect(diff).toEqual(0);
+  });
+
+  it("should correspond to small differences in circle center", () => {
+    const circles = [
+      new Circle(new THREE.Vector3(3, 4, 5), 1.1, new THREE.Vector3(1, -1, 1).normalize())
+    ];
+    const circlesMutated = circles.map(
+        circle => new Circle(circle.center, circle.radius, circle.normal)
+    );
+    circlesMutated[0].center.addScaledVector (diagonal, 0.01);
+
+    const diff = rmsd([], [], circlesMutated, [], [], circles);
+
+    expect(diff).toBeCloseTo(Math.sqrt((0.01*0.01)/3), 6);
+  });
+
+  it("should correspond to small differences in circle radius", () => {
+    const circles = [
+      new Circle(new THREE.Vector3(3, 4, 5), 1.2, new THREE.Vector3(1, -1, 1).normalize())
+    ];
+    const circlesMutated = circles.map(
+        circle => new Circle(circle.center, circle.radius+0.02, circle.normal)
+    );
+
+    const diff = rmsd([], [], circlesMutated, [], [], circles);
+
+    expect(diff).toBeCloseTo(Math.sqrt((0.02*0.02)/3), 6);
+  });
+
+  it("should correspond to small differences in circle normal", () => {
+    const circles = [
+      new Circle(new THREE.Vector3(3, 4, 5), 1.3, new THREE.Vector3(1, -1, 1).normalize())
+    ];
+    const circlesMutated = circles.map(
+        circle => new Circle(circle.center, circle.radius, circle.normal.clone().addScaledVector(diagonal, 0.03))
+    );
+
+    const diff = rmsd([], [], circlesMutated, [], [], circles);
+
+    expect(diff).toBeCloseTo(Math.sqrt((0.03*0.03)/3), 6);
+  });
+
+  it("should correspond for small fuzz of circles", () => {
+    const circles = [
+      new Circle(new THREE.Vector3(3, 4, 5), 1.4, new THREE.Vector3(1, -1, 1).normalize())
+    ];
+    const circlesFuzzed = circles.map(
+        (circle, i) => fuzzCircle(circle, 0.01, i)
+    );
+
+    const diff = rmsd([], [], circlesFuzzed, [], [], circles);
+
+    expect(diff).toBeCloseTo(0.01, 2);
+  });
+
+  it("should correspond for small fuzz of segments & circles", () => {
+    const segments = [
+       new Segment(new THREE.Vector3(4, 5, 6), new THREE.Vector3(-2, 3, 4))
+    ];
+    const segmentsFuzzed = segments.map(
+        (segment, i) => fuzzSegment(segment, 0.02, i)
+    )
+    const circles = [
+      new Circle(new THREE.Vector3(3, 4, 5), 1.4, new THREE.Vector3(1, -1, 1).normalize())
+    ];
+    const circlesFuzzed = circles.map(
+        (circle, i) => fuzzCircle(circle, 0.02, i)
+    );
+
+    const diff = rmsd(segmentsFuzzed, [], circlesFuzzed, segments, [], circles);
+
+    expect(diff).toBeCloseTo(0.02, 2);
   });
 });
 
