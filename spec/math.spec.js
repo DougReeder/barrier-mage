@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentagramTemplate, triquetraTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
+const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentagramTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);   // 0.70711
 const INV_SQRT_3 = 1 / Math.sqrt(3);   // 0.57735
@@ -712,6 +712,55 @@ describe("Circle", () => {
       expect(ex.message).toMatch(/\D3\D|\bthree\b/);
     }
   });
+
+  it("should scale", () => {
+    const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(1, 1, 2).normalize();
+    const circle = new Circle(center, radius, normal);
+
+    const scale = 2.5;
+    circle.scaleAndTranslate(scale);
+
+    expect(circle.center.x).toEqual(center.x * scale);
+    expect(circle.center.y).toEqual(center.y * scale);
+    expect(circle.center.z).toEqual(center.z * scale);
+    expect(circle.radius).toEqual(radius * scale);
+    expect(circle.normal).toEqual(normal);
+  });
+
+  it("should translate", () => {
+    const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(1, 1, 2).normalize();
+    const circle = new Circle(center, radius, normal);
+
+    const offset = new THREE.Vector3(10, -20, 30);
+    circle.scaleAndTranslate(null, offset);
+
+    expect(circle.center.x).toEqual(center.x + offset.x);
+    expect(circle.center.y).toEqual(center.y + offset.y);
+    expect(circle.center.z).toEqual(center.z + offset.z);
+    expect(circle.radius).toEqual(radius);
+    expect(circle.normal).toEqual(normal);
+  });
+
+  it("should scale and translate", () => {
+    const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(1, 1, 2).normalize();
+    const circle = new Circle(center, radius, normal);
+
+    const scale = 2.5;
+    const offset = new THREE.Vector3(10, -20, 30);
+    circle.scaleAndTranslate(scale, offset);
+
+    expect(circle.center.x).toEqual(center.x * scale + offset.x);
+    expect(circle.center.y).toEqual(center.y * scale + offset.y);
+    expect(circle.center.z).toEqual(center.z * scale + offset.z);
+    expect(circle.radius).toEqual(radius * scale);
+    expect(circle.normal).toEqual(normal);
+  });
 });
 
 const diagonal = new THREE.Vector3(1, 1, 1).normalize();
@@ -1020,7 +1069,7 @@ describe("templates", () => {
   });
 
   it("should have triquetra at origin", () => {
-    const points = triquetraTemplate.segments.map(segment => segment.center);
+    const points = [];
     triquetraTemplate.arcs.forEach(arc => {
       points.push(arc.end1);
       points.push(arc.midpoint);
@@ -1036,6 +1085,44 @@ describe("templates", () => {
 
     const triquetraSize = 3 * 0 + 6 * 1;
     expect(triquetraTemplate.size).toBeCloseTo(triquetraSize, 4);
+  });
+
+  it("should have borromean rings at origin", () => {
+    const centroidPt = new THREE.Vector3();
+    borromeanRingsTemplate.circles.forEach(circle => {
+      centroidPt.add(circle.center);
+    });
+    centroidPt.divideScalar(borromeanRingsTemplate.circles.length);
+
+    expect(centroidPt.x).toBeCloseTo(0, 4);
+    expect(centroidPt.y).toBeCloseTo(0, 4);
+    expect(centroidPt.z).toBeCloseTo(0, 4);
+
+    expect(borromeanRingsTemplate.size).toBeCloseTo(1.73205, 5);
+  });
+
+  it("should have quicksilver at origin", () => {
+    const centroidPt = new THREE.Vector3();
+    quicksilverTemplate.segments.forEach(segment => {
+      centroidPt.add(segment.a);
+      centroidPt.add(segment.b);
+    });
+    quicksilverTemplate.arcs.forEach(arc => {
+      centroidPt.add(arc.end1);
+      centroidPt.add(arc.midpoint);
+      centroidPt.add(arc.end2);
+    });
+    quicksilverTemplate.circles.forEach(circle => {
+      centroidPt.add(circle.center);
+    })
+    centroidPt.divideScalar(quicksilverTemplate.segments.length*2 + quicksilverTemplate.arcs.length*3 + quicksilverTemplate.circles.length*1);
+
+    expect(centroidPt.x).toBeCloseTo(0, 4);
+    expect(centroidPt.y).toBeCloseTo(0, 4);
+    expect(centroidPt.z).toBeCloseTo(0, 4);
+
+    expect(quicksilverTemplate.size).toBeGreaterThan(5);
+    expect(quicksilverTemplate.size).toBeLessThan(12);
   });
 
   it("should have dagaz at origin", () => {
@@ -1056,6 +1143,7 @@ describe("templates", () => {
     expect(templates).toContain(brimstoneUpTemplate);
     expect(templates).toContain(pentagramTemplate);
     expect(templates).toContain(triquetraTemplate);
+    expect(templates).toContain(quicksilverTemplate);
     expect(templates).toContain(dagazTemplate);
   })
 
@@ -1100,12 +1188,20 @@ function fuzzCircle(circle, fuzz = 0, offset = 0) {
   const direction1 = (new THREE.Vector3( INV_SQRT_3, INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(xAxis, offset);
   const direction2 = (new THREE.Vector3(-INV_SQRT_3, INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(yAxis, offset);
 
-  return new Circle(
+  const newCircle = new Circle(
       circle.center.clone().addScaledVector(direction1, fuzz),
       circle.radius + fuzz,
       circle.normal.clone().addScaledVector(direction2, fuzz).normalize(),
       true
   );
+  if (circle.guidePoints) {
+    const g1 = circle.guidePoints[0].clone().addScaledVector(direction1, fuzz);
+    const g2 = circle.guidePoints[1].clone().addScaledVector(direction1, fuzz);
+    const g3 = circle.guidePoints[2].clone().addScaledVector(direction1, fuzz);
+    newCircle.setGuidePoints(g1, g2, g3);
+  }
+
+  return newCircle;
 }
 
 describe("transformTemplateToDrawn", () => {
@@ -1381,8 +1477,122 @@ describe("transformTemplateToDrawn", () => {
       expect(templateArcsXformed[i].end2.z).toBeCloseTo(arcsAltered[i].end2.z, 2);
     }
   });
+
+  it("should scale back borromean rings w/ fuzzing & translation", () => {
+    const fuzz = 0.09;
+    const scale = 0.7;
+    const angle = 0;
+    const axis = new THREE.Vector3(0, 1, 0).normalize();
+    const offset = new THREE.Vector3(-22, 33, -44);
+
+    const {segmentsDrawn, arcsDrawn, circlesDrawn} = pseudoDraw(borromeanRingsTemplate, axis, angle, scale, offset, fuzz);
+
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter] = transformTemplateToDrawn(segmentsDrawn, arcsDrawn, circlesDrawn, borromeanRingsTemplate);
+
+    expect(templateSegmentsXformed.length).toEqual(0);
+    expect(templateArcsXformed.length).toEqual(0);
+    for (let i=0; i<circlesDrawn.length; ++i) {
+      expect(templateCirclesXformed[i].center.x).toBeCloseTo(circlesDrawn[i].center.x, 1);
+      expect(templateCirclesXformed[i].center.y).toBeCloseTo(circlesDrawn[i].center.y, 1);
+      expect(templateCirclesXformed[i].center.z).toBeCloseTo(circlesDrawn[i].center.z, 1);
+      expect(templateCirclesXformed[i].radius).toBeCloseTo(circlesDrawn[i].radius, 1);
+      expect(templateCirclesXformed[i].normal.x).toBeCloseTo(circlesDrawn[i].normal.x, 0);
+      expect(templateCirclesXformed[i].normal.y).toBeCloseTo(circlesDrawn[i].normal.y, 1);
+      expect(templateCirclesXformed[i].normal.z).toBeCloseTo(circlesDrawn[i].normal.z, 1);
+    }
+    expect(drawnCenter.x).toBeCloseTo(offset.x, 1);
+    expect(drawnCenter.y).toBeCloseTo(offset.y, 1);
+    expect(drawnCenter.z).toBeCloseTo(offset.z, 1);
+  });
+
+  it("should rotate and scale back quicksilver w/ fuzzing & translation", () => {
+    const fuzz = 0.043;
+    const scale = 0.4;
+    const angle = Math.PI / 6;
+    const axis = new THREE.Vector3(0, 11, -1).normalize();
+    const offset = new THREE.Vector3(10, 12, 14);
+
+    const {segmentsDrawn, arcsDrawn, circlesDrawn} = pseudoDraw(quicksilverTemplate, axis, angle, scale, offset, fuzz);
+
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter] = transformTemplateToDrawn(segmentsDrawn, arcsDrawn, circlesDrawn, quicksilverTemplate);
+
+    for (let i=0; i<segmentsDrawn.length; ++i) {
+      expect(templateSegmentsXformed[i].a.x).toBeCloseTo(segmentsDrawn[i].a.x, 1);
+      expect(templateSegmentsXformed[i].a.y).toBeCloseTo(segmentsDrawn[i].a.y, 1);
+      expect(templateSegmentsXformed[i].a.z).toBeCloseTo(segmentsDrawn[i].a.z, 1);
+      expect(templateSegmentsXformed[i].b.x).toBeCloseTo(segmentsDrawn[i].b.x, 1);
+      expect(templateSegmentsXformed[i].b.y).toBeCloseTo(segmentsDrawn[i].b.y, 1);
+      expect(templateSegmentsXformed[i].b.z).toBeCloseTo(segmentsDrawn[i].b.z, 1);
+    }
+    for (let i=0; i<arcsDrawn.length; ++i) {
+      expect(templateArcsXformed[i].end1.x).toBeCloseTo(arcsDrawn[i].end1.x, 1);
+      expect(templateArcsXformed[i].end1.y).toBeCloseTo(arcsDrawn[i].end1.y, 1);
+      expect(templateArcsXformed[i].end1.z).toBeCloseTo(arcsDrawn[i].end1.z, 1);
+      expect(templateArcsXformed[i].midpoint.x).toBeCloseTo(arcsDrawn[i].midpoint.x, 1);
+      expect(templateArcsXformed[i].midpoint.y).toBeCloseTo(arcsDrawn[i].midpoint.y, 1);
+      expect(templateArcsXformed[i].midpoint.z).toBeCloseTo(arcsDrawn[i].midpoint.z, 1);
+      expect(templateArcsXformed[i].end2.x).toBeCloseTo(arcsDrawn[i].end2.x, 1);
+      expect(templateArcsXformed[i].end2.y).toBeCloseTo(arcsDrawn[i].end2.y, 1);
+      expect(templateArcsXformed[i].end2.z).toBeCloseTo(arcsDrawn[i].end2.z, 1);
+    }
+    for (let i=0; i<circlesDrawn.length; ++i) {
+      expect(templateCirclesXformed[i].center.x).toBeCloseTo(circlesDrawn[i].center.x, 1);
+      expect(templateCirclesXformed[i].center.y).toBeCloseTo(circlesDrawn[i].center.y, 1);
+      expect(templateCirclesXformed[i].center.z).toBeCloseTo(circlesDrawn[i].center.z, 1);
+      expect(templateCirclesXformed[i].radius).toBeCloseTo(circlesDrawn[i].radius, 1);
+      expect(templateCirclesXformed[i].normal.x).toBeCloseTo(circlesDrawn[i].normal.x, 1);
+      expect(templateCirclesXformed[i].normal.y).toBeCloseTo(circlesDrawn[i].normal.y, 1);
+      expect(templateCirclesXformed[i].normal.z).toBeCloseTo(circlesDrawn[i].normal.z, 1);
+    }
+    expect(drawnCenter.x).toBeCloseTo(offset.x, 1);
+    expect(drawnCenter.y).toBeCloseTo(offset.y, 1);
+    expect(drawnCenter.z).toBeCloseTo(offset.z, 1);
+  });
 });
 
+function pseudoDraw(template, axis, angle, scale, offset, fuzz) {
+  const segmentsDrawn = [];
+  template.segments.forEach((segment, i) => {
+    const newSegment = new Segment(segment.a, segment.b);
+    newSegment.a.applyAxisAngle(axis, angle).multiplyScalar(scale).add(offset);
+    newSegment.b.applyAxisAngle(axis, angle).multiplyScalar(scale).add(offset);
+    segmentsDrawn.push(fuzzSegment(newSegment, fuzz, i))
+  });
+  const arcsDrawn = [];
+  template.arcs.forEach((arc, i) => {
+    const newArc = new Arc(arc.end1, arc.midpoint, arc.end2);
+    newArc.end1.applyAxisAngle(axis, angle).multiplyScalar(scale).add(offset);
+    newArc.midpoint.applyAxisAngle(axis, angle).multiplyScalar(scale).add(offset);
+    newArc.end2.applyAxisAngle(axis, angle).multiplyScalar(scale).add(offset);
+    arcsDrawn.push(fuzzArc(newArc, fuzz, i));
+  });
+  const circlesDrawn = [];
+  template.circles.forEach( (circle, i) => {
+    const newCircle = new Circle(circle.center, circle.radius, circle.normal);
+    newCircle.center.applyAxisAngle(axis, angle);
+    newCircle.normal.applyAxisAngle(axis, angle);
+    newCircle.scaleAndTranslate(scale, offset);
+    const newerCircle = fuzzCircle(newCircle, fuzz, i);
+
+    const g1 = new THREE.Vector3(newerCircle.radius, 0, 0).applyAxisAngle(axis, angle).add(newerCircle.center);
+    const g2 = new THREE.Vector3(-newerCircle.radius*Math.sqrt(3)/2, 0.5, 0).applyAxisAngle(axis, angle).add(newerCircle.center);
+    const g3 = new THREE.Vector3(-newerCircle.radius*Math.sqrt(3)/2, -0.5, 0).applyAxisAngle(axis, angle).add(newerCircle.center);
+
+    // const {circle: guideCircle} = circleFrom3Points(g1, g2, g3);
+    // expect(guideCircle.center.x).toBeCloseTo(newerCircle.center.x, 1);
+    // expect(guideCircle.center.y).toBeCloseTo(newerCircle.center.y, 1);
+    // expect(guideCircle.center.z).toBeCloseTo(newerCircle.center.z, 1);
+    // expect(guideCircle.radius).toBeCloseTo(newerCircle.radius, 1);
+    // expect(guideCircle.normal.x).toBeCloseTo(newerCircle.normal.x, 1);
+    // expect(guideCircle.normal.y).toBeCloseTo(newerCircle.normal.y, 1);
+    // expect(guideCircle.normal.z).toBeCloseTo(newerCircle.normal.z, 1);
+
+    newerCircle.setGuidePoints(g1, g2, g3);
+    circlesDrawn.push(newerCircle);
+  });
+
+  return {segmentsDrawn, arcsDrawn, circlesDrawn};
+}
 
 describe("rmsd", () => {
   it("should calculate 0 for exact match", () => {

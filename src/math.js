@@ -254,6 +254,7 @@ class Arc {
 }
 
 
+// noinspection JSUnresolvedFunction
 class Circle {
   /**
    * Creates a Circle object.
@@ -307,6 +308,20 @@ class Circle {
 
   get guidePoints() {
     return this._guidePoints;
+  }
+
+  scaleAndTranslate(scale, offset) {
+    if (scale) {
+      this._center.multiplyScalar(scale)
+      this._radius *= scale;
+      // normal is unchanged
+      // guidepoints are not changed, because this is called on template
+    }
+    if (offset) {
+      this._center.add(offset);
+      // normal and radius are unchanged
+      // guidepoints are not changed, because this is called on template
+    }
   }
 }
 
@@ -362,6 +377,7 @@ function calcPlaneNormalPoints(points, normal) {
   });
 
   // finds the plane
+  // noinspection JSUnusedAssignment
   plane.setFromCoplanarPoints(points[0], points[furthestInd], thirdPt);
 
   normal.copy(plane.normal);
@@ -406,8 +422,11 @@ function centerAndSizeTemplate(template) {
     center.add(arc.end1);
     center.add(arc.midpoint);
     center.add(arc.end2);
-  })
-  center.divideScalar(template.segments.length * 2 + template.arcs.length * 3);
+  });
+  template.circles.forEach(circle => {
+    center.add(circle.center);
+  });
+  center.divideScalar(template.segments.length * 2 + template.arcs.length * 3 + template.circles.length);
 
   template.segments.forEach(segment => {
     segment.a.sub(center);
@@ -418,12 +437,19 @@ function centerAndSizeTemplate(template) {
     arc.midpoint.sub(center);
     arc.end2.sub(center);
   });
+  template.circles.forEach(circle => {
+    circle.center.sub(center);
+  })
 
   template.size = template.segments.reduce((total, segment) => {
     return total + segment.a.length() + segment.b.length();
   }, 0);
   template.size += template.arcs.reduce((total, arc) => {
     return total + arc.end1.length() + arc.midpoint.length() + arc.end2.length();
+  }, 0);
+  template.size += template.circles.reduce((total, circle) => {
+    // noinspection JSValidateTypes
+    return total + circle.center.length();
   }, 0);
 
   if (! (template.color instanceof THREE.Color)) {
@@ -443,6 +469,7 @@ const brimstoneDownTemplate = centerAndSizeTemplate({
     new Segment(new THREE.Vector3(-11/24, -17/24, 0), new THREE.Vector3(11/24, -17/24, 0), true),
   ],
   arcs: [],
+  circles: [],
   size: null,   // sum of distances from segment endpoints to origin
   minScore: 6.0,
   manaUseMultiplier: 1,
@@ -460,6 +487,7 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
     new Segment(new THREE.Vector3(-11/24, -11/24, 0), new THREE.Vector3(11/24, -11/24, 0), true),
   ],
   arcs: [],
+  circles: [],
   size: null,
   minScore: 5.0,
   manaUseMultiplier: 1,
@@ -477,6 +505,7 @@ const pentagramTemplate = centerAndSizeTemplate({
     new Segment(new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0), true),
   ],
   arcs: [],
+  circles: [],
   size: null,
   minScore: 5.0,
   manaUseMultiplier: 1,
@@ -494,11 +523,47 @@ const triquetraTemplate = centerAndSizeTemplate({
     new Arc(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(HALF_SQRT3, -0.5, 0)),
     new Arc(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(-HALF_SQRT3, -0.5, 0))
   ],
+  circles: [],
   size: null,
   minScore: 5.0,
   manaUseMultiplier: 1,
   color: 'forestgreen',
   audioTag: '#bind',
+});
+
+const borromeanRingsTemplate = centerAndSizeTemplate({
+  name: "borromean rings",
+  segments: [],
+  arcs: [],
+  circles: [
+    new Circle(new THREE.Vector3(0.5,0.28868,0), 1, new THREE.Vector3(0, 0, 1)),
+    new Circle(new THREE.Vector3(-0.5,0.28868,0), 1, new THREE.Vector3(0, 0, 1)),
+    new Circle(new THREE.Vector3(0,-0.57735,0), 1, new THREE.Vector3(0, 0, 1)),
+  ],
+  size: null,
+  minScore: 4.0,
+  manaUseMultiplier: 1,
+  color: 'gold',
+  audioTag: '#foo',
+});
+
+const quicksilverTemplate = centerAndSizeTemplate({
+  name: "quicksilver",
+  segments: [
+    new Segment(new THREE.Vector3(0, -20/20, 0), new THREE.Vector3(0, -10/20,  0), true),
+    new Segment(new THREE.Vector3(-5/20, -15/20, 0), new THREE.Vector3(5/20, -15/20, 0), true)
+  ],
+  arcs: [
+    new Arc(new THREE.Vector3(-8.9/20, 18/20, 0), new THREE.Vector3(0, 10/20,  0), new THREE.Vector3(8.9/20, 18/20, 0)),
+  ],
+  circles: [
+    new Circle(new THREE.Vector3(0,0,0), 10/20, new THREE.Vector3(0, 0, 1))
+  ],
+  size: null,
+  minScore: 4.0,
+  manaUseMultiplier: 1,
+  color: 'silver',
+  audioTag: '#foo',
 });
 
 const dagazTemplate = centerAndSizeTemplate({
@@ -510,6 +575,7 @@ const dagazTemplate = centerAndSizeTemplate({
     new Segment(new THREE.Vector3(-2/3, -1), new THREE.Vector3(-2/3, 1), true),
   ],
   arcs: [],
+  circles: [],
   size: null,
   minScore: 9.0,
   manaUseMultiplier: 15,
@@ -522,6 +588,7 @@ const templates = [
   brimstoneUpTemplate,
   pentagramTemplate,
   triquetraTemplate,
+  quicksilverTemplate,
   dagazTemplate,
 ];
 
@@ -536,8 +603,11 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
     drawnCenter.add(arc.end1);
     drawnCenter.add(arc.midpoint);
     drawnCenter.add(arc.end2);
-  })
-  drawnCenter.divideScalar(drawnSegments.length * 2 + drawnArcs.length * 3);
+  });
+  drawnCircles.forEach(circle => {
+    drawnCenter.add(circle.center);
+  });
+  drawnCenter.divideScalar(drawnSegments.length * 2 + drawnArcs.length * 3 + drawnCircles.length);
 
   // centers drawn segments & arcs & collects points
   const centeredDrawnSegments = [];
@@ -552,12 +622,18 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
     const midpoint = arc.midpoint.clone().sub(drawnCenter);
     const end2 = arc.end2.clone().sub(drawnCenter);
     centeredDrawnArcs.push(new Arc(end1, midpoint, end2, true));
+  });
+  const centeredDrawnCircles = [];
+  drawnCircles.forEach(circle => {
+    const center = circle.center.clone().sub(drawnCenter);
+    centeredDrawnCircles.push(new Circle(center, circle.radius, circle.normal.clone(), true));
   })
 
   const normalDrawn = calcPlaneNormal(drawnSegments, drawnArcs, drawnCircles);
 
   const templateSegmentsXformed = template.segments.map(segment => new Segment(segment.a, segment.b));
   const templateArcsXformed = template.arcs.map(arc => new Arc(arc.end1, arc.midpoint, arc.end2));
+  const templateCirclesXformed = template.circles.map(circle => new Circle(circle.center, circle.radius, circle.normal));
 
   // rotates plane of template to match drawn
   let rotAngle = normalDrawn.angleTo(zAxis);
@@ -574,6 +650,10 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
       arc.midpoint.applyAxisAngle(rotAxis, rotAngle);
       arc.end2.applyAxisAngle(rotAxis, rotAngle);
     });
+    templateCirclesXformed.forEach(circle => {
+      circle.center.applyAxisAngle(rotAxis, rotAngle);
+      circle.normal.applyAxisAngle(rotAxis, rotAngle);
+    });
   }
 
   // scales template to match drawn, and moves to its location
@@ -587,6 +667,9 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
     sizeDrawn += centeredDrawnArcs[i].midpoint.length();
     sizeDrawn += centeredDrawnArcs[i].end2.length();
   }
+  for (let i=0; i<templateCirclesXformed.length; ++i) {
+    sizeDrawn += centeredDrawnCircles[i].center.length();
+  }
   const scale = sizeDrawn / template.size;
 
   templateSegmentsXformed.forEach(segment => {
@@ -597,9 +680,12 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
     arc.end1.multiplyScalar(scale).add(drawnCenter);
     arc.midpoint.multiplyScalar(scale).add(drawnCenter);
     arc.end2.multiplyScalar(scale).add(drawnCenter);
-  })
+  });
+  templateCirclesXformed.forEach(circle => {
+    circle.scaleAndTranslate(scale, drawnCenter);
+  });
 
-  return [templateSegmentsXformed, templateArcsXformed, drawnCenter];
+  return [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter];
 }
 
 /**
@@ -703,7 +789,7 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
     const candidateSegments = drawnSegments.slice(-template.segments.length);
     const candidateArcs = drawnArcs.slice(-template.arcs.length);
 
-    const [templateSegmentsXformed, templateArcsXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, [], template);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, [], template);
 
     const diff = rmsd(candidateSegments, candidateArcs, [], templateSegmentsXformed, templateArcsXformed, []);
     const rawTemplateScore = 1 / diff;
@@ -748,6 +834,8 @@ try {   // pulled in via require for testing
     brimstoneUpTemplate,
     pentagramTemplate,
     triquetraTemplate,
+    borromeanRingsTemplate,
+    quicksilverTemplate,
     dagazTemplate,
     templates,
     transformTemplateToDrawn,
