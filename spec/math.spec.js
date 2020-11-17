@@ -1143,6 +1143,7 @@ describe("templates", () => {
     expect(templates).toContain(brimstoneUpTemplate);
     expect(templates).toContain(pentagramTemplate);
     expect(templates).toContain(triquetraTemplate);
+    expect(templates).toContain(borromeanRingsTemplate);
     expect(templates).toContain(quicksilverTemplate);
     expect(templates).toContain(dagazTemplate);
   })
@@ -1814,7 +1815,7 @@ describe("rmsd", () => {
 
 describe("matchDrawnAgainstTemplates", () => {
   it("should match brimstone (point down) exact", () => {
-    const [score, rawScore, template] = matchDrawnAgainstTemplates(brimstoneDownTemplate.segments, []);
+    const [score, rawScore, template] = matchDrawnAgainstTemplates(brimstoneDownTemplate.segments, [], []);
 
     expect(template.name).toEqual("brimstone down");
     expect(score).toBeGreaterThan(1000);
@@ -1827,7 +1828,7 @@ describe("matchDrawnAgainstTemplates", () => {
     });
     segmentsFuzzed[1].a.x += 0.01;
 
-    const [score, rawScore, template] = matchDrawnAgainstTemplates(segmentsFuzzed, []);
+    const [score, rawScore, template] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
 
     expect(template.name).toEqual("brimstone down");
     expect(score).toBeGreaterThan(brimstoneDownTemplate.minScore);
@@ -1839,7 +1840,7 @@ describe("matchDrawnAgainstTemplates", () => {
       segmentsFuzzed.push(fuzzSegment(segment, 0.01, i));
     });
 
-    const [score, rawScore, template] = matchDrawnAgainstTemplates(segmentsFuzzed, []);
+    const [score, rawScore, template] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
 
     expect(template.name).toEqual("brimstone down");
     expect(score).toBeGreaterThan(brimstoneDownTemplate.minScore);
@@ -1862,7 +1863,7 @@ describe("matchDrawnAgainstTemplates", () => {
       segmentsDrawn.push(newSegment);
     });
 
-    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed] = matchDrawnAgainstTemplates(segmentsDrawn, []);
+    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed] = matchDrawnAgainstTemplates(segmentsDrawn, [], []);
 
     expect(template.name).toEqual("brimstone down");
     expect(score).toBeGreaterThan(brimstoneDownTemplate.minScore);
@@ -1888,7 +1889,7 @@ describe("matchDrawnAgainstTemplates", () => {
       new Segment(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0)),
     ];
 
-    const [score, rawScore, template] = matchDrawnAgainstTemplates(segments, []);
+    const [score, rawScore, template] = matchDrawnAgainstTemplates(segments, [], []);
 
     expect(template).toBeNull();
     expect(score).toEqual(Number.NEGATIVE_INFINITY);
@@ -1899,7 +1900,7 @@ describe("matchDrawnAgainstTemplates", () => {
       new Arc(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(-2, 4, 9), new THREE.Vector3(1, 0, 0)),
     ];
 
-    const [score, rawScore, template] = matchDrawnAgainstTemplates([], arcs);
+    const [score, rawScore, template] = matchDrawnAgainstTemplates([], arcs, []);
 
     expect(template).toBeNull();
     expect(score).toEqual(Number.NEGATIVE_INFINITY);
@@ -1915,7 +1916,7 @@ describe("matchDrawnAgainstTemplates", () => {
       new Segment(new THREE.Vector3(0.5, 0.5, 0), new THREE.Vector3(1, -1, 0)),
     ];
 
-    const [score, rawScore, template] = matchDrawnAgainstTemplates(segments, []);
+    const [score, rawScore, template] = matchDrawnAgainstTemplates(segments, [], []);
 
     expect(score).toBeLessThan(-2.5);
   });
@@ -1930,7 +1931,21 @@ describe("matchDrawnAgainstTemplates", () => {
       new Arc(new THREE.Vector3(0.5, 0.5, 0), new THREE.Vector3(1, -1, 0), new THREE.Vector3(9, 3, 5)),
     ];
 
-    const [score, rawScore, template] = matchDrawnAgainstTemplates([], drawnArcs);
+    const [score, rawScore, template] = matchDrawnAgainstTemplates([], drawnArcs, []);
+
+    expect(score).toBeLessThan(-2.5);
+  });
+
+  it("should not match random circles", () => {
+    const {circle} = circleFrom3Points(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0), new THREE.Vector3(3, -5, 9));
+    const {circle:circle2} = circleFrom3Points(new THREE.Vector3(1, 1, 0.10), new THREE.Vector3(0, 0, 0), new THREE.Vector3(8, 3, 2));
+    const {circle:circle3} = circleFrom3Points(new THREE.Vector3(-1, 2, 0), new THREE.Vector3(2, 1, 0), new THREE.Vector3(-3, 6, 4));
+    const {circle:circle4} = circleFrom3Points(new THREE.Vector3(-2, 0, 0), new THREE.Vector3(1, 1, 0), new THREE.Vector3(4, 4, -4));
+    const {circle:circle5} = circleFrom3Points(new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0, 0), new THREE.Vector3(8, -6.5, 2));
+
+    const drawnCircles = [circle, circle2, circle3, circle4, circle5];
+
+    const [score, rawScore, template] = matchDrawnAgainstTemplates([], [], drawnCircles);
 
     expect(score).toBeLessThan(-2.5);
   });
@@ -1941,7 +1956,7 @@ describe("matchDrawnAgainstTemplates", () => {
       segmentsFuzzed.push(fuzzSegment(segment, 0.01, i));
     });
 
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, []);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
 
     expect(template.name).toEqual("brimstone up");
     expect(score).toBeGreaterThan(0);
@@ -1951,7 +1966,7 @@ describe("matchDrawnAgainstTemplates", () => {
   });
 
   it("should match pentagram exact", () => {
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(pentagramTemplate.segments, []);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(pentagramTemplate.segments, [], []);
 
     expect(template.name).toEqual("pentagram");
     expect(score).toBeGreaterThan(1000);
@@ -1967,7 +1982,7 @@ describe("matchDrawnAgainstTemplates", () => {
     });
     segmentsFuzzed[1].a.x += 0.01;
 
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, []);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
 
     expect(template.name).toEqual("pentagram");
     expect(score).toBeGreaterThan(pentagramTemplate.minScore);
@@ -1982,7 +1997,7 @@ describe("matchDrawnAgainstTemplates", () => {
       segmentsFuzzed.push(fuzzSegment(segment, 0.01, i));
     });
 
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, []);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
 
     expect(template.name).toEqual("pentagram");
     expect(score).toBeGreaterThan(0);
@@ -2009,7 +2024,7 @@ describe("matchDrawnAgainstTemplates", () => {
       segment.b.applyAxisAngle(axis, Math.PI/6);
     });
 
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, []);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
 
     expect(template.name).toEqual("pentagram");
     expect(score).toBeGreaterThan(0);
@@ -2019,7 +2034,7 @@ describe("matchDrawnAgainstTemplates", () => {
   });
 
   it("should match triquetra exact", () => {
-    const [score, rawScore, template, centroidOfDrawn] = matchDrawnAgainstTemplates(triquetraTemplate.segments, triquetraTemplate.arcs);
+    const [score, rawScore, template, centroidOfDrawn] = matchDrawnAgainstTemplates(triquetraTemplate.segments, triquetraTemplate.arcs, triquetraTemplate.circles);
 
     expect(template.name).toEqual("triquetra");
     expect(score).toBeGreaterThan(1000);
@@ -2031,7 +2046,7 @@ describe("matchDrawnAgainstTemplates", () => {
         (arc, i) => fuzzArc(arc, 0.01, i)
     );
 
-    const [score, rawScore, template, centroidOfDrawn] = matchDrawnAgainstTemplates(triquetraTemplate.segments, arcsFuzzed);
+    const [score, rawScore, template, centroidOfDrawn] = matchDrawnAgainstTemplates(triquetraTemplate.segments, arcsFuzzed, []);
 
     expect(template.name).toEqual("triquetra");
     expect(score).toBeGreaterThan(100);
@@ -2054,7 +2069,7 @@ describe("matchDrawnAgainstTemplates", () => {
       drawnArcs.push(newArc);
     });
 
-    const [score, rawScore, template, centroidOfDrawn] = matchDrawnAgainstTemplates(triquetraTemplate.segments, drawnArcs);
+    const [score, rawScore, template, centroidOfDrawn] = matchDrawnAgainstTemplates(triquetraTemplate.segments, drawnArcs, []);
 
     expect(template.name).toEqual("triquetra");
     expect(score).toBeGreaterThan(100);
@@ -2080,7 +2095,7 @@ describe("matchDrawnAgainstTemplates", () => {
       drawnArcs.push(newArc);
     });
 
-    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(triquetraTemplate.segments, drawnArcs);
+    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(triquetraTemplate.segments, drawnArcs, []);
 
     expect(template.name).toEqual("triquetra");
     expect(score).toBeGreaterThan(88);
@@ -2100,6 +2115,99 @@ describe("matchDrawnAgainstTemplates", () => {
       expect(bestArc.end2.x).toBeCloseTo(drawnArc.end2.x, 1);
       expect(bestArc.end2.y).toBeCloseTo(drawnArc.end2.y, 1);
       expect(bestArc.end2.z).toBeCloseTo(drawnArc.end2.z, 2);
+    }
+  });
+
+  it("should match Borromean Rings fuzzed rotated scaled & translated", () => {
+    const fuzz = 0.058;
+    const scale = 1.2;
+    const angle = -Math.PI / 6;
+    const axis = new THREE.Vector3(0, 12, 1).normalize();
+    const offset = new THREE.Vector3(20, 21, 22);
+
+    const {segmentsDrawn, arcsDrawn, circlesDrawn} = pseudoDraw(borromeanRingsTemplate, axis, angle, scale, offset, fuzz);
+
+    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
+
+    expect(template.name).toEqual("borromean rings");
+    expect(score).toBeGreaterThan(19);
+    expect(centroidOfDrawn.x).toBeCloseTo(offset.x, 1);
+    expect(centroidOfDrawn.y).toBeCloseTo(offset.y, 1);
+    expect(centroidOfDrawn.z).toBeCloseTo(offset.z, 1);
+
+    expect(bestSegmentsXformed.length).toEqual(0);
+
+    expect(bestArcsXformed.length).toEqual(0);
+
+    const relevantCircles = circlesDrawn.slice(-borromeanRingsTemplate.circles.length);
+    for (let i=0; i<template.circles.length; ++i) {
+      const bestCircle = bestCirclesXformed[i];
+      const drawnCircle = relevantCircles[i];
+      expect(bestCircle.center.x).toBeCloseTo(drawnCircle.center.x, 1);
+      expect(bestCircle.center.y).toBeCloseTo(drawnCircle.center.y, 1);
+      expect(bestCircle.center.z).toBeCloseTo(drawnCircle.center.z, 1);
+      expect(bestCircle.radius).toBeCloseTo(drawnCircle.radius, 1);
+      expect(bestCircle.normal.x).toBeCloseTo(drawnCircle.normal.x, 1);
+      expect(bestCircle.normal.y).toBeCloseTo(drawnCircle.normal.y, 1);
+      expect(bestCircle.normal.z).toBeCloseTo(drawnCircle.normal.z, 1);
+    }
+  });
+
+  it("should match quicksilver rotated, scaled, fuzzed & translated", () => {
+    const fuzz = 0.063;
+    const scale = 0.8;
+    const angle = -Math.PI / 6;
+    const axis = new THREE.Vector3(1, 12, 0).normalize();
+    const offset = new THREE.Vector3(-30, 40, -50);
+
+    const {segmentsDrawn, arcsDrawn, circlesDrawn} = pseudoDraw(quicksilverTemplate, axis, angle, scale, offset, fuzz);
+
+    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
+
+    expect(template.name).toEqual("quicksilver");
+    expect(score).toBeGreaterThan(19);
+    expect(centroidOfDrawn.x).toBeCloseTo(offset.x, 1);
+    expect(centroidOfDrawn.y).toBeCloseTo(offset.y, 1);
+    expect(centroidOfDrawn.z).toBeCloseTo(offset.z, 1);
+
+    const relevantSegments = segmentsDrawn.slice(-quicksilverTemplate.segments.length);
+    for (let i=0; i<template.segments.length; ++i) {
+      const bestSegment = bestSegmentsXformed[i];
+      const drawnSegment = relevantSegments[i];
+      expect(bestSegment.a.x).toBeCloseTo(drawnSegment.a.x, 1);
+      expect(bestSegment.a.y).toBeCloseTo(drawnSegment.a.y, 1);
+      expect(bestSegment.a.z).toBeCloseTo(drawnSegment.a.z, 1);
+      expect(bestSegment.b.x).toBeCloseTo(drawnSegment.b.x, 1);
+      expect(bestSegment.b.y).toBeCloseTo(drawnSegment.b.y, 1);
+      expect(bestSegment.b.z).toBeCloseTo(drawnSegment.b.z, 1);
+    }
+
+    const relevantArcs = arcsDrawn.slice(-quicksilverTemplate.arcs.length);
+    for (let i=0; i<template.arcs.length; ++i) {
+      const bestArc = bestArcsXformed[i];
+      const drawnArc = relevantArcs[i];
+      expect(bestArc.end1.x).toBeCloseTo(drawnArc.end1.x, 1);
+      expect(bestArc.end1.y).toBeCloseTo(drawnArc.end1.y, 1);
+      expect(bestArc.end1.z).toBeCloseTo(drawnArc.end1.z, 1);
+      expect(bestArc.midpoint.x).toBeCloseTo(drawnArc.midpoint.x, 1);
+      expect(bestArc.midpoint.y).toBeCloseTo(drawnArc.midpoint.y, 1);
+      expect(bestArc.midpoint.z).toBeCloseTo(drawnArc.midpoint.z, 1);
+      expect(bestArc.end2.x).toBeCloseTo(drawnArc.end2.x, 1);
+      expect(bestArc.end2.y).toBeCloseTo(drawnArc.end2.y, 1);
+      expect(bestArc.end2.z).toBeCloseTo(drawnArc.end2.z, 2);
+    }
+
+    const relevantCircles = circlesDrawn.slice(-quicksilverTemplate.circles.length);
+    for (let i=0; i<template.circles.length; ++i) {
+      const bestCircle = bestCirclesXformed[i];
+      const drawnCircle = relevantCircles[i];
+      expect(bestCircle.center.x).toBeCloseTo(drawnCircle.center.x, 1);
+      expect(bestCircle.center.y).toBeCloseTo(drawnCircle.center.y, 1);
+      expect(bestCircle.center.z).toBeCloseTo(drawnCircle.center.z, 1);
+      expect(bestCircle.radius).toBeCloseTo(drawnCircle.radius, 0);
+      expect(bestCircle.normal.x).toBeCloseTo(drawnCircle.normal.x, 1);
+      expect(bestCircle.normal.y).toBeCloseTo(drawnCircle.normal.y, 1);
+      expect(bestCircle.normal.z).toBeCloseTo(drawnCircle.normal.z, 1);
     }
   });
 });

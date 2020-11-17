@@ -77,6 +77,7 @@ AFRAME.registerState({
         lines: [],
         segments: [],
         arcs: [],
+        circles: [],
         mana: null,   // not yet active
       });
     },
@@ -162,6 +163,7 @@ AFRAME.registerState({
             line.points[secondInd],
             line.points[thirdInd]
         ));
+        barrier.circles.push(circle);
       }
       line.points.splice(line.curveBeginInd, line.points.length, ...points);
       line.geometry.setFromPoints(line.points);
@@ -332,7 +334,7 @@ AFRAME.registerState({
     matchAndDisplayTemplates: function (state) {
       const barrier = state.barriers[state.barriers.length - 1];
 
-      const [score, rawScore, template, centroid, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(barrier.segments, barrier.arcs);
+      const [score, rawScore, template, centroid, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(barrier.segments, barrier.arcs, barrier.circles);
 
       if (template && score >= 0) {
         barrier.mana = 25000 + score * 30000;

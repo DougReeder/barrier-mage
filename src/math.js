@@ -588,6 +588,7 @@ const templates = [
   brimstoneUpTemplate,
   pentagramTemplate,
   triquetraTemplate,
+  borromeanRingsTemplate,
   quicksilverTemplate,
   dagazTemplate,
 ];
@@ -768,10 +769,11 @@ function rmsd(drawnSegments, drawnArcs, drawnCircles, templateSegments, template
  *
  * @param {Segment[]} drawnSegments
  * @param {Arc[]} drawnArcs
+ * @param {Circle[]} drawnCircles
  */
-function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
-  if (!(drawnSegments instanceof Array) || !(drawnArcs instanceof Array)) {
-    throw new Error("must pass both segments and arcs to matchDrawnAgainstTemplates");
+function matchDrawnAgainstTemplates(drawnSegments, drawnArcs, drawnCircles) {
+  if (!(drawnSegments instanceof Array) || !(drawnArcs instanceof Array) || !(drawnCircles instanceof Array)) {
+    throw new Error("must pass segments, arcs and circles to matchDrawnAgainstTemplates");
   }
 
   let bestScore = Number.NEGATIVE_INFINITY,
@@ -779,19 +781,22 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
       matchedTemplate = null,
       centroidOfDrawn = null,
       bestSegmentsXformed = null,
-      bestArcsXformed = null;
+      bestArcsXformed = null,
+      bestCirclesXformed = null;
 
   templates.forEach(template => {
     if (drawnSegments.length < template.segments.length ||
-        drawnArcs.length < template.arcs.length) {
+        drawnArcs.length < template.arcs.length ||
+        drawnCircles.length < template.circles.length) {
       return;
     }
     const candidateSegments = drawnSegments.slice(-template.segments.length);
     const candidateArcs = drawnArcs.slice(-template.arcs.length);
+    const candidateCircles = drawnCircles.slice(-template.circles.length);
 
-    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, [], template);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, candidateCircles, template);
 
-    const diff = rmsd(candidateSegments, candidateArcs, [], templateSegmentsXformed, templateArcsXformed, []);
+    const diff = rmsd(candidateSegments, candidateArcs, candidateCircles, templateSegmentsXformed, templateArcsXformed, templateCirclesXformed);
     const rawTemplateScore = 1 / diff;
     const templateScore = rawTemplateScore - template.minScore;
 
@@ -802,10 +807,11 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs) {
       centroidOfDrawn = centroidP.clone();
       bestSegmentsXformed = templateSegmentsXformed;
       bestArcsXformed = templateArcsXformed;
+      bestCirclesXformed = templateCirclesXformed;
     }
   });
 
-  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed];
+  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed];
 }
 
 const rotAxis = new THREE.Vector3();
