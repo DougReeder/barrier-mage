@@ -252,9 +252,9 @@ describe("circleFrom3Points", () => {
     expect(circle.normal.x).toBeCloseTo(1, 6);
     expect(circle.normal.y).toBeCloseTo(0, 6);
     expect(circle.normal.z).toBeCloseTo(0, 6);
-    expect(circle.guidePoints[0]).toEqual(p1);
-    expect(circle.guidePoints[1]).toEqual(p2);
-    expect(circle.guidePoints[2]).toEqual(p3);
+    expect(circle.p1).toEqual(p1);
+    expect(circle.p2).toEqual(p2);
+    expect(circle.p3).toEqual(p3);
 
     expect(points.length).toBeGreaterThan(3141);   // Math.round(10*2*Math.PI/0.02)
     expect(points.length).toBeLessThan(3147);   // Math.round(10*2*Math.PI/0.02)
@@ -275,9 +275,9 @@ describe("circleFrom3Points", () => {
     expect(circle.normal.x).toBeCloseTo(0, 6);
     expect(circle.normal.y).toBeCloseTo(0, 6);
     expect(circle.normal.z).toBeCloseTo(1, 6);
-    expect(circle.guidePoints[0]).toEqual(p1);
-    expect(circle.guidePoints[1]).toEqual(p2);
-    expect(circle.guidePoints[2]).toEqual(p3);
+    expect(circle.p1).toEqual(p1);
+    expect(circle.p2).toEqual(p2);
+    expect(circle.p3).toEqual(p3);
 
     expect(points.length).toBeGreaterThan(3141);   // Math.round(10*2*Math.PI/0.02)
     expect(points.length).toBeLessThan(3147);   // Math.round(10*2*Math.PI/0.02)
@@ -303,9 +303,9 @@ describe("circleFrom3Points", () => {
       expect(circle.normal.x).toBeCloseTo(1, 6);
       expect(circle.normal.y).toBeCloseTo(0, 6);
       expect(circle.normal.z).toBeCloseTo(0, 6);
-      expect(circle.guidePoints[0]).toEqual(p1);
-      expect(circle.guidePoints[1]).toEqual(p2);
-      expect(circle.guidePoints[2]).toEqual(p3);
+      expect(circle.p1).toEqual(p1);
+      expect(circle.p2).toEqual(p2);
+      expect(circle.p3).toEqual(p3);
 
       expect(points.length).toBeCloseTo(Math.round(radius*2*Math.PI/0.02), -1);
     }
@@ -331,9 +331,9 @@ describe("circleFrom3Points", () => {
       expect(circle.normal.x).toBeCloseTo(0, 6);
       expect(circle.normal.y).toBeCloseTo(1, 6);
       expect(circle.normal.z).toBeCloseTo(0, 6);
-      expect(circle.guidePoints[0]).toEqual(p1);
-      expect(circle.guidePoints[1]).toEqual(p2);
-      expect(circle.guidePoints[2]).toEqual(p3);
+      expect(circle.p1).toEqual(p1);
+      expect(circle.p2).toEqual(p2);
+      expect(circle.p3).toEqual(p3);
 
       expect(points.length).toBeCloseTo(Math.round(radius*2*Math.PI/0.02), -1);
     }
@@ -565,40 +565,75 @@ describe("Circle", () => {
     const center = new THREE.Vector3(0, -1, 0);
     const radius = 1.9;
     const normal = new THREE.Vector3(2, 1, 1).normalize();
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
 
-    const circle = new Circle(center, radius, normal);
+    const circle = new Circle(p1, p2, p3, center, radius, normal);
 
+    expect(circle.p1).toEqual(p1);
+    expect(circle.p1 === p1).toBeFalsy();
+    expect(circle.p2).toEqual(p2);
+    expect(circle.p2 === p2).toBeFalsy();
+    expect(circle.p3).toEqual(p3);
+    expect(circle.p3 === p3).toBeFalsy();
     expect(circle.center).toEqual(center);
     expect(circle.center === center).toBeFalsy();
     expect(circle.radius).toEqual(radius);
     expect(circle.normal).toEqual(normal);
     expect(circle.normal === normal).toBeFalsy();
-    expect(circle.guidePoints).toBeUndefined();
   });
 
-  it("should reuse points when 4th arg is true", () => {
+  it("should reuse points when 7th arg is true", () => {
     const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
     const radius = 1.9;
     const normal = new THREE.Vector3(1, 2, 1).normalize();
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
 
-    const circle = new Circle(center, radius, normal, true);
+    const circle = new Circle(p1, p2, p3, center, radius, normal, true);
 
+    expect(circle.p1).toEqual(p1);
+    expect(circle.p1 === p1).toBeTruthy();
+    expect(circle.p2).toEqual(p2);
+    expect(circle.p2 === p2).toBeTruthy();
+    expect(circle.p3).toEqual(p3);
+    expect(circle.p3 === p3).toBeTruthy();
     expect(circle.center).toEqual(center);
     expect(circle.center === center).toBeTruthy();
     expect(circle.radius).toEqual(radius);
     expect(circle.radius === radius).toBeTruthy();
     expect(circle.normal).toEqual(normal);
     expect(circle.normal === normal).toBeTruthy();
-    expect(circle.guidePoints).toBeUndefined();
+  });
+
+  it("should throw if second point not Vector3", () => {
+    const center = new THREE.Vector3(9, 4, 2);
+    const radius = 22;
+    const normal = new THREE.Vector3(2, 1, 1).normalize();
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
+
+    try {
+      new Circle(p1, 2.3, p3, center, radius, normal);
+      fail("should have thrown");
+    } catch (err) {
+      expect(err.message).toMatch(/\b2\b/);
+    }
   });
 
   it("should throw if center not Vector3", () => {
-    const center = 17;
+    const center = new THREE.Vector3(9, 4, 2);
     const radius = 22;
     const normal = new THREE.Vector3(2, 1, 1).normalize();
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
 
     try {
-      new Circle(center, radius, normal);
+      new Circle(p1, p2, p3, 17, radius, normal);
       fail("should have thrown");
     } catch (err) {
       expect(err.message).toMatch(/center/);
@@ -609,9 +644,12 @@ describe("Circle", () => {
     const center = new THREE.Vector3(2, 1.5, 7);
     const radius = Number.POSITIVE_INFINITY;
     const normal = new THREE.Vector3(2, 1, 1).normalize();
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
 
     try {
-      new Circle(center, radius, normal);
+      new Circle(p1, p2, p3, center, radius, normal);
       fail("should have thrown");
     } catch (err) {
       expect(err.message).toMatch(/radius/);
@@ -622,9 +660,12 @@ describe("Circle", () => {
     const center = new THREE.Vector3(2, 1.5, 7);
     const radius = -7;
     const normal = new THREE.Vector3(2, 1, 1).normalize();
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
 
     try {
-      new Circle(center, radius, normal);
+      new Circle(p1, p2, p3, center, radius, normal);
       fail("should have thrown");
     } catch (err) {
       expect(err.message).toMatch(/radius/);
@@ -635,20 +676,40 @@ describe("Circle", () => {
     const center = new THREE.Vector3(1, -1, 1);
     const radius = 22;
     const normal = true;
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
 
     try {
-      new Circle(center, radius, normal);
+      new Circle(p1, p2, p3, center, radius, normal);
       fail("should have thrown");
     } catch (err) {
       expect(err.message).toMatch(/normal/);
     }
   });
 
+  it("should not allow overwriting third guide point", () => {
+    const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
+    const radius = 1.9;
+    const normal = new THREE.Vector3(1, 1, 2).normalize();
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
+    const circle = new Circle(p1, p2, p3, center, radius, normal);
+
+    circle.p3 = new THREE.Vector3(1, 2, 3);
+
+    expect(circle.p3).toEqual(p3);
+  });
+
   it("should not allow overwriting center", () => {
     const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
     const radius = 1.9;
     const normal = new THREE.Vector3(1, 1, 2).normalize();
-    const circle = new Circle(center, radius, normal);
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
+    const circle = new Circle(p1, p2, p3, center, radius, normal);
 
     circle.center = new THREE.Vector3(1, 2, 3);
 
@@ -659,7 +720,10 @@ describe("Circle", () => {
     const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
     const radius = 1.9;
     const normal = new THREE.Vector3(-1, 1, 1).normalize();
-    const circle = new Circle(center, radius, normal);
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
+    const circle = new Circle(p1, p2, p3, center, radius, normal);
 
     circle.radius = 42;
 
@@ -670,43 +734,25 @@ describe("Circle", () => {
     const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
     const radius = 1.9;
     const normal = new THREE.Vector3(1, 1, 2).normalize();
-    const circle = new Circle(center, radius, normal);
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
+    const circle = new Circle(p1, p2, p3, center, radius, normal);
 
     circle.normal = new THREE.Vector3(1, 2, 3);
 
     expect(circle.normal).toEqual(normal);
   });
 
-  it("should allow guidePoints to be set", () => {
-    const center = new THREE.Vector3(0, 0, 0);
-    const radius = 1.1;
-    const normal = new THREE.Vector3(1, 0, 1).normalize();
-    const circle = new Circle(center, radius, normal);
-
-    expect(circle.guidePoints).toBeUndefined();
-
-    const g1 = new THREE.Vector3(0, radius, 0);
-    const g2 = new THREE.Vector3(-radius/Math.sqrt(2), 0, radius/Math.sqrt(2));
-    const g3 = new THREE.Vector3(radius/Math.sqrt(2), 0, -radius/Math.sqrt(2));
-    circle.setGuidePoints(g1, g2, g3);
-
-    expect(circle.guidePoints[0]).toEqual(g1);
-    expect(circle.guidePoints[1]).toEqual(g2);
-    expect(circle.guidePoints[2]).toEqual(g3);
-  });
-
   it("should throw if third guidePoint not Vector3", () => {
     const center = new THREE.Vector3(0, 0, 0);
     const radius = 1.1;
     const normal = new THREE.Vector3(1, 0, 1).normalize();
-    const circle = new Circle(center, radius, normal);
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
 
-    expect(circle.guidePoints).toBeUndefined();
-
-    const g1 = new THREE.Vector3(0, radius, 0);
-    const g2 = new THREE.Vector3(-radius/Math.sqrt(2), 0, radius/Math.sqrt(2));
     try {
-      circle.setGuidePoints(g1, g2, 42);
+      const circle = new Circle(p1, p2, 42, center, radius, normal);
       fail("should have thrown")
     } catch (ex) {
       expect(ex.message).toMatch(/\D3\D|\bthree\b/);
@@ -717,11 +763,23 @@ describe("Circle", () => {
     const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
     const radius = 1.9;
     const normal = new THREE.Vector3(1, 1, 2).normalize();
-    const circle = new Circle(center, radius, normal);
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
+    const circle = new Circle(p1, p2, p3, center, radius, normal);
 
     const scale = 2.5;
     circle.scaleAndTranslate(scale);
 
+    expect(circle.p1.x).toEqual(p1.x * scale);
+    expect(circle.p1.y).toEqual(p1.y * scale);
+    expect(circle.p1.z).toEqual(p1.z * scale);
+    expect(circle.p2.x).toEqual(p2.x * scale);
+    expect(circle.p2.y).toEqual(p2.y * scale);
+    expect(circle.p2.z).toEqual(p2.z * scale);
+    expect(circle.p3.x).toEqual(p3.x * scale);
+    expect(circle.p3.y).toEqual(p3.y * scale);
+    expect(circle.p3.z).toEqual(p3.z * scale);
     expect(circle.center.x).toEqual(center.x * scale);
     expect(circle.center.y).toEqual(center.y * scale);
     expect(circle.center.z).toEqual(center.z * scale);
@@ -733,11 +791,23 @@ describe("Circle", () => {
     const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
     const radius = 1.9;
     const normal = new THREE.Vector3(1, 1, 2).normalize();
-    const circle = new Circle(center, radius, normal);
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
+    const circle = new Circle(p1, p2, p3, center, radius, normal);
 
     const offset = new THREE.Vector3(10, -20, 30);
     circle.scaleAndTranslate(null, offset);
 
+    expect(circle.p1.x).toEqual(p1.x + offset.x);
+    expect(circle.p1.y).toEqual(p1.y + offset.y);
+    expect(circle.p1.z).toEqual(p1.z + offset.z);
+    expect(circle.p2.x).toEqual(p2.x + offset.x);
+    expect(circle.p2.y).toEqual(p2.y + offset.y);
+    expect(circle.p2.z).toEqual(p2.z + offset.z);
+    expect(circle.p3.x).toEqual(p3.x + offset.x);
+    expect(circle.p3.y).toEqual(p3.y + offset.y);
+    expect(circle.p3.z).toEqual(p3.z + offset.z);
     expect(circle.center.x).toEqual(center.x + offset.x);
     expect(circle.center.y).toEqual(center.y + offset.y);
     expect(circle.center.z).toEqual(center.z + offset.z);
@@ -749,12 +819,24 @@ describe("Circle", () => {
     const center = new THREE.Vector3(-HALF_SQRT3, -0.5, 0);
     const radius = 1.9;
     const normal = new THREE.Vector3(1, 1, 2).normalize();
-    const circle = new Circle(center, radius, normal);
+    const p1 = new THREE.Vector3(radius, 0, 0).add(center);
+    const p2 = new THREE.Vector3(0, radius, 0).add(center);
+    const p3 = new THREE.Vector3(-radius, 0, 0).add(center);
+    const circle = new Circle(p1, p2, p3, center, radius, normal);
 
     const scale = 2.5;
     const offset = new THREE.Vector3(10, -20, 30);
     circle.scaleAndTranslate(scale, offset);
 
+    expect(circle.p1.x).toEqual(p1.x * scale + offset.x);
+    expect(circle.p1.y).toEqual(p1.y * scale + offset.y);
+    expect(circle.p1.z).toEqual(p1.z * scale + offset.z);
+    expect(circle.p2.x).toEqual(p2.x * scale + offset.x);
+    expect(circle.p2.y).toEqual(p2.y * scale + offset.y);
+    expect(circle.p2.z).toEqual(p2.z * scale + offset.z);
+    expect(circle.p3.x).toEqual(p3.x * scale + offset.x);
+    expect(circle.p3.y).toEqual(p3.y * scale + offset.y);
+    expect(circle.p3.z).toEqual(p3.z * scale + offset.z);
     expect(circle.center.x).toEqual(center.x * scale + offset.x);
     expect(circle.center.y).toEqual(center.y * scale + offset.y);
     expect(circle.center.z).toEqual(center.z * scale + offset.z);
@@ -1088,6 +1170,21 @@ describe("templates", () => {
   });
 
   it("should have borromean rings at origin", () => {
+    expect(borromeanRingsTemplate.circles[0].center.x).toBeCloseTo(0, 6);
+    expect(borromeanRingsTemplate.circles[0].center.y).toBeCloseTo(-Math.sqrt(3)/3, 6);
+    expect(borromeanRingsTemplate.circles[0].center.z).toBeCloseTo( 0, 6);
+    expect(borromeanRingsTemplate.circles[0].radius).toBeCloseTo( 1, 6);
+
+    expect(borromeanRingsTemplate.circles[1].center.x).toBeCloseTo(-0.5, 6);
+    expect(borromeanRingsTemplate.circles[1].center.y).toBeCloseTo(Math.sqrt(3)/6, 6);
+    expect(borromeanRingsTemplate.circles[1].center.z).toBeCloseTo( 0, 6);
+    expect(borromeanRingsTemplate.circles[1].radius).toBeCloseTo( 1, 6);
+
+    expect(borromeanRingsTemplate.circles[2].center.x).toBeCloseTo(0.5, 6);
+    expect(borromeanRingsTemplate.circles[2].center.y).toBeCloseTo(Math.sqrt(3)/6, 6);
+    expect(borromeanRingsTemplate.circles[2].center.z).toBeCloseTo( 0, 6);
+    expect(borromeanRingsTemplate.circles[2].radius).toBeCloseTo( 1);
+
     const centroidPt = new THREE.Vector3();
     borromeanRingsTemplate.circles.forEach(circle => {
       centroidPt.add(circle.center);
@@ -1102,6 +1199,10 @@ describe("templates", () => {
   });
 
   it("should have quicksilver at origin", () => {
+    expect(quicksilverTemplate.circles[0].center.x).toBeCloseTo(0, 6);
+    expect(quicksilverTemplate.circles[0].center.z).toBeCloseTo( 0, 6);
+    expect(quicksilverTemplate.circles[0].radius).toBeCloseTo( 0.5, 6);
+
     const centroidPt = new THREE.Vector3();
     quicksilverTemplate.segments.forEach(segment => {
       centroidPt.add(segment.a);
@@ -1186,24 +1287,17 @@ function fuzzArc(arc, fuzz = 0, offset = 0) {
 }
 
 function fuzzCircle(circle, fuzz = 0, offset = 0) {
-  const direction1 = (new THREE.Vector3( INV_SQRT_3, INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(xAxis, offset);
-  const direction2 = (new THREE.Vector3(-INV_SQRT_3, INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(yAxis, offset);
+  const direction1 = (new THREE.Vector3( INV_SQRT_3, INV_SQRT_3, -INV_SQRT_3)).applyAxisAngle(xAxis, offset);
+  const direction2 = (new THREE.Vector3( INV_SQRT_3, -INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(yAxis, offset);
+  const direction3 = (new THREE.Vector3( -INV_SQRT_3, INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(zAxis, offset);
 
-  const newCircle = new Circle(
-      circle.center.clone().addScaledVector(direction1, fuzz),
-      circle.radius + fuzz,
-      circle.normal.clone().addScaledVector(direction2, fuzz).normalize(),
-      true
-  );
-  if (circle.guidePoints) {
-    const g1 = circle.guidePoints[0].clone().addScaledVector(direction1, fuzz);
-    const g2 = circle.guidePoints[1].clone().addScaledVector(direction1, fuzz);
-    const g3 = circle.guidePoints[2].clone().addScaledVector(direction1, fuzz);
-    newCircle.setGuidePoints(g1, g2, g3);
-  }
+  const p1 = circle.p1.clone().addScaledVector(direction1, fuzz);
+  const p2 = circle.p2.clone().addScaledVector(direction2, fuzz);
+  const p3 = circle.p3.clone().addScaledVector(direction3, fuzz);
 
-  return newCircle;
+  return circleFrom3Points(p1, p2, p3).circle;
 }
+
 
 describe("transformTemplateToDrawn", () => {
   it("should not transform brimstone (point down) exact", () => {
@@ -1480,7 +1574,7 @@ describe("transformTemplateToDrawn", () => {
   });
 
   it("should scale back borromean rings w/ fuzzing & translation", () => {
-    const fuzz = 0.09;
+    const fuzz = 0.051;
     const scale = 0.7;
     const angle = 0;
     const axis = new THREE.Vector3(0, 1, 0).normalize();
@@ -1498,7 +1592,7 @@ describe("transformTemplateToDrawn", () => {
       expect(templateCirclesXformed[i].center.z).toBeCloseTo(circlesDrawn[i].center.z, 1);
       expect(templateCirclesXformed[i].radius).toBeCloseTo(circlesDrawn[i].radius, 1);
       expect(templateCirclesXformed[i].normal.x).toBeCloseTo(circlesDrawn[i].normal.x, 0);
-      expect(templateCirclesXformed[i].normal.y).toBeCloseTo(circlesDrawn[i].normal.y, 1);
+      expect(templateCirclesXformed[i].normal.y).toBeCloseTo(circlesDrawn[i].normal.y, 0);
       expect(templateCirclesXformed[i].normal.z).toBeCloseTo(circlesDrawn[i].normal.z, 1);
     }
     expect(drawnCenter.x).toBeCloseTo(offset.x, 1);
@@ -1507,7 +1601,7 @@ describe("transformTemplateToDrawn", () => {
   });
 
   it("should rotate and scale back quicksilver w/ fuzzing & translation", () => {
-    const fuzz = 0.043;
+    const fuzz = 0.048;
     const scale = 0.4;
     const angle = Math.PI / 6;
     const axis = new THREE.Vector3(0, 11, -1).normalize();
@@ -1541,9 +1635,9 @@ describe("transformTemplateToDrawn", () => {
       expect(templateCirclesXformed[i].center.y).toBeCloseTo(circlesDrawn[i].center.y, 1);
       expect(templateCirclesXformed[i].center.z).toBeCloseTo(circlesDrawn[i].center.z, 1);
       expect(templateCirclesXformed[i].radius).toBeCloseTo(circlesDrawn[i].radius, 1);
-      expect(templateCirclesXformed[i].normal.x).toBeCloseTo(circlesDrawn[i].normal.x, 1);
+      expect(templateCirclesXformed[i].normal.x).toBeCloseTo(circlesDrawn[i].normal.x, 0);
       expect(templateCirclesXformed[i].normal.y).toBeCloseTo(circlesDrawn[i].normal.y, 1);
-      expect(templateCirclesXformed[i].normal.z).toBeCloseTo(circlesDrawn[i].normal.z, 1);
+      expect(templateCirclesXformed[i].normal.z).toBeCloseTo(circlesDrawn[i].normal.z, 0);
     }
     expect(drawnCenter.x).toBeCloseTo(offset.x, 1);
     expect(drawnCenter.y).toBeCloseTo(offset.y, 1);
@@ -1569,27 +1663,15 @@ function pseudoDraw(template, axis, angle, scale, offset, fuzz) {
   });
   const circlesDrawn = [];
   template.circles.forEach( (circle, i) => {
-    const newCircle = new Circle(circle.center, circle.radius, circle.normal);
-    newCircle.center.applyAxisAngle(axis, angle);
-    newCircle.normal.applyAxisAngle(axis, angle);
-    newCircle.scaleAndTranslate(scale, offset);
-    const newerCircle = fuzzCircle(newCircle, fuzz, i);
+    const fuzzDir1 = (new THREE.Vector3( INV_SQRT_3, INV_SQRT_3, -INV_SQRT_3)).applyAxisAngle(xAxis, i);
+    const fuzzDir2 = (new THREE.Vector3( INV_SQRT_3, -INV_SQRT_3, INV_SQRT_3)).applyAxisAngle(yAxis, i);
+    const fuzzDir3 = (new THREE.Vector3( -INV_SQRT_3, INV_SQRT_3, -INV_SQRT_3)).applyAxisAngle(xAxis, i);
 
-    const g1 = new THREE.Vector3(newerCircle.radius, 0, 0).applyAxisAngle(axis, angle).add(newerCircle.center);
-    const g2 = new THREE.Vector3(-newerCircle.radius*Math.sqrt(3)/2, 0.5, 0).applyAxisAngle(axis, angle).add(newerCircle.center);
-    const g3 = new THREE.Vector3(-newerCircle.radius*Math.sqrt(3)/2, -0.5, 0).applyAxisAngle(axis, angle).add(newerCircle.center);
+    const p1 = circle.p1.clone().applyAxisAngle(axis, angle).multiplyScalar(scale).add(offset).addScaledVector(fuzzDir1, fuzz);
+    const p2 = circle.p2.clone().applyAxisAngle(axis, angle).multiplyScalar(scale).add(offset).addScaledVector(fuzzDir2, fuzz);
+    const p3 = circle.p3.clone().applyAxisAngle(axis, angle).multiplyScalar(scale).add(offset).addScaledVector(fuzzDir3, fuzz);
 
-    // const {circle: guideCircle} = circleFrom3Points(g1, g2, g3);
-    // expect(guideCircle.center.x).toBeCloseTo(newerCircle.center.x, 1);
-    // expect(guideCircle.center.y).toBeCloseTo(newerCircle.center.y, 1);
-    // expect(guideCircle.center.z).toBeCloseTo(newerCircle.center.z, 1);
-    // expect(guideCircle.radius).toBeCloseTo(newerCircle.radius, 1);
-    // expect(guideCircle.normal.x).toBeCloseTo(newerCircle.normal.x, 1);
-    // expect(guideCircle.normal.y).toBeCloseTo(newerCircle.normal.y, 1);
-    // expect(guideCircle.normal.z).toBeCloseTo(newerCircle.normal.z, 1);
-
-    newerCircle.setGuidePoints(g1, g2, g3);
-    circlesDrawn.push(newerCircle);
+    circlesDrawn.push(circleFrom3Points(p1, p2, p3).circle);
   });
 
   return {segmentsDrawn, arcsDrawn, circlesDrawn};
@@ -1730,8 +1812,8 @@ describe("rmsd", () => {
 
   it("should calculate 0 for exact match of circles", () => {
     const circles = [
-      new Circle(new THREE.Vector3(2, 3, 4), 1.5, new THREE.Vector3(-1, -1, -1).normalize()),
-      new Circle(new THREE.Vector3(-1, 6, -3), 0.99, new THREE.Vector3(5, -1, 6).normalize()),
+      new Circle(new THREE.Vector3(2, 3, 4), new THREE.Vector3(2, 3, 4), new THREE.Vector3(2, 3, 4), new THREE.Vector3(2, 3, 4), 1.5, new THREE.Vector3(-1, -1, -1).normalize()),
+      new Circle(new THREE.Vector3(2, 3, 4), new THREE.Vector3(2, 3, 4), new THREE.Vector3(2, 3, 4), new THREE.Vector3(-1, 6, -3), 0.99, new THREE.Vector3(5, -1, 6).normalize()),
     ]
 
     const diff = rmsd([], [], circles, [], [], circles);
@@ -1741,10 +1823,10 @@ describe("rmsd", () => {
 
   it("should correspond to small differences in circle center", () => {
     const circles = [
-      new Circle(new THREE.Vector3(3, 4, 5), 1.1, new THREE.Vector3(1, -1, 1).normalize())
+      new Circle(new THREE.Vector3(2, 3, 4), new THREE.Vector3(2, 3, 4), new THREE.Vector3(2, 3, 4), new THREE.Vector3(3, 4, 5), 1.1, new THREE.Vector3(1, -1, 1).normalize())
     ];
     const circlesMutated = circles.map(
-        circle => new Circle(circle.center, circle.radius, circle.normal)
+        circle => new Circle(circle.p1, circle.p2, circle.p3, circle.center, circle.radius, circle.normal)
     );
     circlesMutated[0].center.addScaledVector (diagonal, 0.01);
 
@@ -1755,10 +1837,10 @@ describe("rmsd", () => {
 
   it("should correspond to small differences in circle radius", () => {
     const circles = [
-      new Circle(new THREE.Vector3(3, 4, 5), 1.2, new THREE.Vector3(1, -1, 1).normalize())
+      new Circle(new THREE.Vector3(3, 4, 5), new THREE.Vector3(3, 4, 5), new THREE.Vector3(3, 4, 5), new THREE.Vector3(3, 4, 5), 1.2, new THREE.Vector3(1, -1, 1).normalize())
     ];
     const circlesMutated = circles.map(
-        circle => new Circle(circle.center, circle.radius+0.02, circle.normal)
+        circle => new Circle(circle.p1, circle.p2, circle.p3, circle.center, circle.radius+0.02, circle.normal)
     );
 
     const diff = rmsd([], [], circlesMutated, [], [], circles);
@@ -1768,10 +1850,10 @@ describe("rmsd", () => {
 
   it("should correspond to small differences in circle normal", () => {
     const circles = [
-      new Circle(new THREE.Vector3(3, 4, 5), 1.3, new THREE.Vector3(1, -1, 1).normalize())
+      new Circle(new THREE.Vector3(3, 4, 5), new THREE.Vector3(3, 4, 5), new THREE.Vector3(3, 4, 5), new THREE.Vector3(3, 4, 5), 1.3, new THREE.Vector3(1, -1, 1).normalize())
     ];
     const circlesMutated = circles.map(
-        circle => new Circle(circle.center, circle.radius, circle.normal.clone().addScaledVector(diagonal, 0.03))
+        circle => new Circle(circle.p1, circle.p2, circle.p3, circle.center, circle.radius, circle.normal.clone().addScaledVector(diagonal, 0.03))
     );
 
     const diff = rmsd([], [], circlesMutated, [], [], circles);
@@ -1781,8 +1863,16 @@ describe("rmsd", () => {
 
   it("should correspond for small fuzz of circles", () => {
     const circles = [
-      new Circle(new THREE.Vector3(3, 4, 5), 1.4, new THREE.Vector3(1, -1, 1).normalize())
+      circleFrom3Points(
+          new THREE.Vector3(0, Math.sqrt(3)/6, 1.5),
+          new THREE.Vector3(0, Math.sqrt(3)/6, -0.5),
+          new THREE.Vector3(0, -Math.sqrt(3)/3, 0)
+      ).circle
     ];
+    expect(circles[0].center.x).toBeCloseTo(0, 6);
+    expect(circles[0].center.y).toBeCloseTo(Math.sqrt(3)/6, 6);
+    expect(circles[0].center.z).toBeCloseTo(0.5, 6);
+    expect(circles[0].radius).toBeCloseTo(1, 6);
     const circlesFuzzed = circles.map(
         (circle, i) => fuzzCircle(circle, 0.01, i)
     );
@@ -1800,7 +1890,11 @@ describe("rmsd", () => {
         (segment, i) => fuzzSegment(segment, 0.02, i)
     )
     const circles = [
-      new Circle(new THREE.Vector3(3, 4, 5), 1.4, new THREE.Vector3(1, -1, 1).normalize())
+      circleFrom3Points(
+          new THREE.Vector3(0, Math.sqrt(3)/6, 1.5),
+          new THREE.Vector3(0, Math.sqrt(3)/6, -0.5),
+          new THREE.Vector3(0, -Math.sqrt(3)/3, 0)
+      ).circle
     ];
     const circlesFuzzed = circles.map(
         (circle, i) => fuzzCircle(circle, 0.02, i)
@@ -2119,7 +2213,7 @@ describe("matchDrawnAgainstTemplates", () => {
   });
 
   it("should match Borromean Rings fuzzed rotated scaled & translated", () => {
-    const fuzz = 0.058;
+    const fuzz = 0.050;
     const scale = 1.2;
     const angle = -Math.PI / 6;
     const axis = new THREE.Vector3(0, 12, 1).normalize();
@@ -2130,7 +2224,7 @@ describe("matchDrawnAgainstTemplates", () => {
     const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
 
     expect(template.name).toEqual("borromean rings");
-    expect(score).toBeGreaterThan(19);
+    expect(score).toBeGreaterThan(16);
     expect(centroidOfDrawn.x).toBeCloseTo(offset.x, 1);
     expect(centroidOfDrawn.y).toBeCloseTo(offset.y, 1);
     expect(centroidOfDrawn.z).toBeCloseTo(offset.z, 1);
@@ -2148,13 +2242,13 @@ describe("matchDrawnAgainstTemplates", () => {
       expect(bestCircle.center.z).toBeCloseTo(drawnCircle.center.z, 1);
       expect(bestCircle.radius).toBeCloseTo(drawnCircle.radius, 1);
       expect(bestCircle.normal.x).toBeCloseTo(drawnCircle.normal.x, 1);
-      expect(bestCircle.normal.y).toBeCloseTo(drawnCircle.normal.y, 1);
+      expect(bestCircle.normal.y).toBeCloseTo(drawnCircle.normal.y, 0);
       expect(bestCircle.normal.z).toBeCloseTo(drawnCircle.normal.z, 1);
     }
   });
 
   it("should match quicksilver rotated, scaled, fuzzed & translated", () => {
-    const fuzz = 0.063;
+    const fuzz = 0.043;
     const scale = 0.8;
     const angle = -Math.PI / 6;
     const axis = new THREE.Vector3(1, 12, 0).normalize();

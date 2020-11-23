@@ -9,6 +9,10 @@ try {
 }
 
 
+const rotAxis = new THREE.Vector3();
+const zAxis = new THREE.Vector3(0,0,1);
+
+
 // ignores Z coordinate
 function circleFrom3Points2D(p1, p2, p3) {
   const x12 = p1.x - p2.x;
@@ -157,8 +161,7 @@ function circleFrom3Points(p1, p2, p3) {
     normal.negate();
   }
 
-  const circle = new Circle(center, radius, normal);
-  circle.setGuidePoints(p1, p2, p3);
+  const circle = new Circle(p1, p2, p3, center, radius, normal);
 
   return {circle, points}
 }
@@ -258,12 +261,26 @@ class Arc {
 class Circle {
   /**
    * Creates a Circle object.
+   * This should only be called from circleFrom3Points(),
+   *   or to clone an existing Circle.
+   * @param {THREE.Vector3} p1
+   * @param {THREE.Vector3} p2
+   * @param {THREE.Vector3} p3
    * @param {THREE.Vector3} center
    * @param {number} radius
    * @param {THREE.Vector3} normal
    * @param {boolean} doReuse
    */
-  constructor(center, radius, normal, doReuse = false) {
+  constructor(p1, p2, p3, center, radius, normal, doReuse = false) {
+    if (!(p1 instanceof  THREE.Vector3)) {
+      throw new Error("guidepoint 1 must be Vector3");
+    }
+    if (!(p2 instanceof  THREE.Vector3)) {
+      throw new Error("guidepoint 2 must be Vector3");
+    }
+    if (!(p3 instanceof  THREE.Vector3)) {
+      throw new Error("guidepoint 3 must be Vector3");
+    }
     if (!(center instanceof THREE.Vector3)) {
       throw new Error("center must be Vector3");
     }
@@ -277,14 +294,35 @@ class Circle {
       throw new Error("normal must be Vector3");
     }
     if (doReuse) {
+      this._p1 = p1;
+      this._p2 = p2;
+      this._p3 = p3;
       this._center = center;
       this._radius = radius;
       this._normal = normal;
     } else {
+      this._p1 = p1.clone();
+      this._p2 = p2.clone();
+      this._p3 = p3.clone();
       this._center = center.clone();
       this._radius = radius;
       this._normal = normal.clone();
     }
+  }
+
+  /** @return {THREE.Vector3} the first guide point */
+  get p1() {
+    return this._p1;
+  }
+
+  /** @return {THREE.Vector3} the second guide point */
+  get p2() {
+    return this._p2;
+  }
+
+  /** @return {THREE.Vector3} the third guide point */
+  get p3() {
+    return this._p3;
   }
 
   /** @return {THREE.Vector3} the center point */
@@ -302,25 +340,22 @@ class Circle {
     return this._normal;
   }
 
-  setGuidePoints(p1, p2, p3) {
-    this._guidePoints = [p1.clone(), p2.clone(), p3.clone()];
-  }
-
-  get guidePoints() {
-    return this._guidePoints;
-  }
-
+  /** the template should be centered before calling this */
   scaleAndTranslate(scale, offset) {
     if (scale) {
-      this._center.multiplyScalar(scale)
+      this._p1.multiplyScalar(scale);
+      this._p2.multiplyScalar(scale);
+      this._p3.multiplyScalar(scale);
+      this._center.multiplyScalar(scale);
       this._radius *= scale;
       // normal is unchanged
-      // guidepoints are not changed, because this is called on template
     }
     if (offset) {
+      this._p1.add(offset);
+      this._p2.add(offset);
+      this._p3.add(offset);
       this._center.add(offset);
       // normal and radius are unchanged
-      // guidepoints are not changed, because this is called on template
     }
   }
 }
@@ -393,16 +428,13 @@ function calcPlaneNormal(segments, arcs, circles) {
   }
   const points = [];
   segments.forEach(segment => {
-    points.push(segment.a);
-    points.push(segment.b);
+    points.push(segment.a, segment.b);
   });
   arcs.forEach(arc => {
-    points.push(arc.end1);
-    points.push(arc.midpoint);
-    points.push(arc.end2);
+    points.push(arc.end1, arc.midpoint, arc.end2);
   });
   circles.forEach(circle => {
-    points.push(...circle.guidePoints);
+    points.push(circle.p1, circle.p2, circle.p3);
   })
 
   const normal = new THREE.Vector3();
@@ -437,9 +469,10 @@ function centerAndSizeTemplate(template) {
     arc.midpoint.sub(center);
     arc.end2.sub(center);
   });
+  center.negate();
   template.circles.forEach(circle => {
-    circle.center.sub(center);
-  })
+    circle.scaleAndTranslate(false, center);
+  });
 
   template.size = template.segments.reduce((total, segment) => {
     return total + segment.a.length() + segment.b.length();
@@ -531,15 +564,26 @@ const triquetraTemplate = centerAndSizeTemplate({
   audioTag: '#bind',
 });
 
+const {circle: circle1} = circleFrom3Points(
+    new THREE.Vector3(0, -Math.sqrt(3)/3 - 1, 0),
+    new THREE.Vector3(-0.5, Math.sqrt(3)/6, 0),
+    new THREE.Vector3(0.5, Math.sqrt(3)/6, 0)
+);
+const {circle: circle2} = circleFrom3Points(
+    new THREE.Vector3(-1.5, Math.sqrt(3)/6, 0),
+    new THREE.Vector3(0.5, Math.sqrt(3)/6, 0),
+    new THREE.Vector3(0, -Math.sqrt(3)/3, 0)
+);
+const {circle: circle3} = circleFrom3Points(
+    new THREE.Vector3(1.5, Math.sqrt(3)/6, 0),
+    new THREE.Vector3(-0.5, Math.sqrt(3)/6, 0),
+    new THREE.Vector3(0, -Math.sqrt(3)/3, 0)
+);
 const borromeanRingsTemplate = centerAndSizeTemplate({
   name: "borromean rings",
   segments: [],
   arcs: [],
-  circles: [
-    new Circle(new THREE.Vector3(0.5,0.28868,0), 1, new THREE.Vector3(0, 0, 1)),
-    new Circle(new THREE.Vector3(-0.5,0.28868,0), 1, new THREE.Vector3(0, 0, 1)),
-    new Circle(new THREE.Vector3(0,-0.57735,0), 1, new THREE.Vector3(0, 0, 1)),
-  ],
+  circles: [circle1, circle2, circle3],
   size: null,
   minScore: 4.0,
   manaUseMultiplier: 1,
@@ -556,9 +600,11 @@ const quicksilverTemplate = centerAndSizeTemplate({
   arcs: [
     new Arc(new THREE.Vector3(-8.9/20, 18/20, 0), new THREE.Vector3(0, 10/20,  0), new THREE.Vector3(8.9/20, 18/20, 0)),
   ],
-  circles: [
-    new Circle(new THREE.Vector3(0,0,0), 10/20, new THREE.Vector3(0, 0, 1))
-  ],
+  circles: [circleFrom3Points(
+      new THREE.Vector3(0, 10/20,  0),
+      new THREE.Vector3(10/20, 0, 0),
+      new THREE.Vector3(0, -10/20,  0)
+  ).circle],
   size: null,
   minScore: 4.0,
   manaUseMultiplier: 1,
@@ -626,15 +672,18 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
   });
   const centeredDrawnCircles = [];
   drawnCircles.forEach(circle => {
+    const p1 = circle.p1.clone().sub(drawnCenter);
+    const p2 = circle.p2.clone().sub(drawnCenter);
+    const p3 = circle.p3.clone().sub(drawnCenter);
     const center = circle.center.clone().sub(drawnCenter);
-    centeredDrawnCircles.push(new Circle(center, circle.radius, circle.normal.clone(), true));
+    centeredDrawnCircles.push(new Circle(p1, p2, p3, center, circle.radius, circle.normal.clone(), true));
   })
 
   const normalDrawn = calcPlaneNormal(drawnSegments, drawnArcs, drawnCircles);
 
   const templateSegmentsXformed = template.segments.map(segment => new Segment(segment.a, segment.b));
   const templateArcsXformed = template.arcs.map(arc => new Arc(arc.end1, arc.midpoint, arc.end2));
-  const templateCirclesXformed = template.circles.map(circle => new Circle(circle.center, circle.radius, circle.normal));
+  const templateCirclesXformed = template.circles.map(circle => new Circle(circle.p1, circle.p2, circle.p3, circle.center, circle.radius, circle.normal));
 
   // rotates plane of template to match drawn
   let rotAngle = normalDrawn.angleTo(zAxis);
@@ -652,6 +701,9 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
       arc.end2.applyAxisAngle(rotAxis, rotAngle);
     });
     templateCirclesXformed.forEach(circle => {
+      circle.p1.applyAxisAngle(rotAxis, rotAngle);
+      circle.p2.applyAxisAngle(rotAxis, rotAngle);
+      circle.p3.applyAxisAngle(rotAxis, rotAngle);
       circle.center.applyAxisAngle(rotAxis, rotAngle);
       circle.normal.applyAxisAngle(rotAxis, rotAngle);
     });
@@ -813,9 +865,6 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs, drawnCircles) {
 
   return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed];
 }
-
-const rotAxis = new THREE.Vector3();
-const zAxis = new THREE.Vector3(0,0,1);
 
 
 function angleDiff(first, second) {
