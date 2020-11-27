@@ -390,11 +390,11 @@ AFRAME.registerState({
         } else {
           duration = TRAINING_DURATION;
         }
-        this.showTraining(state, bestSegmentsXformed, bestArcsXformed, rawScore, score, centroid, duration);
+        this.showTraining(state, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, rawScore, score, centroid, duration);
       }
     },
 
-    showTraining: function (state, bestSegmentsXformed, bestArcsXformed, rawScore, score, centroid, duration) {
+    showTraining: function (state, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, rawScore, score, centroid, duration) {
       const trainingEl = document.createElement('a-entity');
       bestSegmentsXformed.forEach((segment, i) => {
         trainingEl.setAttribute('line__' + i,
@@ -403,7 +403,13 @@ AFRAME.registerState({
       bestArcsXformed.forEach((arc, i) => {
         const {points} = arcFrom3Points(arc.end1, arc.midpoint, arc.end2);
         const pointData = points.map(point => point.x.toFixed(3) + ' ' + point.y.toFixed(3) + ' ' + point.z.toFixed(3)).join(',');
-        trainingEl.setAttribute('lines__' + i,
+        trainingEl.setAttribute('lines__a' + i,
+            {points: pointData, color: 'black'});
+      });
+      bestCirclesXformed.forEach((circle, i) => {
+        const {points} = circleFrom3Points(circle.p1, circle.p2, circle.p3);
+        const pointData = points.map(point => point.x.toFixed(3) + ' ' + point.y.toFixed(3) + ' ' + point.z.toFixed(3)).join(',');
+        trainingEl.setAttribute('lines__c' + i,
             {points: pointData, color: 'black'});
       });
       AFRAME.scenes[0].appendChild(trainingEl);
