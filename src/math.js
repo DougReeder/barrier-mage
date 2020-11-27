@@ -482,7 +482,7 @@ function centerAndSizeTemplate(template) {
   }, 0);
   template.size += template.circles.reduce((total, circle) => {
     // noinspection JSValidateTypes
-    return total + circle.center.length();
+    return total + circle.center.length() + circle.radius;
   }, 0);
 
   if (! (template.color instanceof THREE.Color)) {
@@ -560,7 +560,7 @@ const triquetraTemplate = centerAndSizeTemplate({
   size: null,
   minScore: 5.0,
   manaUseMultiplier: 1,
-  color: 'forestgreen',
+  color: 'gold',
   audioTag: '#bind',
 });
 
@@ -585,10 +585,10 @@ const borromeanRingsTemplate = centerAndSizeTemplate({
   arcs: [],
   circles: [circle1, circle2, circle3],
   size: null,
-  minScore: 4.0,
+  minScore: 10.0,
   manaUseMultiplier: 1,
   color: 'gold',
-  audioTag: '#foo',
+  audioTag: '#bind',
 });
 
 const quicksilverTemplate = centerAndSizeTemplate({
@@ -606,10 +606,10 @@ const quicksilverTemplate = centerAndSizeTemplate({
       new THREE.Vector3(0, -10/20,  0)
   ).circle],
   size: null,
-  minScore: 4.0,
+  minScore: 10.0,
   manaUseMultiplier: 1,
   color: 'silver',
-  audioTag: '#foo',
+  audioTag: '#liquid',
 });
 
 const dagazTemplate = centerAndSizeTemplate({
@@ -722,6 +722,7 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
   }
   for (let i=0; i<templateCirclesXformed.length; ++i) {
     sizeDrawn += centeredDrawnCircles[i].center.length();
+    sizeDrawn += centeredDrawnCircles[i].radius;
   }
   const scale = sizeDrawn / template.size;
 

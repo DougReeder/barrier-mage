@@ -24,11 +24,11 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     <img src="assets/symbols.png" alt="pentagram, brimstone and day-rune"><br>
     Grip button: grab staff<br>
     Trigger: Press and hold to draw straight segment<br>
-    A or X Button: Press and hold to draw arc<br>
+    A or X Button: Press and hold to draw arc or circle<br>
     ${requirements}
     <div>
       <video controls width="450" height="450">
-          <source src="assets/Barrier Mage basic play 2.mp4" type="video/mp4">
+          <source src="assets/Barrier Mage basic play 3.mp4" type="video/mp4">
           Sorry, your browser doesn't support embedded videos.
       </video>
     </div>

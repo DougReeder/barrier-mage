@@ -22,3 +22,6 @@ by "hykenfreak" is licensed under Creative Commons Attribution
 
 178318__robinhood76__04099-magic-string-spell.mp3 (https://freesound.org/people/Robinhood76/sounds/178318/)
 by "Robinhood76" is licensed under Creative Commons Attribution
+
+337500__eardeer__blub-short-2.mp3 (https://freesound.org/people/eardeer/sounds/337500/)
+by "eardeer" is licensed under Creative Commons Attribution
