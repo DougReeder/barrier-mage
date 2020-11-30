@@ -97,7 +97,7 @@ function _curveFrom3Points(p1, p2, p3, isCircle = false) {
   const startAngle = aRel.angle();
   let endAngle;
   if (isCircle) {
-    endAngle = startAngle + 2*Math.PI;
+    endAngle = startAngle + 2*Math.PI - 0.00001;
   } else {
     cRel.set(c.x, c.y).sub(center2);
     endAngle = cRel.angle();
