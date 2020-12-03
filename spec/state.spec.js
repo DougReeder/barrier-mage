@@ -385,7 +385,7 @@ describe("curveBegin/curveEnd", () => {
     state.staffEl.object3D.position.set(0, -0.57735,0);
     AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
 
-    state.staffEl.object3D.position.set(1.5, 0.28868,0);
+    state.staffEl.object3D.position.set(1.67, 0.28868,0);
     AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
 
     expect(state.barriers[0].segments.length).toEqual(0);

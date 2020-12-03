@@ -143,13 +143,15 @@ AFRAME.registerState({
       // smooths the curve
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
+      const beginPoint = line.points[line.curveBeginInd];
+      const midPoint = line.points[line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 2)];
+      const circleThreshold = Math.max((beginPoint.distanceToSquared(midPoint) / 16), STRAIGHT_PROXIMITY_SQ);
       let points;
-      if (state.tipPosition.distanceToSquared(line.points[line.curveBeginInd]) > STRAIGHT_PROXIMITY_SQ) {
-        const midInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 2);
+      if (state.tipPosition.distanceToSquared(beginPoint) > circleThreshold) {
         let arc;
         ({arc, points} = arcFrom3Points(
-            line.points[line.curveBeginInd],
-            line.points[midInd],
+            beginPoint,
+            midPoint,
             line.points[line.points.length - 1]
         ));
 
@@ -159,7 +161,7 @@ AFRAME.registerState({
         const thirdInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) * 2 / 3);
         let circle;
         ({circle, points} = circleFrom3Points(
-            line.points[line.curveBeginInd],
+            beginPoint,
             line.points[secondInd],
             line.points[thirdInd]
         ));
