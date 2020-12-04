@@ -2060,7 +2060,7 @@ describe("matchDrawnAgainstTemplates", () => {
   });
 
   it("should match pentagram exact", () => {
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(pentagramTemplate.segments, [], []);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(pentagramTemplate.segments, [], pentagramTemplate.circles);
 
     expect(template.name).toEqual("pentagram");
     expect(score).toBeGreaterThan(1000);
@@ -2076,22 +2076,25 @@ describe("matchDrawnAgainstTemplates", () => {
     });
     segmentsFuzzed[1].a.x += 0.01;
 
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], pentagramTemplate.circles);
 
     expect(template.name).toEqual("pentagram");
-    expect(score).toBeGreaterThan(pentagramTemplate.minScore);
+    expect(score).toBeGreaterThan(300);
     expect(centroidPt.x).toBeCloseTo(0.001, 3);
     expect(centroidPt.y).toBeCloseTo(0, 6);
     expect(centroidPt.z).toBeCloseTo(0, 6);
   });
 
   it("should match pentagram fuzzed linear", () => {
-    const segmentsFuzzed = [];
-    pentagramTemplate.segments.forEach( (segment, i) => {
-      segmentsFuzzed.push(fuzzSegment(segment, 0.01, i));
-    });
+    const fuzz = 0.01;
+    const scale = 1.0;
+    const angle = 0;
+    const axis = new THREE.Vector3(0, 1, 0);
+    const offset = new THREE.Vector3(0, 0, 0);
 
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
+    const {segmentsDrawn: segmentsFuzzed, circlesDrawn: circlesFuzzed} = pseudoDraw(pentagramTemplate, axis, angle, scale, offset, fuzz);
+
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], circlesFuzzed);
 
     expect(template.name).toEqual("pentagram");
     expect(score).toBeGreaterThan(0);
@@ -2101,24 +2104,30 @@ describe("matchDrawnAgainstTemplates", () => {
   });
 
   it("should match pentagram fuzzed linear after random junk", () => {
-    const segmentsFuzzed = [
+    const fuzz = 0.01;
+    const scale = 1.0;
+    const angle = Math.PI/6;
+    const axis = new THREE.Vector3(0, 1, 0);
+    const offset = new THREE.Vector3(0, 0, 0);
+
+    const {segmentsDrawn: segmentsFuzzed, arcsDrawn: arcsFuzzed, circlesDrawn: circlesFuzzed} = pseudoDraw(pentagramTemplate, axis, angle, scale, offset, fuzz);
+
+    segmentsFuzzed.unshift(
       new Segment(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0)),
       new Segment(new THREE.Vector3(1, 1, 0.10), new THREE.Vector3(0, 0, 0)),
       new Segment(new THREE.Vector3(-1, 2, 0), new THREE.Vector3(2, 1, 0)),
       new Segment(new THREE.Vector3(-2, 0, 0), new THREE.Vector3(1, 1, 0)),
       new Segment(new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0, 0)),
       new Segment(new THREE.Vector3(0.5, 0.5, 0), new THREE.Vector3(1, -1, 0)),
-    ];
-    pentagramTemplate.segments.forEach( (segment, i) => {
-      segmentsFuzzed.push(fuzzSegment(segment, 0.01, i));
-    });
-    const axis = new THREE.Vector3(0, 1, 0);
-    segmentsFuzzed.forEach(segment => {
-      segment.a.applyAxisAngle(axis, Math.PI/6);
-      segment.b.applyAxisAngle(axis, Math.PI/6);
-    });
+    );
+    arcsFuzzed.unshift(
+        new Arc(new THREE.Vector3(-1, 0, 2), new THREE.Vector3(2, 1, 0), new THREE.Vector3(3, -5, 9))
+    );
+    circlesFuzzed.unshift(
+        circleFrom3Points(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0), new THREE.Vector3(3, -5, 9)).circle
+    );
 
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, arcsFuzzed, circlesFuzzed);
 
     expect(template.name).toEqual("pentagram");
     expect(score).toBeGreaterThan(100);
@@ -2209,6 +2218,56 @@ describe("matchDrawnAgainstTemplates", () => {
       expect(bestArc.end2.x).toBeCloseTo(drawnArc.end2.x, 1);
       expect(bestArc.end2.y).toBeCloseTo(drawnArc.end2.y, 1);
       expect(bestArc.end2.z).toBeCloseTo(drawnArc.end2.z, 2);
+    }
+  });
+
+  it("should match triquetra fuzzed rotated scaled & translated after random junk", () => {
+    const fuzz = 0.0095;
+    const scale = 1.7;
+    const angle = Math.PI/3;
+    const axis = new THREE.Vector3(1, 12, 0).normalize();
+    const offset = new THREE.Vector3(40, 41, 42);
+
+    const {segmentsDrawn, arcsDrawn, circlesDrawn} = pseudoDraw(triquetraTemplate, axis, angle, scale, offset, fuzz);
+
+    segmentsDrawn.unshift(
+        new Segment(new THREE.Vector3(-50, 51, 52), new THREE.Vector3(1, 0, 0)),
+        new Segment(new THREE.Vector3(1, 1, 0.10), new THREE.Vector3(0, 0, 0)),
+        new Segment(new THREE.Vector3(-1, 2, 0), new THREE.Vector3(2, 1, 0)),
+        new Segment(new THREE.Vector3(-2, 0, 0), new THREE.Vector3(1, 1, 0)),
+        new Segment(new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0, 0)),
+        new Segment(new THREE.Vector3(0.5, 0.5, 0), new THREE.Vector3(1, -1, 0)),
+    );
+    arcsDrawn.unshift(
+        new Arc(new THREE.Vector3(60, -61, 62), new THREE.Vector3(1, 1, 0), new THREE.Vector3(4, 4, -4)),
+        new Arc(new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0, 0), new THREE.Vector3(8, -6.5, 2)),
+        new Arc(new THREE.Vector3(0.5, 0.5, 0), new THREE.Vector3(1, -1, 0), new THREE.Vector3(9, 3, 5)),
+        new Arc(new THREE.Vector3(-1, 0, 2), new THREE.Vector3(2, 1, 0), new THREE.Vector3(3, -5, 9))
+    );
+    circlesDrawn.unshift(
+        circleFrom3Points(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0), new THREE.Vector3(3, -5, 9)).circle
+    );
+
+    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
+
+    expect(template.name).toEqual("triquetra");
+    expect(score).toBeGreaterThan(88);
+    expect(centroidOfDrawn.x).toBeCloseTo(offset.x, 2);
+    expect(centroidOfDrawn.y).toBeCloseTo(offset.y, 2);
+    expect(centroidOfDrawn.z).toBeCloseTo(offset.z, 2);
+    const relevantArcs = arcsDrawn.slice(-triquetraTemplate.arcs.length);
+    for (let i=0; i<template.arcs.length; ++i) {
+      const bestArc = bestArcsXformed[i];
+      const drawnArc = relevantArcs[i];
+      expect(bestArc.end1.x).toBeCloseTo(drawnArc.end1.x, 1);
+      expect(bestArc.end1.y).toBeCloseTo(drawnArc.end1.y, 1);
+      expect(bestArc.end1.z).toBeCloseTo(drawnArc.end1.z, 1);
+      expect(bestArc.midpoint.x).toBeCloseTo(drawnArc.midpoint.x, 1);
+      expect(bestArc.midpoint.y).toBeCloseTo(drawnArc.midpoint.y, 1);
+      expect(bestArc.midpoint.z).toBeCloseTo(drawnArc.midpoint.z, 1);
+      expect(bestArc.end2.x).toBeCloseTo(drawnArc.end2.x, 1);
+      expect(bestArc.end2.y).toBeCloseTo(drawnArc.end2.y, 1);
+      expect(bestArc.end2.z).toBeCloseTo(drawnArc.end2.z, 1);
     }
   });
 

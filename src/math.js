@@ -843,9 +843,15 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs, drawnCircles) {
         drawnCircles.length < template.circles.length) {
       return;
     }
-    const candidateSegments = drawnSegments.slice(-template.segments.length);
-    const candidateArcs = drawnArcs.slice(-template.arcs.length);
-    const candidateCircles = drawnCircles.slice(-template.circles.length);
+    const candidateSegments = template.segments.length ?
+        drawnSegments.slice(-template.segments.length) :
+        [];
+    const candidateArcs = template.arcs.length ?
+        drawnArcs.slice(-template.arcs.length) :
+        [];
+    const candidateCircles = template.circles.length ?
+        drawnCircles.slice(-template.circles.length) :
+        [];
 
     const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, candidateCircles, template);
 
