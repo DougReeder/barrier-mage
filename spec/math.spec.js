@@ -2121,7 +2121,7 @@ describe("matchDrawnAgainstTemplates", () => {
     const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], []);
 
     expect(template.name).toEqual("pentagram");
-    expect(score).toBeGreaterThan(0);
+    expect(score).toBeGreaterThan(100);
     expect(centroidPt.x).toBeCloseTo(0, 2);
     expect(centroidPt.y).toBeCloseTo(0, 2);
     expect(centroidPt.z).toBeCloseTo(0, 2);
@@ -2259,7 +2259,7 @@ describe("matchDrawnAgainstTemplates", () => {
     const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
 
     expect(template.name).toEqual("quicksilver");
-    expect(score).toBeGreaterThan(18);
+    expect(score).toBeGreaterThan(21);
     expect(centroidOfDrawn.x).toBeCloseTo(offset.x, 1);
     expect(centroidOfDrawn.y).toBeCloseTo(offset.y, 1);
     expect(centroidOfDrawn.z).toBeCloseTo(offset.z, 1);

@@ -606,7 +606,7 @@ const quicksilverTemplate = centerAndSizeTemplate({
       new THREE.Vector3(0, -10/20,  0)
   ).circle],
   size: null,
-  minScore: 10.0,
+  minScore: 7.0,
   manaUseMultiplier: 1,
   color: 'silver',
   audioTag: '#liquid',
