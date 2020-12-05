@@ -10,7 +10,7 @@ global.Segment = math.Segment;
 global.arcFrom3Points = math.arcFrom3Points;
 global.circleFrom3Points = math.circleFrom3Points;
 global.matchDrawnAgainstTemplates = math.matchDrawnAgainstTemplates;
-global.pentagramTemplate = math.pentagramTemplate;
+global.pentacleTemplate = math.pentacleTemplate;
 global.triquetraTemplate = math.triquetraTemplate;
 global.borromeanRingsTemplate = math.borromeanRingsTemplate;
 
@@ -162,6 +162,25 @@ describe("straightBegin/straightEnd", () => {
 
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
 
+    state.staffEl.object3D.position.set(0, 1, 0);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(1, 0, 0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+
+    state.staffEl.object3D.position.set(0, -1, 0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+
+    state.staffEl.object3D.position.set(0, 1, 0);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(1);
+    expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(showTrainingSpy).not.toHaveBeenCalled();
+
     state.staffEl.object3D.position.set(0,1,0);
     AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
 
@@ -180,7 +199,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers.length).toEqual(1);
     expect(state.barriers[0].segments.length).toEqual(3);
     expect(state.barriers[0].arcs.length).toEqual(0);
-    expect(state.barriers[0].circles.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(1);
     expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
 
     state.staffEl.object3D.position.set(-0.58779,-0.80902,0);
@@ -190,7 +209,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers.length).toEqual(1);
     expect(state.barriers[0].segments.length).toEqual(4);
     expect(state.barriers[0].arcs.length).toEqual(0);
-    expect(state.barriers[0].circles.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(1);
     expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
     expect(showTrainingSpy).not.toHaveBeenCalled();
 
@@ -199,9 +218,9 @@ describe("straightBegin/straightEnd", () => {
 
     expect(state.barriers[0].segments.length).toEqual(5);
     expect(state.barriers[0].arcs.length).toEqual(0);
-    expect(state.barriers[0].circles.length).toEqual(0);
-    expect(state.barriers[0].template).toEqual(pentagramTemplate);
-    expect(state.barriers[0].color).toEqual(pentagramTemplate.color);
+    expect(state.barriers[0].circles.length).toEqual(1);
+    expect(state.barriers[0].template).toEqual(pentacleTemplate);
+    expect(state.barriers[0].color).toEqual(pentacleTemplate.color);
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(state.barriers.length).toEqual(2);
     expect(showTrainingSpy).toHaveBeenCalled();

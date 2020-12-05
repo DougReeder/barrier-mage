@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentagramTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
+const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentacleTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);   // 0.70711
 const INV_SQRT_3 = 1 / Math.sqrt(3);   // 0.57735
@@ -1137,8 +1137,13 @@ describe("templates", () => {
     expect(centroidPt.z).toEqual(0);
   });
 
-  it("should have pentagram at origin", () => {
-    const points = pentagramTemplate.segments.map(segment => segment.center);
+  it("should have pentacle at origin", () => {
+    expect(pentacleTemplate.circles[0].center.x).toBeCloseTo(0, 6);
+    expect(pentacleTemplate.circles[0].center.y).toBeCloseTo(0, 6);
+    expect(pentacleTemplate.circles[0].center.z).toBeCloseTo( 0, 6);
+    expect(pentacleTemplate.circles[0].radius).toBeCloseTo( 1, 6);
+
+    const points = pentacleTemplate.segments.map(segment => segment.center);
 
     const centroidPt = new THREE.Vector3();
     calcCentroid(points, centroidPt);
@@ -1147,7 +1152,7 @@ describe("templates", () => {
     expect(centroidPt.y).toBeCloseTo(0,6);
     expect(centroidPt.z).toEqual(0);
 
-    expect(pentagramTemplate.size).toBeCloseTo(5 * 2 * 1.0, 4);
+    expect(pentacleTemplate.size).toBeCloseTo(5 * 2 * 1.0 + 1.0, 4);
   });
 
   it("should have triquetra at origin", () => {
@@ -1242,7 +1247,7 @@ describe("templates", () => {
   it("should contain all templates", () => {
     expect(templates).toContain(brimstoneDownTemplate);
     expect(templates).toContain(brimstoneUpTemplate);
-    expect(templates).toContain(pentagramTemplate);
+    expect(templates).toContain(pentacleTemplate);
     expect(templates).toContain(triquetraTemplate);
     expect(templates).toContain(borromeanRingsTemplate);
     expect(templates).toContain(quicksilverTemplate);
@@ -2059,58 +2064,75 @@ describe("matchDrawnAgainstTemplates", () => {
     expect(centroidPt.z).toBeCloseTo(0, 1);
   });
 
-  it("should match pentagram exact", () => {
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(pentagramTemplate.segments, [], pentagramTemplate.circles);
+  it("should match pentacle exact", () => {
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(pentacleTemplate.segments, [], pentacleTemplate.circles);
 
-    expect(template.name).toEqual("pentagram");
+    expect(template.name).toEqual("pentacle");
     expect(score).toBeGreaterThan(1000);
     expect(centroidPt.x).toBeCloseTo(0, 6);
     expect(centroidPt.y).toBeCloseTo(0, 6);
     expect(centroidPt.z).toBeCloseTo(0, 6);
   });
 
-  it("should match pentagram; small difference in a.x", () => {
+  it("should match pentacle; small difference in a.x", () => {
     const segmentsFuzzed = [];
-    pentagramTemplate.segments.forEach( segment => {
+    pentacleTemplate.segments.forEach( segment => {
       segmentsFuzzed.push(new Segment(segment.a, segment.b));
     });
     segmentsFuzzed[1].a.x += 0.01;
 
-    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], pentagramTemplate.circles);
+    const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], pentacleTemplate.circles);
 
-    expect(template.name).toEqual("pentagram");
+    expect(template.name).toEqual("pentacle");
     expect(score).toBeGreaterThan(300);
-    expect(centroidPt.x).toBeCloseTo(0.001, 3);
+    expect(centroidPt.x).toBeCloseTo(0.0009, 4);
     expect(centroidPt.y).toBeCloseTo(0, 6);
     expect(centroidPt.z).toBeCloseTo(0, 6);
   });
 
-  it("should match pentagram fuzzed linear", () => {
+  it("should match pentacle; small difference in circle center", () => {
+    const circlesFuzzed = [
+      circleFrom3Points(new THREE.Vector3(1, 0.01, 0), new THREE.Vector3(0, 1.01, 0), new THREE.Vector3(-1, 0.01, 0)).circle
+    ];
+
+    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(pentacleTemplate.segments, [], circlesFuzzed);
+
+    expect(template.name).toEqual("pentacle");
+    expect(score).toBeGreaterThan(300);
+    expect(centroidOfDrawn.x).toBeCloseTo(0, 6);
+    expect(centroidOfDrawn.y).toBeCloseTo(0.0009, 4);
+    expect(centroidOfDrawn.z).toBeCloseTo(0, 6);
+    expect(bestCirclesXformed[0].center.x).toBeCloseTo(0, 6)
+    expect(bestCirclesXformed[0].center.y).toBeCloseTo(0.0009, 4)
+    expect(bestCirclesXformed[0].center.z).toBeCloseTo(0, 6)
+  });
+
+  it("should match pentacle fuzzed linear", () => {
     const fuzz = 0.01;
     const scale = 1.0;
     const angle = 0;
     const axis = new THREE.Vector3(0, 1, 0);
     const offset = new THREE.Vector3(0, 0, 0);
 
-    const {segmentsDrawn: segmentsFuzzed, circlesDrawn: circlesFuzzed} = pseudoDraw(pentagramTemplate, axis, angle, scale, offset, fuzz);
+    const {segmentsDrawn: segmentsFuzzed, circlesDrawn: circlesFuzzed} = pseudoDraw(pentacleTemplate, axis, angle, scale, offset, fuzz);
 
     const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, [], circlesFuzzed);
 
-    expect(template.name).toEqual("pentagram");
-    expect(score).toBeGreaterThan(0);
+    expect(template.name).toEqual("pentacle");
+    expect(score).toBeGreaterThan(83);
     expect(centroidPt.x).toBeCloseTo(0, 2);
     expect(centroidPt.y).toBeCloseTo(0, 2);
     expect(centroidPt.z).toBeCloseTo(0, 2);
   });
 
-  it("should match pentagram fuzzed linear after random junk", () => {
+  it("should match pentacle fuzzed linear after random junk", () => {
     const fuzz = 0.01;
     const scale = 1.0;
     const angle = Math.PI/6;
     const axis = new THREE.Vector3(0, 1, 0);
     const offset = new THREE.Vector3(0, 0, 0);
 
-    const {segmentsDrawn: segmentsFuzzed, arcsDrawn: arcsFuzzed, circlesDrawn: circlesFuzzed} = pseudoDraw(pentagramTemplate, axis, angle, scale, offset, fuzz);
+    const {segmentsDrawn: segmentsFuzzed, arcsDrawn: arcsFuzzed, circlesDrawn: circlesFuzzed} = pseudoDraw(pentacleTemplate, axis, angle, scale, offset, fuzz);
 
     segmentsFuzzed.unshift(
       new Segment(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0)),
@@ -2129,8 +2151,8 @@ describe("matchDrawnAgainstTemplates", () => {
 
     const [score, rawScore, template, centroidPt] = matchDrawnAgainstTemplates(segmentsFuzzed, arcsFuzzed, circlesFuzzed);
 
-    expect(template.name).toEqual("pentagram");
-    expect(score).toBeGreaterThan(100);
+    expect(template.name).toEqual("pentacle");
+    expect(score).toBeGreaterThan(74);
     expect(centroidPt.x).toBeCloseTo(0, 2);
     expect(centroidPt.y).toBeCloseTo(0, 2);
     expect(centroidPt.z).toBeCloseTo(0, 2);

@@ -528,8 +528,8 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
   audioTag: '#flame',
 });
 
-const pentagramTemplate = centerAndSizeTemplate({
-  name: "pentagram",
+const pentacleTemplate = centerAndSizeTemplate({
+  name: "pentacle",
   segments: [
     new Segment(new THREE.Vector3(0,1,0), new THREE.Vector3(0.58779,-0.80902,0), true),
     new Segment(new THREE.Vector3(0.58779,-0.80902,0), new THREE.Vector3(-0.95106,0.30902,0), true),
@@ -538,7 +538,9 @@ const pentagramTemplate = centerAndSizeTemplate({
     new Segment(new THREE.Vector3(-0.58779,-0.80902), new THREE.Vector3(0,1,0), true),
   ],
   arcs: [],
-  circles: [],
+  circles: [
+    circleFrom3Points(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(-1, 0, 0)).circle
+  ],
   size: null,
   minScore: 5.0,
   manaUseMultiplier: 1,
@@ -632,7 +634,7 @@ const dagazTemplate = centerAndSizeTemplate({
 const templates = [
   brimstoneDownTemplate,
   brimstoneUpTemplate,
-  pentagramTemplate,
+  pentacleTemplate,
   triquetraTemplate,
   borromeanRingsTemplate,
   quicksilverTemplate,
@@ -894,7 +896,7 @@ try {   // pulled in via require for testing
     angleDiff,
     brimstoneDownTemplate,
     brimstoneUpTemplate,
-    pentagramTemplate,
+    pentacleTemplate,
     triquetraTemplate,
     borromeanRingsTemplate,
     quicksilverTemplate,
