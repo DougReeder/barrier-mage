@@ -588,9 +588,9 @@ const borromeanRingsTemplate = centerAndSizeTemplate({
   circles: [circle1, circle2, circle3],
   size: null,
   minScore: 10.0,
-  manaUseMultiplier: 1,
-  color: 'gold',
-  audioTag: '#bind',
+  manaUseMultiplier: 30,
+  color: 'white',
+  audioTag: '#portal',
 });
 
 const quicksilverTemplate = centerAndSizeTemplate({
@@ -626,7 +626,7 @@ const dagazTemplate = centerAndSizeTemplate({
   circles: [],
   size: null,
   minScore: 9.0,
-  manaUseMultiplier: 15,
+  manaUseMultiplier: 8,
   color: 'yellow',
   audioTag: '#light',
 });

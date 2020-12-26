@@ -19,6 +19,7 @@ const WHITE = new THREE.Color('white');
 
 class MockState {
   constructor() {
+    this.rigEl = new MockElement({});
     this.staffEl = new MockElement({});
     this.straighting = false;
     this.curving = false;
@@ -343,6 +344,7 @@ describe("curveBegin/curveEnd", () => {
   });
 
   it("should end barrier when template w/ circles recognized", () => {
+    const createPortalSpy = spyOn(AFRAME.stateParam.handlers, 'createPortal');
     const showTrainingSpy = spyOn(AFRAME.stateParam.handlers, 'showTraining');
 
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
@@ -368,6 +370,7 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(1);
     expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(createPortalSpy).not.toHaveBeenCalled();
     expect(showTrainingSpy).not.toHaveBeenCalled();
 
     state.staffEl.object3D.position.set(-1.5, 0.28868, 0);
@@ -377,6 +380,7 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(1);
     expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(createPortalSpy).not.toHaveBeenCalled();
     expect(showTrainingSpy).not.toHaveBeenCalled();
 
     state.staffEl.object3D.position.set(0.5, 0.28868,0);
@@ -393,6 +397,7 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(2);
     expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(createPortalSpy).not.toHaveBeenCalled();
     expect(showTrainingSpy).not.toHaveBeenCalled();
 
     state.staffEl.object3D.position.set(1.5, 0.28868,0);
@@ -413,6 +418,7 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].template).toEqual(borromeanRingsTemplate);
     expect(state.barriers[0].color).toEqual(borromeanRingsTemplate.color);
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
+    expect(createPortalSpy).toHaveBeenCalled();
     expect(showTrainingSpy).toHaveBeenCalled();
     expect(showTrainingSpy.calls.argsFor(0)[7]).toEqual(6000);
     expect(state.barriers.length).toBe(2);

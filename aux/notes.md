@@ -1,7 +1,7 @@
 ## forum blurb
 
 In fantasy, a wizard draws mystic symbols to work a magic spell.
-In this experice, you can too! 
+In this demo, you can too! 
 
 A 6-DOF controller is required.
 
@@ -15,8 +15,6 @@ Video at https://dougreeder.github.io/barrier-mage/assets/Barrier%20Mage%20basic
 Webapp at https://dougreeder.github.io/barrier-mage/
 
 For a challenge, surround yourself with barriers (as if you were attacked by demons) and try to keep a complete circle in place!
-
-You can also draw circular arcs using the A or X button, but there aren't yet any symbol templates that require them.
 
 If you're moved to create a fantasy landscape that can use point light sources, I'd much appreciate such a contribution!
 Likewise, creatures to be fended off with the barriers. 

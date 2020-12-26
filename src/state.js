@@ -7,6 +7,7 @@ function isDesktop() {
   return ! (AFRAME.utils.device.isMobile() || AFRAME.utils.device.isMobileVR());
 }
 
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const STRAIGHT_PROXIMITY_SQ = 0.01;   // when drawing straight sections; square of 0.1 m
 const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved sections; square of 0.05 m
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
@@ -353,6 +354,10 @@ AFRAME.registerState({
         line.el.setAttribute('sound', {src: template.audioTag, autoplay: true, refDistance:2.0});
 
         switch (template.name) {
+          case "borromean rings":
+            this.createPortal(state, centroid);
+            break;
+
           case "dagaz":
             barrier.mana = FADEOUT_DURATION;
 
@@ -369,12 +374,24 @@ AFRAME.registerState({
                 segmentsWidth: 24
               });
               lightEl.setAttribute('position', '0, 1.18, 0');   // relative to hand
+              lightEl.setAttribute('animation', {
+                property: 'geometry.radius',
+                from: 0.001, to: 0.03,
+                easing: 'easeOutSine',
+                dur: '2000'   // ms
+              });
               state.staffEl.appendChild(lightEl);
 
               const glowEl = document.createElement('a-entity');
               glowEl.setAttribute('material', {color: '#F3E5AB', transparent: true, opacity: 0.25});
               glowEl.setAttribute('geometry', {primitive: 'sphere', radius: 0.10});
               glowEl.setAttribute('position', '0, 1.18, 0');   // relative to hand
+              glowEl.setAttribute('animation', {
+                property: 'geometry.radius',
+                from: 0.001, to: 0.10,
+                easing: 'easeOutSine',
+                dur: '2000'   // ms
+              });
               state.staffEl.appendChild(glowEl);
             }
             break;
@@ -431,6 +448,37 @@ AFRAME.registerState({
         trainingEl.fadeRemainingMs = TRAINING_FADE_DURATION;
         scoreEl.fadeRemainingMs = TRAINING_FADE_DURATION;
       }, duration - TRAINING_FADE_DURATION);
+    },
+
+    createPortal: function (state, centroid) {
+      const displacement = new THREE.Vector3();
+      displacement.subVectors(centroid, state.rigEl.object3D.position);
+      const cameraPosition = document.querySelector('[camera]').object3D.position;
+      displacement.x -= cameraPosition.x;
+      displacement.z -= cameraPosition.z;
+      displacement.y -= 1;
+      displacement.normalize();   // 1m past barrier
+
+      const linkEl = document.createElement('a-entity');
+      linkEl.object3D.position.addVectors(centroid, displacement);
+      console.log("centroid:", centroid, "   displacement:", displacement);
+      linkEl.object3D.setRotationFromAxisAngle(Y_AXIS, Math.atan2(displacement.x, displacement.z));
+      linkEl.setAttribute('link', {
+        href: 'https://dougreeder.github.io/elfland-glider/',
+        title: 'Elfland Glider',
+        image: 'https://dougreeder.github.io/elfland-glider/city/screenshot-city.png',
+        on: 'hitstart',
+        visualAspectEnabled: true
+      });
+      linkEl.setAttribute('scale', '0.001 0.001 0.001');
+      linkEl.setAttribute('animation', {
+        property: 'scale',
+        from: '0.001 0.001 0.001', to:'1 1 0.001',
+        easing: 'easeOutSine',
+        dur: '2000'   // ms
+      });
+      console.log("linkEl:", linkEl);
+      AFRAME.scenes[0].appendChild(linkEl);
     }
   }
 });
