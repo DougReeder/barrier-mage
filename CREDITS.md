@@ -1,4 +1,5 @@
-Code by P. Douglas Reeder
+Most code by P. Douglas Reeder
+displacement shader by Stefan Gustavson
 
 ## Models
 
