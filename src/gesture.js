@@ -46,8 +46,12 @@ AFRAME.registerComponent('gesture', {
 
   gripdown: function (evt) {
     AFRAME.scenes[0].emit("magicEnd", {handId: this.el.id});
-    AFRAME.scenes[0].emit("grabStaff", {handId: this.el.id});
-    AFRAME.scenes[0].emit("magicBegin", {handId: this.el.id});
+    if (this.el.children.length) {   // contains staff
+      AFRAME.scenes[0].emit("dropStaff", {handId: this.el.id});
+    } else {
+      AFRAME.scenes[0].emit("grabStaff", {handId: this.el.id});
+      AFRAME.scenes[0].emit("magicBegin", {handId: this.el.id});
+    }
   },
 
   triggerdown: function (evt) {

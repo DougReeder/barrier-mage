@@ -52,6 +52,9 @@ AFRAME.registerState({
       state.inProgress.el = document.createElement('a-entity');
       state.inProgress.el.setObject3D('line', state.inProgress.line);
       AFRAME.scenes[0].appendChild(state.inProgress.el);
+
+      const terrainGeometry = rigEl.sceneEl.querySelector('a-atoll-terrain').getAttribute('geometry');
+      this.getElevation = terrainGeometry.getElevation;
     },
 
     /** event from gesture component on hand */
@@ -221,6 +224,28 @@ AFRAME.registerState({
       if (barrier && ! barrier.template) {
         this.removeBarrier(state, state.barriers.length-1);
       }
+    },
+
+    dropStaff: function (state, evt) {
+      console.log("dropStaff", evt.handId);
+
+      const positionWorld = new THREE.Vector3();
+      state.staffEl.object3D.getWorldPosition(positionWorld);
+      const quaternionWorld = new THREE.Quaternion();
+      state.staffEl.object3D.getWorldQuaternion(quaternionWorld);
+
+      state.staffEl.parentNode.removeChild(state.staffEl);
+
+      const targetElevation = this.getElevation(positionWorld.x, positionWorld.z) + 0.1;
+
+      state.staffEl = document.createElement('a-entity');
+      state.staffEl.setAttribute('gltf-model', "#staffModel");
+      state.staffEl.object3D.position.copy(positionWorld);
+      state.staffEl.object3D.setRotationFromQuaternion (quaternionWorld);
+      state.staffEl.setAttribute('animation', {property: 'object3D.position.y', to: targetElevation, easing: 'easeInCubic'});
+      state.rigEl.sceneEl.appendChild(state.staffEl);
+
+      state.staffHandId = '';
     },
 
     iterate: function (state, action) {
