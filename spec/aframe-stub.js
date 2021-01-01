@@ -63,6 +63,9 @@ class MockElement {
             this._attributes = {};
         }
         this.object3D = new THREE.Object3D();
+        this.parentNode = {
+            removeChild: function () {}
+        }
     }
 
     setAttribute(name, value) {

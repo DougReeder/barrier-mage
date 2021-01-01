@@ -59,8 +59,10 @@ AFRAME.registerState({
 
     /** event from gesture component on hand */
     grabStaff: function (state, evt) {
+      if (! state.staffEl) { return; }
       state.staffEl.parentNode.removeChild(state.staffEl);
       state.staffEl = document.createElement('a-entity');
+      state.staffEl.setAttribute('id', 'staff');
       state.staffEl.setAttribute('gltf-model', "#staffModel");
       if ('leftHand' === evt.handId) {
         state.staffEl.setAttribute('position', '0.01 0 0');
@@ -76,6 +78,7 @@ AFRAME.registerState({
 
     magicBegin: function (state, evt) {
       // console.log("magicBegin:", evt.handId);
+      if (! state.staffEl) { return; }
       state.barriers.push({
         color: WHITE,
         lines: [],
@@ -239,6 +242,7 @@ AFRAME.registerState({
       const targetElevation = this.getElevation(positionWorld.x, positionWorld.z) + 0.1;
 
       state.staffEl = document.createElement('a-entity');
+      state.staffEl.setAttribute('id', 'staff');
       state.staffEl.setAttribute('gltf-model', "#staffModel");
       state.staffEl.object3D.position.copy(positionWorld);
       state.staffEl.object3D.setRotationFromQuaternion (quaternionWorld);
@@ -248,21 +252,30 @@ AFRAME.registerState({
       state.staffHandId = '';
     },
 
-    iterate: function (state, action) {
-      state.staffEl.object3D.updateMatrixWorld();
-      state.tipPosition.set(0, 1.09, 0);   // relative to hand
-      state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
+    destroyStaff: function(state, evt) {
+      state.staffEl.parentNode.removeChild(state.staffEl);
+      state.staffEl = null;
+      state.tipPosition = new THREE.Vector3(1000, 1.1, 1000);
+      state.staffHandId = '';
+    },
 
-      if (state.straighting) {
-        state.inProgress.points[1].copy(state.tipPosition);
-        state.inProgress.geometry.setFromPoints(state.inProgress.points);
-        state.inProgress.geometry.computeBoundingSphere();
-      } else if (state.curving) {
-        const distSq = state.tipPosition.distanceToSquared(state.lastTipPosition);
-        // console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
-        if (distSq >= CURVE_PROXIMITY_SQ) {
-          this.appendTipPositionToBarrier(state);
-          state.lastTipPosition.copy(state.tipPosition);
+    iterate: function (state, action) {
+      if (state.staffEl) {
+        state.staffEl.object3D.updateMatrixWorld();
+        state.tipPosition.set(0, 1.09, 0);   // relative to hand
+        state.tipPosition.applyMatrix4(state.staffEl.object3D.matrixWorld);
+
+        if (state.straighting) {
+          state.inProgress.points[1].copy(state.tipPosition);
+          state.inProgress.geometry.setFromPoints(state.inProgress.points);
+          state.inProgress.geometry.computeBoundingSphere();
+        } else if (state.curving) {
+          const distSq = state.tipPosition.distanceToSquared(state.lastTipPosition);
+          // console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
+          if (distSq >= CURVE_PROXIMITY_SQ) {
+            this.appendTipPositionToBarrier(state);
+            state.lastTipPosition.copy(state.tipPosition);
+          }
         }
       }
 

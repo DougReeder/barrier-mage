@@ -49,10 +49,31 @@ AFRAME.registerComponent('creatures', {
     if (this.creatureEl.object3D.position.y < minElevation) {
       this.creatureEl.object3D.position.y = minElevation;
     }
+    const staffDistance = this.creatureEl.object3D.position.distanceTo(this.data.staffPosition);
+    if (staffDistance < 0.5 && ! this.isStaffExploding) {
+      this.isStaffExploding = true;
+      const particleEl = document.createElement('a-entity');
+      particleEl.setAttribute('position', {x: 0, y: 1.00, z: 0});
+      particleEl.setAttribute('particle-system', {
+        velocityValue: "0 1 0",
+        maxAge: 1,
+        dragValue: 1.0,
+        color: "#ff1811,#1d18ff,#1d18ff",
+        size: 0.2,
+        texture: "assets/smokeparticle.png"
+      });
+      particleEl.setAttribute('sound', {src:'#smash', autoplay: true, refDistance:1.0});
+      document.getElementById('staff').appendChild(particleEl);
+
+      setTimeout(() => {
+        particleEl.parentNode.removeChild(particleEl);
+        AFRAME.scenes[0].emit("destroyStaff", {});
+      }, 3000);
+    }
 
     this.cameraPos.setFromMatrixPosition(this.cameraEl.object3D.matrixWorld);
-    const distance = this.creatureEl.object3D.position.distanceTo(this.cameraPos);
-    const opacity = Math.min(Math.max(1 - (distance-1) / 2, 0.0), 1.0);
+    const cameraDistance = this.creatureEl.object3D.position.distanceTo(this.cameraPos);
+    const opacity = Math.min(Math.max(1 - (cameraDistance-1) / 2, 0.0), 1.0);
     this.blackoutEl.setAttribute('material', 'opacity', opacity);
   }
 });

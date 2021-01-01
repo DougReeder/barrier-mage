@@ -424,3 +424,40 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers.length).toBe(2);
   });
 });
+
+describe("destroyStaff", () => {
+  let state;
+
+  beforeEach(() => {
+    state = new MockState();
+  });
+
+  it("should prevent magic", () => {
+    AFRAME.stateParam.handlers.destroyStaff(state, {});
+
+    expect(state.staffEl).toBeFalsy();
+    expect(state.tipPosition.x).toBeGreaterThanOrEqual(1000);
+    expect(state.tipPosition.z).toBeGreaterThanOrEqual(1000);
+    expect(state.tipPosition.y).toBeGreaterThanOrEqual(1);
+    expect(state.staffHandId).toEqual("");
+
+    state.straighting = true;
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+
+    expect(state.tipPosition.x).toBeGreaterThanOrEqual(1000);
+
+    state.straighting = false;
+    state.curving = true;
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+
+    expect(state.tipPosition.x).toBeGreaterThanOrEqual(1000);
+
+    AFRAME.stateParam.handlers.grabStaff(state, {handId: 'leftHand'})
+
+    expect(state.staffHandId).toEqual("");
+
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'})
+
+    expect(state.barriers.length).toEqual(0);
+  });
+})
