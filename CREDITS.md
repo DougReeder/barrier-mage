@@ -27,5 +27,8 @@ by "Robinhood76" is licensed under Creative Commons Attribution
 337500__eardeer__blub-short-2.mp3 (https://freesound.org/people/eardeer/sounds/337500/)
 by "eardeer" is licensed under Creative Commons Attribution
 
+385818__tec-studio__ominous-horn.mp3 (https://freesound.org/people/tec_studio/sounds/385818/)
+by tec_studio is licensed under Creative Commons Attribution
+
 193478__skyklan47__rrmx-wood-metal-glass-explode.mp3 (https://freesound.org/people/skyklan47/sounds/193478/)
 by skyklan47 is licensed under Creative Commons Attribution

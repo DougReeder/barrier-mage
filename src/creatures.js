@@ -38,6 +38,13 @@ AFRAME.registerComponent('creatures', {
     this.creatureEl.setAttribute('material', {shader: 'displacement'});
     const creatureY = this.getElevation(creatureX, creatureZ) + CREATURE_ELEVATION;
     this.creatureEl.setAttribute('position', {x: creatureX, y: creatureY, z: creatureZ});
+    this.creatureEl.setAttribute('sound', {src:'#ominous', volume:2, autoplay: true});
+    this.creatureEl.addEventListener("sound-ended", () => {
+      const staffDistance = this.creatureEl.object3D.position.distanceTo(this.data.staffPosition);
+      setTimeout(() => {
+        this.creatureEl.components.sound.playSound();
+      }, staffDistance*100);   // 10 m = 1 sec
+    });
     AFRAME.scenes[0].appendChild(this.creatureEl);
   },
 

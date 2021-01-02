@@ -389,7 +389,7 @@ AFRAME.registerState({
         this.magicBegin(state, {handId: state.staffHandId});
 
         const line = barrier.lines[barrier.lines.length-1];
-        line.el.setAttribute('sound', {src: template.audioTag, autoplay: true, refDistance:2.0});
+        line.el.setAttribute('sound', {src: template.audioTag, volume:1.333, autoplay: true, refDistance:2.0});
 
         switch (template.name) {
           case "borromean rings":
