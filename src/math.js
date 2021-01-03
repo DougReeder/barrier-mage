@@ -361,6 +361,24 @@ class Circle {
 }
 
 
+function extractPoints(segments, arcs, circles) {
+  if (!(segments instanceof Array) || !(arcs instanceof Array) || !(circles instanceof Array)) {
+    throw new Error("must pass arrays of segments, arcs & circles to extractPoints");
+  }
+  const points = [];
+  segments.forEach(segment => {
+    points.push(segment.a, segment.b);
+  });
+  arcs.forEach(arc => {
+    points.push(arc.end1, arc.midpoint, arc.end2);
+  });
+  circles.forEach(circle => {
+    points.push(circle.p1, circle.p2, circle.p3);
+  });
+  return points;
+}
+
+
 /** Sets 'out' to the mean coordinates of the points */
 function calcCentroid(points, out) {
   out.set(0, 0, 0);
@@ -423,19 +441,7 @@ function calcPlaneNormalPoints(points, normal) {
 }
 
 function calcPlaneNormal(segments, arcs, circles) {
-  if (!(segments instanceof Array) || !(arcs instanceof Array)) {
-    throw new Error("must pass array of segments and array of arcs to calcPlaneNormal");
-  }
-  const points = [];
-  segments.forEach(segment => {
-    points.push(segment.a, segment.b);
-  });
-  arcs.forEach(arc => {
-    points.push(arc.end1, arc.midpoint, arc.end2);
-  });
-  circles.forEach(circle => {
-    points.push(circle.p1, circle.p2, circle.p3);
-  })
+  const points = extractPoints(segments, arcs, circles);
 
   const normal = new THREE.Vector3();
   calcPlaneNormalPoints(points, normal);
@@ -889,6 +895,7 @@ try {   // pulled in via require for testing
     Segment,
     Arc,
     Circle,
+    extractPoints,
     calcCentroid,
     centerPoints,
     calcPlaneNormalPoints,

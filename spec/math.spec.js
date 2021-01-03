@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentacleTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
+const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, extractPoints, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentacleTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);   // 0.70711
 const INV_SQRT_3 = 1 / Math.sqrt(3);   // 0.57735
@@ -842,6 +842,28 @@ describe("Circle", () => {
     expect(circle.center.z).toEqual(center.z * scale + offset.z);
     expect(circle.radius).toEqual(radius * scale);
     expect(circle.normal).toEqual(normal);
+  });
+});
+
+
+describe("extractPoints", () => {
+
+  it("should work for segments, arcs and circles", () => {
+    const segments = [
+      new Segment(new THREE.Vector3(-3.03, 1, -3), new THREE.Vector3(-2, 5, -2), true),
+      new Segment(new THREE.Vector3(-16, -4, 12), new THREE.Vector3(8, 22, 13), true),
+    ];
+    const arcs = [
+      new Arc(new THREE.Vector3(2, 2, 2), new THREE.Vector3(2, -12, 1), new THREE.Vector3(2, 0, -5)),
+      new Arc(new THREE.Vector3(16, -24, 0), new THREE.Vector3(2, 4, 8), new THREE.Vector3(1, -2, -9)),
+    ];
+    const circles = [circleFrom3Points(new THREE.Vector3(4, 0, 4), new THREE.Vector3(4, 3, 4), new THREE.Vector3(6, 1, 6)).circle];
+
+    const points = extractPoints(segments, arcs, circles);
+
+    expect(points[2]).toEqual(new THREE.Vector3(-16, -4, 12));
+    expect(points[8]).toEqual(new THREE.Vector3(2, 4, 8));
+    expect(points[11]).toEqual(new THREE.Vector3(4, 3, 4));
   });
 });
 
