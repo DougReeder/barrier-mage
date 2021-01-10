@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, extractPoints, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, brimstoneDownTemplate, brimstoneUpTemplate, pentacleTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
+const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, extractPoints, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, distanceToBarrier, brimstoneDownTemplate, brimstoneUpTemplate, pentacleTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);   // 0.70711
 const INV_SQRT_3 = 1 / Math.sqrt(3);   // 0.57735
@@ -1135,6 +1135,34 @@ describe("calcPlaneNormal", () => {
   });
 });
 
+describe("distanceToBarrier", () => {
+  it("should equal distance to interior point", () => {
+    const barrier = {
+      lines: [],
+      segments: quicksilverTemplate.segments.slice(0),
+      arcs: quicksilverTemplate.arcs.slice(0),
+      circles: quicksilverTemplate.circles.slice(0),
+    };
+    const point = new THREE.Vector3(0.1, 0.6875, -0.1);
+    const distance = distanceToBarrier(point, barrier);
+
+    expect(distance).toBeCloseTo(0.17321, 4);
+  });
+
+  it("should equal distance to exterior point", () => {
+    const barrier = {
+      lines: [],
+      segments: quicksilverTemplate.segments.slice(0),
+      arcs: quicksilverTemplate.arcs.slice(0),
+      circles: quicksilverTemplate.circles.slice(0),
+    };
+    // { "x": -0.445, "y": 0.9875, "z": 0 }
+    const point = new THREE.Vector3(-0.5, 1, -1);
+    const distance = distanceToBarrier(point, barrier);
+
+    expect(distance).toBeCloseTo(1.00159, 4);
+  });
+});
 
 describe("templates", () => {
   it("should have brimstone down at origin", () => {

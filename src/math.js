@@ -449,6 +449,18 @@ function calcPlaneNormal(segments, arcs, circles) {
   return normal;
 }
 
+function distanceToBarrier(point, barrier) {
+  const barrierPoints = extractPoints(barrier.segments, barrier.arcs, barrier.circles);
+  let minDist = Number.POSITIVE_INFINITY;
+  barrierPoints.forEach(barrierPoint => {
+    const dist = point.distanceTo(barrierPoint);
+    if (dist < minDist) {
+      minDist = dist;
+    }
+  });
+  return minDist;
+}
+
 function centerAndSizeTemplate(template) {
   // centers guidepoints
   const center = new THREE.Vector3(0, 0, 0);
@@ -901,6 +913,7 @@ try {   // pulled in via require for testing
     calcPlaneNormalPoints,
     calcPlaneNormal,
     angleDiff,
+    distanceToBarrier,
     brimstoneDownTemplate,
     brimstoneUpTemplate,
     pentacleTemplate,
