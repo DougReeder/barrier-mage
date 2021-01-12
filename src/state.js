@@ -30,7 +30,9 @@ AFRAME.registerState({
     inProgress: {},
     barriers: [],
     trainingEls: [],
-    scoreEls: []
+    scoreEls: [],
+    creatures: [],
+    isStaffExploding: false
   },
 
   handlers: {
@@ -45,6 +47,9 @@ AFRAME.registerState({
       state.staffEl = document.getElementById('staff');
       state.tipPosition = new THREE.Vector3();
       state.lastTipPosition = new THREE.Vector3();
+      this.cameraEl = document.querySelector('[camera]');
+      this.cameraPos = new THREE.Vector3();
+      this.blackoutEl = this.cameraEl.querySelector('#blackout');
 
       state.inProgress.geometry = new THREE.BufferGeometry();
       state.inProgress.material = new THREE.LineBasicMaterial({color: 'gray'});
@@ -55,6 +60,10 @@ AFRAME.registerState({
 
       const terrainGeometry = rigEl.sceneEl.querySelector('a-atoll-terrain').getAttribute('geometry');
       this.getElevation = terrainGeometry.getElevation;
+
+      setTimeout(() => {
+        this.createCreature(state);
+      }, 3000);
     },
 
     /** event from gesture component on hand */
@@ -259,7 +268,22 @@ AFRAME.registerState({
       state.staffHandId = '';
     },
 
-    iterate: function (state, action) {
+    createCreature: function (state) {
+      const creatureX = 15.00, creatureZ = -50.00;
+      const terrainY = this.getElevation(creatureX, creatureZ);
+      const creatureEl = placeCreature(creatureX, creatureZ, terrainY);
+      state.creatures.push({el: creatureEl});
+
+      creatureEl.addEventListener("sound-ended", () => {
+        // When creature is close, its sound is soon repeated.
+        const staffDistance = creatureEl.object3D.position.distanceTo(state.tipPosition);
+        setTimeout(() => {
+          creatureEl.components.sound.playSound();
+        }, staffDistance*100);   // 10 m = 1 sec
+      });
+    },
+
+    iterate: function (state, {time, timeDelta}) {
       if (state.staffEl) {
         state.staffEl.object3D.updateMatrixWorld();
         state.tipPosition.set(0, 1.09, 0);   // relative to hand
@@ -279,9 +303,41 @@ AFRAME.registerState({
         }
       }
 
+      this.cameraPos.setFromMatrixPosition(this.cameraEl.object3D.matrixWorld);
+      state.creatures.forEach(creature => {
+        // creature attacks staff if near
+        const terrainY = this.getElevation(creature.el.object3D.position.x, creature.el.object3D.position.z)
+        const isNearStaff = creatureTick({creature, timeDelta, staffPosition:state.tipPosition, terrainY});
+        if (isNearStaff && ! state.isStaffExploding) {
+          state.isStaffExploding = true;
+          const particleEl = document.createElement('a-entity');
+          particleEl.setAttribute('position', {x: 0, y: 1.00, z: 0});
+          particleEl.setAttribute('particle-system', {
+            velocityValue: "0 1 0",
+            maxAge: 1,
+            dragValue: 1.0,
+            color: "#ff1811,#1d18ff,#1d18ff",
+            size: 0.2,
+            texture: "assets/smokeparticle.png"
+          });
+          particleEl.setAttribute('sound', {src:'#smash', autoplay: true, refDistance:1.0});
+          document.getElementById('staff').appendChild(particleEl);
+
+          setTimeout(() => {
+            particleEl.parentNode.removeChild(particleEl);
+            AFRAME.scenes[0].emit("destroyStaff", {});
+          }, 3000);
+        }
+
+        // grays out player view if near creature
+        const cameraDistance = creature.el.object3D.position.distanceTo(this.cameraPos);
+        const opacity = Math.min(Math.max(1 - (cameraDistance-1) / 2, 0.0), 1.0);
+        this.blackoutEl.setAttribute('material', 'opacity', opacity);
+      });
+
       state.barriers.forEach((barrier, i) => {
         if (barrier && barrier.mana > 0) {
-          barrier.mana -= action.timeDelta * barrier.template.manaUseMultiplier;
+          barrier.mana -= timeDelta * barrier.template.manaUseMultiplier;
           const fraction = Math.max(barrier.mana / FADEOUT_DURATION, 0);
           if (fraction < 1.0) {
             barrier.color.copy(barrier.template.color);
@@ -302,7 +358,7 @@ AFRAME.registerState({
         if (! trainingEl.hasOwnProperty('fadeRemainingMs')) {
           return;
         }
-        trainingEl.fadeRemainingMs -= action.timeDelta;
+        trainingEl.fadeRemainingMs -= timeDelta;
         const opacity = Math.max(trainingEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
         for (let j=0; j<5; ++j) {   // Templates have at most 5 segments.
           const lineAtrbt = trainingEl.getAttribute('line__'+j);
@@ -330,7 +386,7 @@ AFRAME.registerState({
         if (! scoreEl.hasOwnProperty('fadeRemainingMs')) {
           return;
         }
-        scoreEl.fadeRemainingMs -= action.timeDelta;
+        scoreEl.fadeRemainingMs -= timeDelta;
         const opacity = Math.max(scoreEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
         scoreEl.setAttribute('transparent', true);
         scoreEl.setAttribute('opacity', opacity);

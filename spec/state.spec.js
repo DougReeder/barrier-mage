@@ -33,6 +33,8 @@ class MockState {
     this.barriers = [];
     this.trainingEls = [];
     this.scoreEls = [];
+    this.creatures = [];
+    this.isStaffExploding = false;
 
     this.inProgress.line = new THREE.Line(this.inProgress.geometry, this.inProgress.material);
   }
@@ -43,6 +45,8 @@ describe("straightBegin/straightEnd", () => {
 
   beforeEach(() => {
     state = new MockState();
+    AFRAME.stateParam.handlers.cameraEl = new MockElement();
+    AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
   });
 
   it("should add a new line and a segment when new segment *is not* continuous", () => {
@@ -276,6 +280,8 @@ describe("curveBegin/curveEnd", () => {
 
   beforeEach(() => {
     state = new MockState();
+    AFRAME.stateParam.handlers.cameraEl = new MockElement();
+    AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
   });
 
   it("should end barrier when template w/ arcs recognized", () => {
@@ -430,6 +436,8 @@ describe("destroyStaff", () => {
 
   beforeEach(() => {
     state = new MockState();
+    AFRAME.stateParam.handlers.cameraEl = new MockElement();
+    AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
   });
 
   it("should prevent magic", () => {
