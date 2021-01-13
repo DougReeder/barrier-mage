@@ -272,7 +272,7 @@ AFRAME.registerState({
       const creatureX = 15.00, creatureZ = -50.00;
       const terrainY = this.getElevation(creatureX, creatureZ);
       const creatureEl = placeCreature(creatureX, creatureZ, terrainY);
-      state.creatures.push({el: creatureEl});
+      state.creatures.push({el: creatureEl, canMove: true});
 
       creatureEl.addEventListener("sound-ended", () => {
         // When creature is close, its sound is soon repeated.
@@ -303,11 +303,26 @@ AFRAME.registerState({
         }
       }
 
+      // updates creatures and flags barriers affecting them
       this.cameraPos.setFromMatrixPosition(this.cameraEl.object3D.matrixWorld);
+      state.barriers.forEach(barrier => {
+        if (barrier) {
+          barrier.wasActing = barrier.isActing;
+          barrier.isActing = false;
+        }
+      });
       state.creatures.forEach(creature => {
+        // creature interacts with completed barriers
+        clearCreatureTickStatus(creature);
+        state.barriers.forEach(barrier => {
+          if (barrier && barrier.template) {
+            barrier.isActing |= creatureBarrier({creature, barrier})
+          }
+        });
+
         // creature attacks staff if near
         const terrainY = this.getElevation(creature.el.object3D.position.x, creature.el.object3D.position.z)
-        const isNearStaff = creatureTick({creature, timeDelta, staffPosition:state.tipPosition, terrainY});
+        const isNearStaff = creatureTickMove({creature, timeDelta, staffPosition:state.tipPosition, terrainY});
         if (isNearStaff && ! state.isStaffExploding) {
           state.isStaffExploding = true;
           const particleEl = document.createElement('a-entity');
@@ -336,6 +351,9 @@ AFRAME.registerState({
       });
 
       state.barriers.forEach((barrier, i) => {
+        if (barrier && barrier.isActing && ! barrier.wasActing) {
+          barrier.lines[barrier.lines.length-1].el.components.sound.playSound();
+        }
         if (barrier && barrier.mana > 0) {
           barrier.mana -= timeDelta * barrier.template.manaUseMultiplier;
           const fraction = Math.max(barrier.mana / FADEOUT_DURATION, 0);
