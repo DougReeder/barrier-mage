@@ -111,6 +111,10 @@ float pnoise3(vec3 P, vec3 rep)
 
 AFRAME.registerShader('displacement', {
   schema: {
+    colorOuter: {type: 'color', default: '#ff6600', is: 'uniform'},
+    colorOuterActive: {type: 'color', default: '#00ff00', is: 'uniform'},
+    activity: {type: 'float', default: 0.0, is: 'uniform'},   // 0 to 1
+    colorInner: {type: 'color', default: '#0080ff', is: 'uniform'},
     timeMsec: {type:'time', is:'uniform'}
   },
   vertexShader: pnoise3 + `
@@ -151,12 +155,17 @@ void main() {
 `,
 
   fragmentShader: `
+uniform vec3 colorOuter;
+uniform vec3 colorOuterActive;
+uniform float activity;
+uniform vec3 colorInner;
+
 varying float noise;
 
 void main() {
-
-  // vec3 color = vec3(1. - 2. * noise);
-  gl_FragColor = vec4( 1. - 2. * noise, 0.5, 0.6 + 2. * noise, 1.0 );
+  vec3 colorOut = mix(colorOuter, colorOuterActive, activity);
+  vec3 color = mix(colorOut, colorInner, 2.0 * noise);
+  gl_FragColor = vec4(color, 1.0);
 
 }
 `

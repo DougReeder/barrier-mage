@@ -1,7 +1,7 @@
 // state.js - state model for Barrier Mage
-// Copyright © 2020 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
 
-// math.js must be in a script before this.
+// math.js and creatures.js must be in a script before this.
 
 function isDesktop() {
   return ! (AFRAME.utils.device.isMobile() || AFRAME.utils.device.isMobileVR());
@@ -272,14 +272,17 @@ AFRAME.registerState({
       const creatureX = 15.00, creatureZ = -50.00;
       const terrainY = this.getElevation(creatureX, creatureZ);
       const creatureEl = placeCreature(creatureX, creatureZ, terrainY);
-      state.creatures.push({el: creatureEl, canMove: true});
+      const creature = {el: creatureEl, canMove: true, hitPoints: 5000};
+      state.creatures.push(creature);
 
       creatureEl.addEventListener("sound-ended", () => {
         // When creature is close, its sound is soon repeated.
         const staffDistance = creatureEl.object3D.position.distanceTo(state.tipPosition);
         setTimeout(() => {
-          creatureEl.components.sound.playSound();
-        }, staffDistance*100);   // 10 m = 1 sec
+          if (creature.hitPoints > 0) {
+            creatureEl.components.sound.playSound();
+          }
+        }, staffDistance * 100);   // 10 m = 1 sec
       });
     },
 
@@ -316,9 +319,10 @@ AFRAME.registerState({
         clearCreatureTickStatus(creature);
         state.barriers.forEach(barrier => {
           if (barrier && barrier.template) {
-            barrier.isActing |= creatureBarrier({creature, barrier})
+            barrier.isActing |= creatureBarrier({creature, barrier, timeDelta})
           }
         });
+        applyCreatureStatuses(creature)
 
         // creature attacks staff if near
         const terrainY = this.getElevation(creature.el.object3D.position.x, creature.el.object3D.position.z)
