@@ -1,7 +1,7 @@
 // unit tests for math utilities for Barrier Mage
 
 require("./support/three.min");
-const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, extractPoints, calcCentroid, centerPoints, calcPlaneNormalPoints, calcPlaneNormal, angleDiff, distanceToBarrier, brimstoneDownTemplate, brimstoneUpTemplate, pentacleTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
+const {arcFrom3Points, circleFrom3Points, Segment, Arc, Circle, extractPoints, calcCentroid, centerPoints, calcPlanePoints, calcPlane, angleDiff, distanceToBarrier, brimstoneDownTemplate, brimstoneUpTemplate, pentacleTemplate, triquetraTemplate, borromeanRingsTemplate, quicksilverTemplate, dagazTemplate, templates, transformTemplateToDrawn, rmsd, matchDrawnAgainstTemplates} = require('../src/math');
 
 const INV_SQRT_2 = 1 / Math.sqrt(2);   // 0.70711
 const INV_SQRT_3 = 1 / Math.sqrt(3);   // 0.57735
@@ -935,13 +935,12 @@ describe("centerPoints", function () {
   });
 });
 
-describe("calcPlaneNormalPoints", () => {
+describe("calcPlanePoints", () => {
   it("should throw if less than three points passed", () => {
     const points = [new THREE.Vector3(1, 0, 1), new THREE.Vector3(2, 0, 2)];
-    const normal = new THREE.Vector3();
 
     try {
-      calcPlaneNormalPoints(points, normal);
+      calcPlanePoints(points);
     } catch (err) {
       expect(err.message).toMatch(/three/i);
     }
@@ -949,70 +948,65 @@ describe("calcPlaneNormalPoints", () => {
 
   it("should handle points almost in the X-Z plane", () => {
     const points = [new THREE.Vector3(1, 0, 1), new THREE.Vector3(2, 0, 2), new THREE.Vector3(3, 0.1, 1), new THREE.Vector3(5, 0, 2), new THREE.Vector3(1, 0, 4)];
-    const normal = new THREE.Vector3();
 
-    calcPlaneNormalPoints(points, normal);
+    const plane = calcPlanePoints(points);
 
-    expect(normal.x).toBeCloseTo(0, 1);
-    expect(Math.abs(normal.y)).toBeCloseTo(1, 2);
-    expect(normal.z).toBeCloseTo(0, 1);
+    expect(plane.normal.x).toBeCloseTo(0, 1);
+    expect(Math.abs(plane.normal.y)).toBeCloseTo(1, 2);
+    expect(plane.normal.z).toBeCloseTo(0, 1);
   });
 
   it("should handle points almost in a vertical plane", () => {
     const points = [new THREE.Vector3(THREE_SQRT_2, 0, THREE_SQRT_2), new THREE.Vector3(-THREE_SQRT_2, 0, -THREE_SQRT_2), new THREE.Vector3(0.01, 2, 0), new THREE.Vector3(0, -4, 0)];
-    const normal = new THREE.Vector3();
 
-    calcPlaneNormalPoints(points, normal);
+    const plane = calcPlanePoints(points);
 
-    expect(normal.x).toBeCloseTo(-INV_SQRT_2, 2);
-    expect(normal.y).toBeCloseTo(0, 2);
-    expect(normal.z).toBeCloseTo(INV_SQRT_2, 2);
+    expect(plane.normal.x).toBeCloseTo(-INV_SQRT_2, 2);
+    expect(plane.normal.y).toBeCloseTo(0, 2);
+    expect(plane.normal.z).toBeCloseTo(INV_SQRT_2, 2);
   });
 
   it("should handle beginning points in one plane and end points in a different one", () => {
     const points = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.0001, 0, 1), new THREE.Vector3(0.0001, 1, 1)];
-    const normal = new THREE.Vector3();
 
-    calcPlaneNormalPoints(points, normal);
+    const plane = calcPlanePoints(points);
 
-    expect(normal.lengthSq()).toBeGreaterThan(0);   // direction is ambiguous
+    expect(plane.normal.lengthSq()).toBeGreaterThan(0);   // direction is ambiguous
   });
 
   it("should work around repeated points", () => {
     const points = [new THREE.Vector3(0, 1, 2), new THREE.Vector3(0, 2, 1), new THREE.Vector3(0, 1, 2), new THREE.Vector3(0, 2, 3), new THREE.Vector3(0, 2, 3)];
-    const normal = new THREE.Vector3();
 
-    calcPlaneNormalPoints(points, normal);
+    const plane = calcPlanePoints(points);
 
-    expect(Math.abs(normal.x)).toBeCloseTo(1, 2);
-    expect(normal.y).toBeCloseTo(0, 2);
-    expect(normal.z).toBeCloseTo(0, 2);
+    expect(Math.abs(plane.normal.x)).toBeCloseTo(1, 2);
+    expect(plane.normal.y).toBeCloseTo(0, 2);
+    expect(plane.normal.z).toBeCloseTo(0, 2);
   });
 
   it("should work around many repeated points", () => {
     const points = [new THREE.Vector3(2, 0, 3), new THREE.Vector3(2, 0, 3), new THREE.Vector3(2, 0, 3), new THREE.Vector3(3, 0, 4), new THREE.Vector3(3, 0, 4), new THREE.Vector3(3, 0, 4), new THREE.Vector3(-4, 0.001, 5)];
-    const normal = new THREE.Vector3();
 
-    calcPlaneNormalPoints(points, normal);
+    const plane = calcPlanePoints(points);
 
-    expect(normal.x).toBeCloseTo(0, 2);
-    expect(Math.abs(normal.y)).toBeCloseTo(1, 2);
-    expect(normal.z).toBeCloseTo(0, 2);
+    expect(plane.normal.x).toBeCloseTo(0, 2);
+    expect(Math.abs(plane.normal.y)).toBeCloseTo(1, 2);
+    expect(plane.normal.z).toBeCloseTo(0, 2);
   });
 });
 
-describe("calcPlaneNormal", () => {
+describe("calcPlane", () => {
   it("should work for segments almost in the X-Y plane", () => {
     const segments = [
         new Segment(new THREE.Vector3(1, 1, 0), new THREE.Vector3(-1, -1, 0.01)),
         new Segment(new THREE.Vector3(2, -1, -0.01), new THREE.Vector3(-1, -0.5, 0.1))
     ]
 
-    const normal = calcPlaneNormal(segments, [], []);
+    const plane = calcPlane(segments, [], []);
 
-    expect(normal.x).toBeLessThan(0.01);
-    expect(normal.y).toBeLessThan(0.01);
-    expect(normal.z).toBeGreaterThan(0.99);
+    expect(plane.normal.x).toBeLessThan(0.01);
+    expect(plane.normal.y).toBeLessThan(0.01);
+    expect(plane.normal.z).toBeGreaterThan(0.99);
   });
 
   it("should work for segments almost in a vertical plane", () => {
@@ -1026,11 +1020,11 @@ describe("calcPlaneNormal", () => {
       segment.b.applyAxisAngle(axis, Math.PI/6);
     });
 
-    const normal = calcPlaneNormal(segments, [], []);
+    const plane = calcPlane(segments, [], []);
 
-    expect(normal.x).toBeCloseTo(Math.sin(Math.PI/6), 2);
-    expect(normal.z).toBeCloseTo(Math.cos(Math.PI/6), 2);   // 0.86603
-    expect(normal.y).toBeCloseTo(0, 2);
+    expect(plane.normal.x).toBeCloseTo(Math.sin(Math.PI/6), 2);
+    expect(plane.normal.z).toBeCloseTo(Math.cos(Math.PI/6), 2);   // 0.86603
+    expect(plane.normal.y).toBeCloseTo(0, 2);
   });
 
   it("should work for segments almost in a tilted plane", () => {
@@ -1044,11 +1038,11 @@ describe("calcPlaneNormal", () => {
       segment.b.applyAxisAngle(axis, Math.PI/6);
     });
 
-    const normal = calcPlaneNormal(segments, [], []);
+    const plane = calcPlane(segments, [], []);
 
-    expect(normal.z).toBeCloseTo(Math.cos(Math.PI/6), 2);   // 0.86603
-    expect(normal.y).toBeCloseTo(-Math.sin(Math.PI/6), 2);
-    expect(normal.x).toBeCloseTo(0, 2);
+    expect(plane.normal.z).toBeCloseTo(Math.cos(Math.PI/6), 2);   // 0.86603
+    expect(plane.normal.y).toBeCloseTo(-Math.sin(Math.PI/6), 2);
+    expect(plane.normal.x).toBeCloseTo(0, 2);
   });
 
   it("should work for segments almost in a skew plane", () => {
@@ -1062,11 +1056,11 @@ describe("calcPlaneNormal", () => {
       segment.b.applyAxisAngle(axis, Math.PI/6);
     });
 
-    const normal = calcPlaneNormal(segments, [], []);
+    const plane = calcPlane(segments, [], []);
 
-    expect(normal.y).toBeGreaterThan(0.1);
-    expect(normal.x).toBeGreaterThan(normal.y);
-    expect(normal.z).toBeGreaterThan(normal.x);
+    expect(plane.normal.y).toBeGreaterThan(0.1);
+    expect(plane.normal.x).toBeGreaterThan(plane.normal.y);
+    expect(plane.normal.z).toBeGreaterThan(plane.normal.x);
   });
 
   it("should work for arcs alone in the Y-Z plane", () => {
@@ -1074,11 +1068,11 @@ describe("calcPlaneNormal", () => {
       new Arc(new THREE.Vector3(2, 2, 2), new THREE.Vector3(2, -12, 1), new THREE.Vector3(2, 0, -5)),
     ];
 
-    const normal = calcPlaneNormal([], arcs, []);
+    const plane = calcPlane([], arcs, []);
 
-    expect(normal.y).toBeCloseTo(0, 6);
-    expect(normal.z).toBeCloseTo(0, 6);
-    expect(Math.abs(normal.x)).toBeCloseTo(1, 6);
+    expect(plane.normal.y).toBeCloseTo(0, 6);
+    expect(plane.normal.z).toBeCloseTo(0, 6);
+    expect(Math.abs(plane.normal.x)).toBeCloseTo(1, 6);
 
   });
 
@@ -1086,11 +1080,11 @@ describe("calcPlaneNormal", () => {
     const {circle} = circleFrom3Points(new THREE.Vector3(10.1, 15.1, 20.1), new THREE.Vector3(10.1, -2, 6), new THREE.Vector3(10.1, 9.9, -3.2));
     const circles = [circle];
 
-    const normal = calcPlaneNormal([], [], circles);
+    const plane = calcPlane([], [], circles);
 
-    expect(normal.y).toBeCloseTo(0, 6);
-    expect(normal.z).toBeCloseTo(0, 6);
-    expect(Math.abs(normal.x)).toBeCloseTo(1, 6);
+    expect(plane.normal.y).toBeCloseTo(0, 6);
+    expect(plane.normal.z).toBeCloseTo(0, 6);
+    expect(Math.abs(plane.normal.x)).toBeCloseTo(1, 6);
   });
 
   it("should work for two circles alone in the Y-Z plane", () => {
@@ -1098,11 +1092,11 @@ describe("calcPlaneNormal", () => {
     const {circle:circleB} = circleFrom3Points(new THREE.Vector3(10.0, -12, -12), new THREE.Vector3(10.0, -14, -12), new THREE.Vector3(10.0, -12, -14));
     const circles = [circleA, circleB];
 
-    const normal = calcPlaneNormal([], [], circles);
+    const plane = calcPlane([], [], circles);
 
-    expect(normal.y).toBeCloseTo(0, 2);
-    expect(normal.z).toBeCloseTo(0, 2);
-    expect(Math.abs(normal.x)).toBeCloseTo(1, 5);
+    expect(plane.normal.y).toBeCloseTo(0, 2);
+    expect(plane.normal.z).toBeCloseTo(0, 2);
+    expect(Math.abs(plane.normal.x)).toBeCloseTo(1, 5);
   });
 
   it("should work for segments and arcs in the Y-Z plane", () => {
@@ -1113,11 +1107,11 @@ describe("calcPlaneNormal", () => {
       new Arc(new THREE.Vector3(1.99, 2, 2), new THREE.Vector3(2, -12, 1), new THREE.Vector3(2, 0, -5)),
     ];
 
-    const normal = calcPlaneNormal(segments, arcs, []);
+    const plane = calcPlane(segments, arcs, []);
 
-    expect(Math.abs(normal.x)).toBeCloseTo(1, 5);
-    expect(normal.y).toBeCloseTo(0, 2);
-    expect(normal.z).toBeCloseTo(0, 2);
+    expect(Math.abs(plane.normal.x)).toBeCloseTo(1, 5);
+    expect(plane.normal.y).toBeCloseTo(0, 2);
+    expect(plane.normal.z).toBeCloseTo(0, 2);
 
   });
 
@@ -1128,10 +1122,10 @@ describe("calcPlaneNormal", () => {
     const {circle} = circleFrom3Points(new THREE.Vector3(4, 0, 4), new THREE.Vector3(4, 3, 4), new THREE.Vector3(6, 1, 6));
     const circles = [circle];
 
-    const normal = calcPlaneNormal(segments, [], circles);
+    const plane = calcPlane(segments, [], circles);
 
-    expect(normal.y).toBeCloseTo(0, 2);
-    expect(normal.x).toBeCloseTo(-normal.z, 2);
+    expect(plane.normal.y).toBeCloseTo(0, 2);
+    expect(plane.normal.x).toBeCloseTo(-plane.normal.z, 2);
   });
 });
 
@@ -1356,7 +1350,7 @@ function fuzzCircle(circle, fuzz = 0, offset = 0) {
 
 describe("transformTemplateToDrawn", () => {
   it("should not transform brimstone (point down) exact", () => {
-    const [segmentsXformed, arcsXformed] = transformTemplateToDrawn(brimstoneDownTemplate.segments, [], [], brimstoneDownTemplate);
+    const [segmentsXformed, arcsXformed, circlesXformed, drawnCenter, planeDrawn] = transformTemplateToDrawn(brimstoneDownTemplate.segments, [], [], brimstoneDownTemplate);
 
     for (let i=0; i<brimstoneDownTemplate.segments.length; ++i) {
       expect(segmentsXformed[i].a.x).toBeCloseTo(brimstoneDownTemplate.segments[i].a.x, 6);
@@ -1366,6 +1360,9 @@ describe("transformTemplateToDrawn", () => {
       expect(segmentsXformed[i].b.y).toBeCloseTo(brimstoneDownTemplate.segments[i].b.y, 6);
       expect(segmentsXformed[i].b.z).toBeCloseTo(brimstoneDownTemplate.segments[i].b.z, 6);
     }
+    expect(planeDrawn.normal.x).toBeCloseTo(0, 6);
+    expect(planeDrawn.normal.y).toBeCloseTo(0, 6);
+    expect(planeDrawn.normal.z).toBeCloseTo(1, 6);
   });
 
   it("should not much transform brimstone (point down) fuzzed", () => {
@@ -1374,7 +1371,7 @@ describe("transformTemplateToDrawn", () => {
       segmentsFuzzed.push(fuzzSegment(segment, 0.01, i))
     });
 
-    const [templateSegmentsXformed, templateArcsXformed] = transformTemplateToDrawn(segmentsFuzzed, [], [], brimstoneDownTemplate);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter, planeDrawn] = transformTemplateToDrawn(segmentsFuzzed, [], [], brimstoneDownTemplate);
 
     for (let i=0; i<brimstoneDownTemplate.segments.length; ++i) {
       expect(templateSegmentsXformed[i].a.x).toBeCloseTo(brimstoneDownTemplate.segments[i].a.x, 1);
@@ -1384,6 +1381,9 @@ describe("transformTemplateToDrawn", () => {
       expect(templateSegmentsXformed[i].b.y).toBeCloseTo(brimstoneDownTemplate.segments[i].b.y, 1);
       expect(templateSegmentsXformed[i].b.z).toBeCloseTo(brimstoneDownTemplate.segments[i].b.z, 1);
     }
+    expect(planeDrawn.normal.x).toBeCloseTo(0, 2);
+    expect(planeDrawn.normal.y).toBeCloseTo(0, 2);
+    expect(planeDrawn.normal.z).toBeCloseTo(1, 4);
   });
 
   it("should translate back brimstone (point down) fuzzed", () => {
@@ -1395,7 +1395,7 @@ describe("transformTemplateToDrawn", () => {
       segmentsFuzzed.push(newSegment)
     });
 
-    const [templateSegmentsXformed, templateArcsXformed] = transformTemplateToDrawn(segmentsFuzzed, [], [], brimstoneDownTemplate);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter, planeDrawn] = transformTemplateToDrawn(segmentsFuzzed, [], [], brimstoneDownTemplate);
 
     for (let i=0; i<brimstoneDownTemplate.segments.length; ++i) {
       expect(templateSegmentsXformed[i].a.x).toBeCloseTo(brimstoneDownTemplate.segments[i].a.x + 2*INV_SQRT_3, 2);
@@ -1405,6 +1405,9 @@ describe("transformTemplateToDrawn", () => {
       expect(templateSegmentsXformed[i].b.y).toBeCloseTo(brimstoneDownTemplate.segments[i].b.y + 2*INV_SQRT_3, 2);
       expect(templateSegmentsXformed[i].b.z).toBeCloseTo(brimstoneDownTemplate.segments[i].b.z + 2*INV_SQRT_3, 2);
     }
+    expect(planeDrawn.normal.x).toBeCloseTo(0, 2);
+    expect(planeDrawn.normal.y).toBeCloseTo(0, 2);
+    expect(planeDrawn.normal.z).toBeCloseTo(1, 4);
   });
 
   it("should rotate to match brimstone (point down) small rotation around Y", () => {
@@ -1418,7 +1421,7 @@ describe("transformTemplateToDrawn", () => {
       segment.b.applyAxisAngle(axis, Math.PI/6);
     });
 
-    const [templateSegmentsXformed, templateArcsXformed] = transformTemplateToDrawn(segmentsRotated, [], [], brimstoneDownTemplate);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter, planeDrawn] = transformTemplateToDrawn(segmentsRotated, [], [], brimstoneDownTemplate);
 
     for (let i=0; i<segmentsRotated.length; ++i) {
       expect(templateSegmentsXformed[i].a.x).toBeCloseTo(segmentsRotated[i].a.x, 1);
@@ -1428,6 +1431,10 @@ describe("transformTemplateToDrawn", () => {
       expect(templateSegmentsXformed[i].b.y).toBeCloseTo(segmentsRotated[i].b.y, 1);
       expect(Math.abs(templateSegmentsXformed[i].b.z)).toBeCloseTo(Math.abs(segmentsRotated[i].b.z), 1);
     }
+    const normalExpected = new THREE.Vector3(0, 0, 1).applyAxisAngle(axis, Math.PI/6);
+    expect(planeDrawn.normal.x).toBeCloseTo(normalExpected.x, 2);
+    expect(planeDrawn.normal.y).toBeCloseTo(normalExpected.y, 2);
+    expect(planeDrawn.normal.z).toBeCloseTo(normalExpected.z, 2);
   });
 
   it("should rotate to match brimstone (point down) small negative rotation around Y", () => {
@@ -1464,7 +1471,7 @@ describe("transformTemplateToDrawn", () => {
       segment.b.applyAxisAngle(axis, Math.PI*5/6);
     });
 
-    const [templateSegmentsXformed, templateArcsXformed] = transformTemplateToDrawn(segmentsRotated, [], [], brimstoneDownTemplate);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter, planeDrawn] = transformTemplateToDrawn(segmentsRotated, [], [], brimstoneDownTemplate);
 
     for (let i=0; i<segmentsRotated.length; ++i) {
       expect(Math.abs(templateSegmentsXformed[i].a.x)).toBeCloseTo(Math.abs(segmentsRotated[i].a.x), 1);
@@ -1474,6 +1481,10 @@ describe("transformTemplateToDrawn", () => {
       expect(templateSegmentsXformed[i].b.y).toBeCloseTo(segmentsRotated[i].b.y, 1);
       expect(Math.abs(templateSegmentsXformed[i].b.z)).toBeCloseTo(Math.abs(segmentsRotated[i].b.z), 1);
     }
+    const normalExpected = new THREE.Vector3(0, 0, 1).applyAxisAngle(axis, Math.PI*5/6).negate();
+    expect(planeDrawn.normal.x).toBeCloseTo(normalExpected.x, 2);
+    expect(planeDrawn.normal.y).toBeCloseTo(normalExpected.y, 2);
+    expect(planeDrawn.normal.z).toBeCloseTo(normalExpected.z, 2);
   });
 
   it("should rotate back brimstone (point down) rotated around X", () => {
@@ -1487,7 +1498,7 @@ describe("transformTemplateToDrawn", () => {
       segment.b.applyAxisAngle(axis, Math.PI/6);
     });
 
-    const [templateSegmentsXformed, templateArcsXformed] = transformTemplateToDrawn(segmentsRotated, [], [], brimstoneDownTemplate);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter, planeDrawn] = transformTemplateToDrawn(segmentsRotated, [], [], brimstoneDownTemplate);
 
     for (let i=0; i<segmentsRotated.length; ++i) {
       expect(templateSegmentsXformed[i].a.x).toBeCloseTo(segmentsRotated[i].a.x, 1);
@@ -1497,6 +1508,10 @@ describe("transformTemplateToDrawn", () => {
       expect(templateSegmentsXformed[i].b.y).toBeCloseTo(segmentsRotated[i].b.y, 1);
       expect(templateSegmentsXformed[i].b.z).toBeCloseTo(segmentsRotated[i].b.z, 1);
     }
+    const normalExpected = new THREE.Vector3(0, 0, 1).applyAxisAngle(axis, Math.PI/6);
+    expect(planeDrawn.normal.x).toBeCloseTo(normalExpected.x, 2);
+    expect(planeDrawn.normal.y).toBeCloseTo(normalExpected.y, 2);
+    expect(planeDrawn.normal.z).toBeCloseTo(normalExpected.z, 2);
   });
 
   it("should rotate back brimstone (point down) rotated around X and Y", () => {
@@ -1510,7 +1525,7 @@ describe("transformTemplateToDrawn", () => {
       segment.b.applyAxisAngle(axis, Math.PI/6);
     });
 
-    const [templateSegmentsXformed, templateArcsXformed] = transformTemplateToDrawn(segmentsRotated, [], [], brimstoneDownTemplate);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter, planeDrawn] = transformTemplateToDrawn(segmentsRotated, [], [], brimstoneDownTemplate);
 
     for (let i=0; i<segmentsRotated.length; ++i) {
       expect(templateSegmentsXformed[i].a.x).toBeCloseTo(segmentsRotated[i].a.x, 1);
@@ -1520,6 +1535,10 @@ describe("transformTemplateToDrawn", () => {
       expect(templateSegmentsXformed[i].b.y).toBeCloseTo(segmentsRotated[i].b.y, 1);
       expect(templateSegmentsXformed[i].b.z).toBeCloseTo(segmentsRotated[i].b.z, 1);
     }
+    const normalExpected = new THREE.Vector3(0, 0, 1).applyAxisAngle(axis, Math.PI/6);
+    expect(planeDrawn.normal.x).toBeCloseTo(normalExpected.x, 1);
+    expect(planeDrawn.normal.y).toBeCloseTo(normalExpected.y, 1);
+    expect(planeDrawn.normal.z).toBeCloseTo(normalExpected.z, 1);
   });
 
   it("should resize brimstone (point down) fuzzed", () => {
@@ -2012,7 +2031,7 @@ describe("matchDrawnAgainstTemplates", () => {
       segmentsDrawn.push(newSegment);
     });
 
-    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed] = matchDrawnAgainstTemplates(segmentsDrawn, [], []);
+    const [score, rawScore, template, centroidOfDrawn, planeDrawn, bestSegmentsXformed] = matchDrawnAgainstTemplates(segmentsDrawn, [], []);
 
     expect(template.name).toEqual("brimstone down");
     expect(score).toBeGreaterThan(brimstoneDownTemplate.minScore);
@@ -2145,7 +2164,7 @@ describe("matchDrawnAgainstTemplates", () => {
       circleFrom3Points(new THREE.Vector3(1, 0.01, 0), new THREE.Vector3(0, 1.01, 0), new THREE.Vector3(-1, 0.01, 0)).circle
     ];
 
-    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(pentacleTemplate.segments, [], circlesFuzzed);
+    const [score, rawScore, template, centroidOfDrawn, planeDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(pentacleTemplate.segments, [], circlesFuzzed);
 
     expect(template.name).toEqual("pentacle");
     expect(score).toBeGreaterThan(300);
@@ -2270,7 +2289,7 @@ describe("matchDrawnAgainstTemplates", () => {
       drawnArcs.push(newArc);
     });
 
-    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(triquetraTemplate.segments, drawnArcs, []);
+    const [score, rawScore, template, centroidOfDrawn, planeDrawn, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(triquetraTemplate.segments, drawnArcs, []);
 
     expect(template.name).toEqual("triquetra");
     expect(score).toBeGreaterThan(88);
@@ -2320,7 +2339,7 @@ describe("matchDrawnAgainstTemplates", () => {
         circleFrom3Points(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0, 0), new THREE.Vector3(3, -5, 9)).circle
     );
 
-    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
+    const [score, rawScore, template, centroidOfDrawn, planeDrawn, bestSegmentsXformed, bestArcsXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
 
     expect(template.name).toEqual("triquetra");
     expect(score).toBeGreaterThan(88);
@@ -2352,7 +2371,7 @@ describe("matchDrawnAgainstTemplates", () => {
 
     const {segmentsDrawn, arcsDrawn, circlesDrawn} = pseudoDraw(borromeanRingsTemplate, axis, angle, scale, offset, fuzz);
 
-    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
+    const [score, rawScore, template, centroidOfDrawn, planeDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
 
     expect(template.name).toEqual("borromean rings");
     expect(score).toBeGreaterThan(12);
@@ -2387,7 +2406,7 @@ describe("matchDrawnAgainstTemplates", () => {
 
     const {segmentsDrawn, arcsDrawn, circlesDrawn} = pseudoDraw(quicksilverTemplate, axis, angle, scale, offset, fuzz);
 
-    const [score, rawScore, template, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
+    const [score, rawScore, template, centroidOfDrawn, planeDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(segmentsDrawn, arcsDrawn, circlesDrawn);
 
     expect(template.name).toEqual("quicksilver");
     expect(score).toBeGreaterThan(21);
@@ -2434,6 +2453,11 @@ describe("matchDrawnAgainstTemplates", () => {
       expect(bestCircle.normal.y).toBeCloseTo(drawnCircle.normal.y, 1);
       expect(bestCircle.normal.z).toBeCloseTo(drawnCircle.normal.z, 1);
     }
+
+    const normalExpected = new THREE.Vector3(0, 0, 1).applyAxisAngle(axis, angle);
+    expect(planeDrawn.normal.x).toBeCloseTo(normalExpected.x, 2);
+    expect(planeDrawn.normal.y).toBeCloseTo(normalExpected.y, 2);
+    expect(planeDrawn.normal.z).toBeCloseTo(normalExpected.z, 2);
   });
 });
 

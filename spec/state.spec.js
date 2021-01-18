@@ -225,6 +225,10 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(1);
     expect(state.barriers[0].template).toEqual(pentacleTemplate);
+    expect(state.barriers[0].plane).toBeDefined();
+    expect(state.barriers[0].plane.normal.x).toBeCloseTo(0, 6);
+    expect(state.barriers[0].plane.normal.y).toBeCloseTo(0, 6);
+    expect(state.barriers[0].plane.normal.z).toBeCloseTo(1, 6);
     expect(state.barriers[0].color).toEqual(pentacleTemplate.color);
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(state.barriers.length).toEqual(2);
@@ -342,6 +346,10 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].arcs.length).toEqual(3);
     expect(state.barriers[0].circles.length).toEqual(0);
     expect(state.barriers[0].template).toEqual(triquetraTemplate);
+    expect(state.barriers[0].plane).toBeDefined();
+    expect(state.barriers[0].plane.normal.x).toBeCloseTo(-1, 6);
+    expect(state.barriers[0].plane.normal.y).toBeCloseTo(0, 6);
+    expect(state.barriers[0].plane.normal.z).toBeCloseTo(0, 6);
     expect(state.barriers[0].color).toEqual(triquetraTemplate.color);
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(showTrainingSpy).toHaveBeenCalled();
@@ -422,6 +430,10 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(3);
     expect(state.barriers[0].template).toEqual(borromeanRingsTemplate);
+    expect(state.barriers[0].plane).toBeDefined();
+    expect(state.barriers[0].plane.normal.x).toBeCloseTo(0, 6);
+    expect(state.barriers[0].plane.normal.y).toBeCloseTo(0, 6);
+    expect(state.barriers[0].plane.normal.z).toBeCloseTo(1, 6);
     expect(state.barriers[0].color).toEqual(borromeanRingsTemplate.color);
     expect(state.barriers[0].mana).toBeGreaterThan(15000);
     expect(createPortalSpy).toHaveBeenCalled();

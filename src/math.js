@@ -398,7 +398,7 @@ function centerPoints(points) {
 }
 
 
-function calcPlaneNormalPoints(points, normal) {
+function calcPlanePoints(points) {
   if (points.length < 3) {
     throw new Error("Three points are required to determine a plane");
   }
@@ -430,23 +430,26 @@ function calcPlaneNormalPoints(points, normal) {
   });
 
   // finds the plane
+  const plane = new THREE.Plane();
   // noinspection JSUnusedAssignment
   plane.setFromCoplanarPoints(points[0], points[furthestInd], thirdPt);
 
-  normal.copy(plane.normal);
-  if (normal.z < 0) {
-    normal.multiplyScalar(-1);
+  if (plane.normal.z < 0) {
+    plane.normal.negate();
   }
-  return normal;
+  return plane;
 }
 
-function calcPlaneNormal(segments, arcs, circles) {
+/**
+ * @param {Segment[]} segments
+ * @param {Arc[]} arcs
+ * @param {Circle[]} circles
+ * @returns {THREE.Plane}
+ */
+function calcPlane(segments, arcs, circles) {
   const points = extractPoints(segments, arcs, circles);
 
-  const normal = new THREE.Vector3();
-  calcPlaneNormalPoints(points, normal);
-
-  return normal;
+  return calcPlanePoints(points);
 }
 
 function distanceToBarrier(point, barrier) {
@@ -699,15 +702,15 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
     centeredDrawnCircles.push(new Circle(p1, p2, p3, center, circle.radius, circle.normal.clone(), true));
   })
 
-  const normalDrawn = calcPlaneNormal(drawnSegments, drawnArcs, drawnCircles);
+  const planeDrawn = calcPlane(drawnSegments, drawnArcs, drawnCircles);
 
   const templateSegmentsXformed = template.segments.map(segment => new Segment(segment.a, segment.b));
   const templateArcsXformed = template.arcs.map(arc => new Arc(arc.end1, arc.midpoint, arc.end2));
   const templateCirclesXformed = template.circles.map(circle => new Circle(circle.p1, circle.p2, circle.p3, circle.center, circle.radius, circle.normal));
 
   // rotates plane of template to match drawn
-  let rotAngle = normalDrawn.angleTo(zAxis);
-  rotAxis.crossVectors(zAxis, normalDrawn);
+  let rotAngle = planeDrawn.normal.angleTo(zAxis);
+  rotAxis.crossVectors(zAxis, planeDrawn.normal);
   if (rotAxis.length() > 0.00001) {   // rotates if normals not co-linear
     rotAxis.normalize();
 
@@ -759,7 +762,7 @@ function transformTemplateToDrawn(drawnSegments, drawnArcs, drawnCircles, templa
     circle.scaleAndTranslate(scale, drawnCenter);
   });
 
-  return [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter];
+  return [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, drawnCenter, planeDrawn];
 }
 
 /**
@@ -853,6 +856,7 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs, drawnCircles) {
       rawScore = Number.NEGATIVE_INFINITY,
       matchedTemplate = null,
       centroidOfDrawn = null,
+      bestPlaneDrawn = null,
       bestSegmentsXformed = null,
       bestArcsXformed = null,
       bestCirclesXformed = null;
@@ -873,7 +877,7 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs, drawnCircles) {
         drawnCircles.slice(-template.circles.length) :
         [];
 
-    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, centroidP] = transformTemplateToDrawn(candidateSegments, candidateArcs, candidateCircles, template);
+    const [templateSegmentsXformed, templateArcsXformed, templateCirclesXformed, centroidP, planeDrawn] = transformTemplateToDrawn(candidateSegments, candidateArcs, candidateCircles, template);
 
     const diff = rmsd(candidateSegments, candidateArcs, candidateCircles, templateSegmentsXformed, templateArcsXformed, templateCirclesXformed);
     const rawTemplateScore = 1 / diff;
@@ -884,13 +888,14 @@ function matchDrawnAgainstTemplates(drawnSegments, drawnArcs, drawnCircles) {
       rawScore = rawTemplateScore;
       matchedTemplate = template;
       centroidOfDrawn = centroidP.clone();
+      bestPlaneDrawn = planeDrawn.clone();
       bestSegmentsXformed = templateSegmentsXformed;
       bestArcsXformed = templateArcsXformed;
       bestCirclesXformed = templateCirclesXformed;
     }
   });
 
-  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed];
+  return [bestScore, rawScore, matchedTemplate, centroidOfDrawn, bestPlaneDrawn, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed];
 }
 
 
@@ -910,8 +915,8 @@ try {   // pulled in via require for testing
     extractPoints,
     calcCentroid,
     centerPoints,
-    calcPlaneNormalPoints,
-    calcPlaneNormal,
+    calcPlanePoints,
+    calcPlane,
     angleDiff,
     distanceToBarrier,
     brimstoneDownTemplate,

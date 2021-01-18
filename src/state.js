@@ -272,7 +272,7 @@ AFRAME.registerState({
       const creatureX = 15.00, creatureZ = -50.00;
       const terrainY = this.getElevation(creatureX, creatureZ);
       const creatureEl = placeCreature(creatureX, creatureZ, terrainY);
-      const creature = {el: creatureEl, canMove: true, hitPoints: 5000};
+      const creature = {el: creatureEl, canMove: true, hitPoints: 5000, forceBarriers: new Set()};
       state.creatures.push(creature);
 
       creatureEl.addEventListener("sound-ended", () => {
@@ -428,7 +428,12 @@ AFRAME.registerState({
         line.el.removeObject3D('line');
         line.el.parentNode.removeChild(line.el);
       });
+      barrier.template = null;
       state.barriers[barrierInd] = null;  // can't splice out if we're looping
+
+      state.creatures.forEach(creature => {
+        creature.forceBarriers.delete(barrier);
+      });
     },
 
     appendTipPositionToBarrier: function updateBarrier(state) {
@@ -453,7 +458,7 @@ AFRAME.registerState({
     matchAndDisplayTemplates: function (state) {
       const barrier = state.barriers[state.barriers.length - 1];
 
-      const [score, rawScore, template, centroid, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(barrier.segments, barrier.arcs, barrier.circles);
+      const [score, rawScore, template, centroid, plane, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(barrier.segments, barrier.arcs, barrier.circles);
 
       if (template && score >= 0) {
         barrier.mana = 25000 + score * 30000;
@@ -463,6 +468,7 @@ AFRAME.registerState({
         barrier.lines.forEach(line => {
           line.material.color.set(barrier.color);
         });
+        barrier.plane = plane;
         this.magicEnd(state, {handId: state.staffHandId});
         this.magicBegin(state, {handId: state.staffHandId});
 

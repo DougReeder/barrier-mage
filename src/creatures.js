@@ -36,6 +36,12 @@ function creatureTickMove({creature, timeDelta, staffPosition, terrainY}) {
     if (creature.hitPoints <= 0) {
       heading.negate();
     }
+    creature.forceBarriers.forEach(barrier => {
+      if (barrier.plane.distanceToPoint(creature.el.object3D.position) < BARRIER_EFFECT_DIST) {
+        const alteration = barrier.plane.normal.clone().multiplyScalar(heading.dot(barrier.plane.normal));
+        heading.sub(alteration)
+      }
+    });
     creature.el.object3D.position.add(heading);   // 1m / sec
     const minElevation = terrainY + CREATURE_ELEVATION;
     if (creature.el.object3D.position.y < minElevation) {
@@ -72,6 +78,14 @@ function creatureBarrier({creature, barrier, timeDelta}) {
   if ("triquetra" === barrier.template.name && dist <= BARRIER_EFFECT_DIST) {
     creature.canMove = false;
     return true;
+  } else if ("pentacle" === barrier.template.name) {
+    // actual effect calculated using plane.distanceToPoint()
+    // uses larger value here because distanceToBarrier is to the nearest point
+    if (dist <= BARRIER_EFFECT_DIST * 1.5) {
+      creature.forceBarriers.add(barrier);
+    } else {
+      creature.forceBarriers.delete(barrier);
+    }
   } else if ("brimstone" === barrier.template.name.slice(0, 9) && dist <= BARRIER_EFFECT_DIST) {
     creature.hitPoints -= timeDelta;
     creature.isBurning = true;
