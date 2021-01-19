@@ -11,9 +11,7 @@ Uses WebXR and [A-Frame](https://aframe.io) and requires a 6-DOF controller.
 The six symbols currently supported are:
 ![mystic symbols](assets/symbols.png)
 
-At present, there are a few sad caveats:
-* The barriers don't actually do anything yet!
-* There are no actual creatures to fend off!
+At present, there is one sad caveat:
 * My landscape component doesn't respond to point light sources, so the only effect of writing the day rune is to light up your hands and staff.
 
 
@@ -25,4 +23,4 @@ Press and hold the A or X button on your staff hand to draw an arc or circle.
 
 
 If you're moved to create a fantasy landscape that can use point light sources, I'd much appreciate such a contribution!
-Likewise, creatures to be fended off with the barriers. 
+Likewise, various creatures to be fended off with the barriers. 

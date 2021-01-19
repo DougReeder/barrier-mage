@@ -1,5 +1,5 @@
 // intro.js - introduction overlay for Barrier Mage
-// Copyright © 2020 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
 
 if (! sessionStorage.getItem('introDisabled')) {
   document.addEventListener("DOMContentLoaded", function (details) {
@@ -20,7 +20,7 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
 
     let html = `
 <div class="wrapper">
-    <div><b>Barrier Mage</b>: Draw mystic symbols to create barriers!</div>
+    <div><b>Barrier Mage</b>: Draw mystic symbols &amp; discover their effects against the Violent Cloud!</div>
     <img src="assets/symbols.png" alt="pentacle, brimstone, triquetra, Borromean rings, quicksilver and day-rune"><br>
     Grip button: grab staff<br>
     Trigger: Press and hold to draw straight segment<br>
@@ -36,7 +36,7 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
         <div>${mt}</div>
         <div><a href="CREDITS.md">Credits</a></div>
         <div>Uses <a href="https://caniuse.com/#search=webxr">WebXR</a>, and the <a href="https://aframe.io" style="white-space: nowrap;">A-Frame</a> framework.</div>
-        <div>Copyright © 2020 by P. Douglas Reeder; Licensed under the GNU GPL-3.0</div>
+        <div>Copyright © 2020-2021 by P. Douglas Reeder; Licensed under the GNU GPL-3.0</div>
         <div><a href="https://github.com/DougReeder/barrier-mage">View source code and contribute</a> </div>
       </div>
 </div>
