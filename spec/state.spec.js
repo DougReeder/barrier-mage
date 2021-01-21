@@ -35,6 +35,7 @@ class MockState {
     this.scoreEls = [];
     this.creatures = [];
     this.isStaffExploding = false;
+    this.progress = {pentacles: 0, brimstones: 0, triquetras: 0};
 
     this.inProgress.line = new THREE.Line(this.inProgress.geometry, this.inProgress.material);
   }
@@ -234,6 +235,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers.length).toEqual(2);
     expect(showTrainingSpy).toHaveBeenCalled();
     expect(showTrainingSpy.calls.argsFor(0)[7]).toEqual(6000);
+    expect(state.progress.pentacles).toEqual(1);
   });
 
   it("should not end barrier when template match is poor", () => {
@@ -355,6 +357,7 @@ describe("curveBegin/curveEnd", () => {
     expect(showTrainingSpy).toHaveBeenCalled();
     expect(showTrainingSpy.calls.argsFor(0)[7]).toEqual(6000);
     expect(state.barriers.length).toEqual(2);
+    expect(state.progress.triquetras).toEqual(1);
   });
 
   it("should end barrier when template w/ circles recognized", () => {

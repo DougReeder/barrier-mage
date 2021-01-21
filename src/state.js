@@ -32,7 +32,8 @@ AFRAME.registerState({
     trainingEls: [],
     scoreEls: [],
     creatures: [],
-    isStaffExploding: false
+    isStaffExploding: false,
+    progress: {pentacles: 0, brimstones: 0, triquetras: 0}
   },
 
   handlers: {
@@ -60,10 +61,6 @@ AFRAME.registerState({
 
       const terrainGeometry = rigEl.sceneEl.querySelector('a-atoll-terrain').getAttribute('geometry');
       this.getElevation = terrainGeometry.getElevation;
-
-      setTimeout(() => {
-        this.createCreature(state);
-      }, 3000);
     },
 
     /** event from gesture component on hand */
@@ -269,7 +266,13 @@ AFRAME.registerState({
     },
 
     createCreature: function (state) {
-      const creatureX = 15.00, creatureZ = -50.00;
+      let creatureX, creatureZ;
+      do {
+        creatureX = (Math.random() - 0.5) * 150;
+        creatureZ = (Math.random() - 0.5) * 150;
+      } while (Math.sqrt(creatureX * creatureX + creatureZ * creatureZ) < 50);
+      creatureX += state.rigEl.object3D.position.x;
+      creatureZ += state.rigEl.object3D.position.z;
       const terrainY = this.getElevation(creatureX, creatureZ);
       const creatureEl = placeCreature(creatureX, creatureZ, terrainY);
       const creature = {el: creatureEl, canMove: true, hitPoints: 5000, forceBarriers: new Set()};
@@ -353,6 +356,15 @@ AFRAME.registerState({
         const opacity = Math.min(Math.max(1 - (cameraDistance-1) / 2, 0.0), 1.0);
         this.blackoutEl.setAttribute('material', 'opacity', opacity);
       });
+      // removes creatures out of play
+      for (let i = state.creatures.length-1; i >= 0; --i) {
+        const distance = state.creatures[i].el.object3D.position.distanceTo(state.rigEl.object3D.position);
+        if (state.creatures[i].hitPoints <= 0 && distance > 75) {
+          const el = state.creatures[i].el;
+          el.parentNode.removeChild(el);
+          state.creatures.splice(i, 1);
+        }
+      }
 
       state.barriers.forEach((barrier, i) => {
         if (barrier && barrier.isActing && ! barrier.wasActing) {
@@ -476,6 +488,19 @@ AFRAME.registerState({
         line.el.setAttribute('sound', {src: template.audioTag, volume:1.333, autoplay: true, refDistance:2.0});
 
         switch (template.name) {
+          case "brimstone up":
+          case "brimstone down":
+            ++state.progress.brimstones;
+            break;
+
+          case "pentacle":
+            ++state.progress.pentacles;
+            break;
+
+          case "triquetra":
+            ++state.progress.triquetras;
+            break;
+
           case "borromean rings":
             this.createPortal(state, centroid);
             break;
@@ -532,6 +557,11 @@ AFRAME.registerState({
           duration = TRAINING_DURATION;
         }
         this.showTraining(state, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, rawScore, score, centroid, duration);
+      }
+
+      const numCreaturesAttacking = state.creatures.reduce((count, creature) => count + (creature.hitPoints > 0 ? 1 : 0), 0 );
+      if (state.progress.brimstones >= 2 && state.progress.pentacles >= 2 && state.progress.triquetras >= 1 && numCreaturesAttacking === 0) {
+        this.createCreature(state);
       }
     },
 
