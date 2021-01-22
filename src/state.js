@@ -33,7 +33,7 @@ AFRAME.registerState({
     scoreEls: [],
     creatures: [],
     isStaffExploding: false,
-    progress: {pentacles: 0, brimstones: 0, triquetras: 0}
+    progress: {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0}
   },
 
   handlers: {
@@ -275,7 +275,8 @@ AFRAME.registerState({
       creatureZ += state.rigEl.object3D.position.z;
       const terrainY = this.getElevation(creatureX, creatureZ);
       const creatureEl = placeCreature(creatureX, creatureZ, terrainY);
-      const creature = {el: creatureEl, canMove: true, hitPoints: 5000, forceBarriers: new Set()};
+      const speed = Math.min(Math.max(state.progress.symbols / 6, 1.0), 10.0);   // m/s
+      const creature = {el: creatureEl, speed: speed, canMove: true, hitPoints: 5000, forceBarriers: new Set()};
       state.creatures.push(creature);
 
       creatureEl.addEventListener("sound-ended", () => {
@@ -472,7 +473,7 @@ AFRAME.registerState({
 
       const [score, rawScore, template, centroid, plane, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed] = matchDrawnAgainstTemplates(barrier.segments, barrier.arcs, barrier.circles);
 
-      if (template && score >= 0) {
+      if (template && score >= 0) {   // success
         barrier.mana = 25000 + score * 30000;
 
         barrier.template = template;
@@ -543,6 +544,13 @@ AFRAME.registerState({
             }
             break;
         }
+
+        ++state.progress.symbols;
+
+        const numCreaturesAttacking = state.creatures.reduce((count, creature) => count + (creature.hitPoints > 0 ? 1 : 0), 0 );
+        if (state.progress.brimstones >= 2 && state.progress.pentacles >= 2 && state.progress.triquetras >= 1 && numCreaturesAttacking === 0) {
+          this.createCreature(state);
+        }
       } else if (template && score >= -2.5) {   // fizzle
         const line = barrier.lines[barrier.lines.length-1];
         line.el.setAttribute('sound', {src: '#fizzle', autoplay: true, volume: 0.75});
@@ -557,11 +565,6 @@ AFRAME.registerState({
           duration = TRAINING_DURATION;
         }
         this.showTraining(state, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, rawScore, score, centroid, duration);
-      }
-
-      const numCreaturesAttacking = state.creatures.reduce((count, creature) => count + (creature.hitPoints > 0 ? 1 : 0), 0 );
-      if (state.progress.brimstones >= 2 && state.progress.pentacles >= 2 && state.progress.triquetras >= 1 && numCreaturesAttacking === 0) {
-        this.createCreature(state);
       }
     },
 

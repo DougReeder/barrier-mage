@@ -8,7 +8,7 @@ const COLOR_OUTER_BRIMSTONE = '#ff8400';
 const COLOR_INNER = '#0080ff';
 const ACTIVITY_LENGTH = 1000;
 
-const heading = new THREE.Vector3();
+const velocity = new THREE.Vector3();
 
 function placeCreature(creatureX, creatureZ, terrainY) {
   const creatureEl = document.createElement('a-sphere');
@@ -31,18 +31,18 @@ function placeCreature(creatureX, creatureZ, terrainY) {
 
 function creatureTickMove({creature, timeDelta, staffPosition, terrainY}) {
   if (creature.canMove) {
-    heading.copy(staffPosition);
-    heading.sub(creature.el.object3D.position).normalize().multiplyScalar(timeDelta / 1000);
+    velocity.copy(staffPosition);
+    velocity.sub(creature.el.object3D.position).normalize().multiplyScalar(creature.speed).multiplyScalar(timeDelta / 1000);
     if (creature.hitPoints <= 0) {
-      heading.negate();
+      velocity.negate();
     }
     creature.forceBarriers.forEach(barrier => {
       if (barrier.plane.distanceToPoint(creature.el.object3D.position) < BARRIER_EFFECT_DIST) {
-        const alteration = barrier.plane.normal.clone().multiplyScalar(heading.dot(barrier.plane.normal));
-        heading.sub(alteration)
+        const alteration = barrier.plane.normal.clone().multiplyScalar(velocity.dot(barrier.plane.normal));
+        velocity.sub(alteration)
       }
     });
-    creature.el.object3D.position.add(heading);   // 1m / sec
+    creature.el.object3D.position.add(velocity);
     const minElevation = terrainY + CREATURE_ELEVATION;
     if (creature.el.object3D.position.y < minElevation) {
       creature.el.object3D.position.y = minElevation;
