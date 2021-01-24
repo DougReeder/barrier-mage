@@ -259,22 +259,35 @@ AFRAME.registerState({
     },
 
     destroyStaff: function(state, evt) {
+      console.log("staff destroyed");
       state.staffEl.parentNode.removeChild(state.staffEl);
       state.staffEl = null;
       state.tipPosition = new THREE.Vector3(1000, 1.1, 1000);
       state.staffHandId = '';
+      state.isStaffExploding = false;
+
+      setTimeout(() => {
+        console.log("staff re-created");
+        state.staffEl = document.createElement('a-entity');
+        state.staffEl.setAttribute('id', 'staff');
+        state.staffEl.setAttribute('gltf-model', "#staffModel");
+        const position = this.nearPlayer(state, 5, 10);
+        position.y += 1;
+        state.staffEl.setAttribute('position', position);
+        state.staffEl.setAttribute('sound', {src:'#tryagain', volume:2, autoplay: true});
+        state.rigEl.sceneEl.appendChild(state.staffEl);
+
+        // removes creatures
+        state.creatures.map(creature => destroyCreature(creature));
+        state.creatures.length = 0;
+
+        state.progress.symbols = 0;   // resets the speed of creatures
+      }, 45_000)
     },
 
     createCreature: function (state) {
-      let creatureX, creatureZ;
-      do {
-        creatureX = (Math.random() - 0.5) * 150;
-        creatureZ = (Math.random() - 0.5) * 150;
-      } while (Math.sqrt(creatureX * creatureX + creatureZ * creatureZ) < 50);
-      creatureX += state.rigEl.object3D.position.x;
-      creatureZ += state.rigEl.object3D.position.z;
-      const terrainY = this.getElevation(creatureX, creatureZ);
-      const creatureEl = placeCreature(creatureX, creatureZ, terrainY);
+      const groundPosition = this.nearPlayer(state, 50, 100);
+      const creatureEl = placeCreature(groundPosition);
       const speed = Math.min(Math.max(state.progress.symbols / 6, 1.0), 10.0);   // m/s
       const creature = {el: creatureEl, speed: speed, canMove: true, hitPoints: 5000, forceBarriers: new Set()};
       state.creatures.push(creature);
@@ -288,6 +301,17 @@ AFRAME.registerState({
           }
         }, staffDistance * 100);   // 10 m = 1 sec
       });
+    },
+
+    nearPlayer: function (state, min = 50, max = 75) {
+      const theta = Math.random() * 2 * Math.PI;
+      const distance = min + Math.random() * (max - min);
+      const x = Math.cos(theta) * distance + state.rigEl.object3D.position.x;
+      const z = Math.sin(theta) * distance + state.rigEl.object3D.position.z;
+
+      const terrainY = this.getElevation(x, z);
+
+      return new THREE.Vector3(x, terrainY, z);
     },
 
     iterate: function (state, {time, timeDelta}) {
@@ -361,8 +385,7 @@ AFRAME.registerState({
       for (let i = state.creatures.length-1; i >= 0; --i) {
         const distance = state.creatures[i].el.object3D.position.distanceTo(state.rigEl.object3D.position);
         if (state.creatures[i].hitPoints <= 0 && distance > 75) {
-          const el = state.creatures[i].el;
-          el.parentNode.removeChild(el);
+          destroyCreature(state.creatures[i]);
           state.creatures.splice(i, 1);
         }
       }

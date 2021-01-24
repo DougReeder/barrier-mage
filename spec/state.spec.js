@@ -41,6 +41,33 @@ class MockState {
   }
 }
 
+describe("nearPlayer", () => {
+  let state;
+
+  beforeEach(() => {
+    state = new MockState();
+    AFRAME.stateParam.handlers.cameraEl = new MockElement();
+    AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
+    AFRAME.stateParam.handlers.getElevation = () => 100;
+  });
+
+  it("should return a position near, but not too near, the player", () => {
+    for (let playerElevation=0; playerElevation<=200; playerElevation+=10 ) {
+      state.rigEl.object3D.position.set(Math.random()*1000-500, playerElevation, Math.random()*1000-500);
+      const min = 10 + Math.random()*100;
+      const max = min + 10 + Math.random()*100;
+
+      const groundPosition = AFRAME.stateParam.handlers.nearPlayer(state, min, max);
+
+      expect(groundPosition.y).toEqual(100);   // from mock getElevation()
+      expect(state.rigEl.object3D.position.distanceTo(groundPosition)).toBeGreaterThanOrEqual(min);
+      expect(state.rigEl.object3D.position.distanceTo(groundPosition)).toBeLessThanOrEqual(max + Math.abs(playerElevation - 100));
+      groundPosition.y = playerElevation;
+      expect(state.rigEl.object3D.position.distanceTo(groundPosition)).toBeLessThanOrEqual(max);
+    }
+  });
+})
+
 describe("straightBegin/straightEnd", () => {
   let state;
 

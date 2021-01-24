@@ -10,7 +10,13 @@ const ACTIVITY_LENGTH = 1000;
 
 const velocity = new THREE.Vector3();
 
-function placeCreature(creatureX, creatureZ, terrainY) {
+/**
+ * Creates the creature entity.
+ * @param position {THREE.Vector3} the location of the ground underneath the creature
+ * @return {HTMLElement}
+ */
+function placeCreature(position) {
+  console.log("placing creature at ground position", position)
   const creatureEl = document.createElement('a-sphere');
   creatureEl.setAttribute('id', 'creature');
   creatureEl.classList.add('creature');
@@ -22,8 +28,8 @@ function placeCreature(creatureX, creatureZ, terrainY) {
     activity: 0.0,
     colorInner: COLOR_INNER
   });
-  const creatureY = terrainY + CREATURE_ELEVATION;
-  creatureEl.setAttribute('position', {x: creatureX, y: creatureY, z: creatureZ});
+  position.y += CREATURE_ELEVATION;
+  creatureEl.setAttribute('position', position);
   creatureEl.setAttribute('sound', {src:'#ominous', volume:3, autoplay: true});
   AFRAME.scenes[0].appendChild(creatureEl);
   return creatureEl;
@@ -103,4 +109,14 @@ function applyCreatureStatuses(creature) {
     creature.activityUp = false;
     creature.activityCount = ACTIVITY_LENGTH;
   }
+}
+
+/**
+ * removes entity from scene; does not remove from array of creatures
+ * @param creature
+ */
+function destroyCreature(creature) {
+  console.log("creature destroyed");
+  creature.hitPoints = 0;
+  creature.el.parentNode.removeChild(creature.el);
 }

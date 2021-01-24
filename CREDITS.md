@@ -32,3 +32,5 @@ by tec_studio is licensed under Creative Commons Attribution
 
 193478__skyklan47__rrmx-wood-metal-glass-explode.mp3 (https://freesound.org/people/skyklan47/sounds/193478/)
 by skyklan47 is licensed under Creative Commons Attribution
+
+try-again.mp3 by P. Douglas Reeder is licensed under the GNU GPL v3
