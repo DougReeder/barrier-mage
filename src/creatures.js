@@ -8,115 +8,144 @@ const COLOR_OUTER_BRIMSTONE = '#ff8400';
 const COLOR_INNER = '#0080ff';
 const ACTIVITY_LENGTH = 1000;
 
-const velocity = new THREE.Vector3();
 
-/**
- * Creates the creature entity.
- * @param position {THREE.Vector3} the location of the ground underneath the creature
- * @return {HTMLElement}
- */
-function placeCreature(position) {
-  console.log("placing creature at ground position", position)
-  const creatureEl = document.createElement('a-sphere');
-  creatureEl.setAttribute('id', 'creature');
-  creatureEl.classList.add('creature');
-  creatureEl.setAttribute('segments-height', 72);
-  creatureEl.setAttribute('segments-width', 144);
-  creatureEl.setAttribute('material', {
-    shader: 'displacement',
-    colorOuter: COLOR_OUTER, colorOuterActive: COLOR_OUTER_BRIMSTONE,
-    activity: 0.0,
-    colorInner: COLOR_INNER
-  });
-  position.y += CREATURE_ELEVATION;
-  creatureEl.setAttribute('position', position);
-  creatureEl.setAttribute('sound', {src:'#ominous', volume:3, autoplay: true});
-  AFRAME.scenes[0].appendChild(creatureEl);
-  return creatureEl;
-}
+class Creature {
+  static velocity = new THREE.Vector3();   // re-used, instead of re-creating every tick
 
-function creatureTickMove({creature, timeDelta, staffPosition, terrainY}) {
-  if (creature.canMove) {
-    velocity.copy(staffPosition);
-    velocity.sub(creature.el.object3D.position).normalize().multiplyScalar(creature.speed).multiplyScalar(timeDelta / 1000);
-    if (creature.hitPoints <= 0) {
-      velocity.negate();
-    }
-    creature.forceBarriers.forEach(barrier => {
-      if (barrier.plane.distanceToPoint(creature.el.object3D.position) < BARRIER_EFFECT_DIST) {
-        const alteration = barrier.plane.normal.clone().multiplyScalar(velocity.dot(barrier.plane.normal));
-        velocity.sub(alteration)
-      }
+  /**
+   * Constructs creature, but not its Entity
+   * @param {Number} speed in m/s
+   * @param {Number} hitPoints nominally the number of ms it can take damage
+   */
+  constructor(speed = 1.0, hitPoints = 1000) {
+    if (typeof speed !== 'number') throw new Error("speed must be number");
+    if (typeof hitPoints !== 'number') throw new Error("hitPoints must be number");
+    this.el = null;
+    this.speed = speed;
+    this.canMove = true;
+    this.hitPoints = hitPoints;
+    this.activityCount = 0;   // interpolate between inactive (0.0) & active (1.0)
+    this.forceBarriers = new Set()
+  }
+
+  /**
+   * Creates the creature entity.
+   * @param position {THREE.Vector3} the location of the ground underneath the creature
+   */
+  place(position) {
+    console.log("placing creature at ground position", position)
+    this.el = document.createElement('a-sphere');
+    this.el.setAttribute('id', 'creature');
+    this.el.classList.add('creature');
+    this.el.setAttribute('segments-height', 72);
+    this.el.setAttribute('segments-width', 144);
+    this.el.setAttribute('material', {
+      shader: 'displacement',
+      colorOuter: COLOR_OUTER, colorOuterActive: COLOR_OUTER_BRIMSTONE,
+      activity: 0.0,
+      colorInner: COLOR_INNER
     });
-    creature.el.object3D.position.add(velocity);
-    const minElevation = terrainY + CREATURE_ELEVATION;
-    if (creature.el.object3D.position.y < minElevation) {
-      creature.el.object3D.position.y = minElevation;
-    }
+    position.y += CREATURE_ELEVATION;
+    this.el.setAttribute('position', position);
+    this.el.setAttribute('sound', {src: '#ominous', volume: 3, autoplay: true});
+    AFRAME.scenes[0].appendChild(this.el);
   }
 
-  if (creature.activityCount > 0) {
-    if ((creature.activityCount -= timeDelta) > 0) {
-      let activity;
-      if (creature.activityUp) {
-        activity = 1 - creature.activityCount / ACTIVITY_LENGTH;
-      } else {
-        activity = creature.activityCount / ACTIVITY_LENGTH;
+  tickMove({timeDelta, staffPosition, terrainY}) {
+    if (this.canMove) {
+      Creature.velocity.copy(staffPosition);
+      Creature.velocity.sub(this.el.object3D.position).normalize().multiplyScalar(this.speed).multiplyScalar(timeDelta / 1000);
+      if (this.hitPoints <= 0) {
+        Creature.velocity.negate();
       }
-      creature.el.setAttribute('material', 'activity', activity);
-    } else {
-      creature.el.setAttribute('material', 'activity', creature.activityUp ? 1.0 : 0.0);
+      this.forceBarriers.forEach(barrier => {
+        if (barrier.plane.distanceToPoint(this.el.object3D.position) < BARRIER_EFFECT_DIST) {
+          const alteration = barrier.plane.normal.clone().multiplyScalar(Creature.velocity.dot(barrier.plane.normal));
+          Creature.velocity.sub(alteration)
+        }
+      });
+      this.el.object3D.position.add(Creature.velocity);
+      const minElevation = terrainY + CREATURE_ELEVATION;
+      if (this.el.object3D.position.y < minElevation) {
+        this.el.object3D.position.y = minElevation;
+      }
+    }
+
+    if (this.activityCount > 0) {
+      if ((this.activityCount -= timeDelta) > 0) {
+        let activity;
+        if (this.activityUp) {
+          activity = 1 - this.activityCount / ACTIVITY_LENGTH;
+        } else {
+          activity = this.activityCount / ACTIVITY_LENGTH;
+        }
+        this.el.setAttribute('material', 'activity', activity);
+      } else {
+        this.el.setAttribute('material', 'activity', this.activityUp ? 1.0 : 0.0);
+      }
+    }
+
+    const staffDistance = this.el.object3D.position.distanceTo(staffPosition);
+    return staffDistance < 0.5;
+  }
+
+  /** call each tick before iterating over barriers */
+  clearTickStatus() {
+    this.canMove = true;
+    this.wasBurning = this.isBurning;
+    this.isBurning = false;
+  }
+
+  /** call each tick for each barrier */
+  barrierTickStatus({barrier, timeDelta}) {
+    const dist = distanceToBarrier(this.el.object3D.position, barrier);
+    if ("triquetra" === barrier.template.name && dist <= BARRIER_EFFECT_DIST) {
+      this.canMove = false;
+      return true;
+    } else if ("pentacle" === barrier.template.name) {
+      // actual effect calculated using plane.distanceToPoint()
+      // uses larger value here because distanceToBarrier is to the nearest point
+      if (dist <= BARRIER_EFFECT_DIST * 1.5) {
+        this.forceBarriers.add(barrier);
+      } else {
+        this.forceBarriers.delete(barrier);
+      }
+    } else if ("brimstone" === barrier.template.name.slice(0, 9) && dist <= BARRIER_EFFECT_DIST) {
+      this.hitPoints -= timeDelta;
+      this.isBurning = true;
+      return true;
+    }
+
+    return false;
+  }
+
+  /** call each tick after iterating over barriers */
+  applyTickStatus() {
+    if (this.isBurning && !this.wasBurning) {
+      this.activityUp = true;
+      this.activityCount = ACTIVITY_LENGTH;
+    } else if (!this.isBurning && this.wasBurning) {
+      this.activityUp = false;
+      this.activityCount = ACTIVITY_LENGTH;
     }
   }
 
-  const staffDistance = creature.el.object3D.position.distanceTo(staffPosition);
-  return staffDistance < 0.5;
-}
-
-function clearCreatureTickStatus(creature) {
-  creature.canMove = true;
-  creature.wasBurning = creature.isBurning;
-  creature.isBurning = false;
-}
-
-function creatureBarrier({creature, barrier, timeDelta}) {
-  const dist = distanceToBarrier(creature.el.object3D.position, barrier);
-  if ("triquetra" === barrier.template.name && dist <= BARRIER_EFFECT_DIST) {
-    creature.canMove = false;
-    return true;
-  } else if ("pentacle" === barrier.template.name) {
-    // actual effect calculated using plane.distanceToPoint()
-    // uses larger value here because distanceToBarrier is to the nearest point
-    if (dist <= BARRIER_EFFECT_DIST * 1.5) {
-      creature.forceBarriers.add(barrier);
-    } else {
-      creature.forceBarriers.delete(barrier);
-    }
-  } else if ("brimstone" === barrier.template.name.slice(0, 9) && dist <= BARRIER_EFFECT_DIST) {
-    creature.hitPoints -= timeDelta;
-    creature.isBurning = true;
-    return true;
+  /**
+   * removes entity from scene; does not remove from array of creatures
+   */
+  destroy() {
+    console.log("creature destroyed");
+    this.el.parentNode.removeChild(this.el);
+    this.hitPoints = 0;
+    this.forceBarriers = undefined;   // removes references to barriers
   }
 
-  return false;
 }
 
-function applyCreatureStatuses(creature) {
-  if (creature.isBurning && !creature.wasBurning) {
-    creature.activityUp = true;
-    creature.activityCount = ACTIVITY_LENGTH;
-  } else if (!creature.isBurning && creature.wasBurning) {
-    creature.activityUp = false;
-    creature.activityCount = ACTIVITY_LENGTH;
+try {   // pulled in via require for testing
+  module.exports = {
+    Creature
   }
-}
-
-/**
- * removes entity from scene; does not remove from array of creatures
- * @param creature
- */
-function destroyCreature(creature) {
-  console.log("creature destroyed");
-  creature.hitPoints = 0;
-  creature.el.parentNode.removeChild(creature.el);
+} catch (err) {
+  // pulled in via script tag
 }

@@ -278,7 +278,7 @@ AFRAME.registerState({
         state.rigEl.sceneEl.appendChild(state.staffEl);
 
         // removes creatures
-        state.creatures.map(creature => destroyCreature(creature));
+        state.creatures.map(creature => creature.destroy());
         state.creatures.length = 0;
 
         state.progress.symbols = 0;   // resets the speed of creatures
@@ -286,18 +286,19 @@ AFRAME.registerState({
     },
 
     createCreature: function (state) {
-      const groundPosition = this.nearPlayer(state, 50, 100);
-      const creatureEl = placeCreature(groundPosition);
       const speed = Math.min(Math.max(state.progress.symbols / 6, 1.0), 10.0);   // m/s
-      const creature = {el: creatureEl, speed: speed, canMove: true, hitPoints: 5000, forceBarriers: new Set()};
+      const creature = new Creature(speed, 5000);
+
+      const groundPosition = this.nearPlayer(state, 50, 100);
+      creature.place(groundPosition);
       state.creatures.push(creature);
 
-      creatureEl.addEventListener("sound-ended", () => {
+      creature.el.addEventListener("sound-ended", () => {
         // When creature is close, its sound is soon repeated.
-        const staffDistance = creatureEl.object3D.position.distanceTo(state.tipPosition);
+        const staffDistance = creature.el.object3D.position.distanceTo(state.tipPosition);
         setTimeout(() => {
           if (creature.hitPoints > 0) {
-            creatureEl.components.sound.playSound();
+            creature.el.components.sound.playSound();
           }
         }, staffDistance * 100);   // 10 m = 1 sec
       });
@@ -344,17 +345,17 @@ AFRAME.registerState({
       });
       state.creatures.forEach(creature => {
         // creature interacts with completed barriers
-        clearCreatureTickStatus(creature);
+        creature.clearTickStatus();
         state.barriers.forEach(barrier => {
           if (barrier && barrier.template) {
-            barrier.isActing |= creatureBarrier({creature, barrier, timeDelta})
+            barrier.isActing |= creature.barrierTickStatus({barrier, timeDelta})
           }
         });
-        applyCreatureStatuses(creature)
+        creature.applyTickStatus()
 
         // creature attacks staff if near
         const terrainY = this.getElevation(creature.el.object3D.position.x, creature.el.object3D.position.z)
-        const isNearStaff = creatureTickMove({creature, timeDelta, staffPosition:state.tipPosition, terrainY});
+        const isNearStaff = creature.tickMove({timeDelta, staffPosition:state.tipPosition, terrainY});
         if (isNearStaff && ! state.isStaffExploding) {
           state.isStaffExploding = true;
           const particleEl = document.createElement('a-entity');
@@ -385,7 +386,7 @@ AFRAME.registerState({
       for (let i = state.creatures.length-1; i >= 0; --i) {
         const distance = state.creatures[i].el.object3D.position.distanceTo(state.rigEl.object3D.position);
         if (state.creatures[i].hitPoints <= 0 && distance > 75) {
-          destroyCreature(state.creatures[i]);
+          state.creatures[i].destroy();
           state.creatures.splice(i, 1);
         }
       }

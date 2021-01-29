@@ -66,10 +66,21 @@ class MockElement {
         this.parentNode = {
             removeChild: function () {}
         }
+        this.classList = [];   // DOMTokenList isn't defined in Node.JS
+        this.classList.add = function (token) {
+            this.push(token);
+        }
     }
 
     setAttribute(name, value) {
         this._attributes[name] = value;
+        switch (name) {
+            case 'position':
+                if (value instanceof THREE.Vector3) {
+                    this.object3D.position.copy(value);
+                }
+                break;
+        }
     }
 
     getAttribute(name) {
