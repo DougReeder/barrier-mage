@@ -20,7 +20,7 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
 
     let html = `
 <div class="wrapper">
-    <div><b>Barrier Mage</b>: Draw mystic symbols &amp; discover their effects against the Violent Clouds!</div>
+    <div><b>Barrier Mage</b>: Draw mystic symbols &amp; discover their effects against creatures!</div>
     <img src="assets/symbols.png" alt="pentacle, brimstone, triquetra, Borromean rings, quicksilver and day-rune"><br>
     Grip button: grab staff<br>
     Trigger: Press and hold to draw straight segment<br>

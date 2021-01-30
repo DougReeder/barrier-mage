@@ -109,26 +109,7 @@ float pnoise3(vec3 P, vec3 rep)
 }
 `;
 
-AFRAME.registerShader('displacement', {
-  schema: {
-    colorOuter: {type: 'color', default: '#ff6600', is: 'uniform'},
-    colorOuterActive: {type: 'color', default: '#00ff00', is: 'uniform'},
-    activity: {type: 'float', default: 0.0, is: 'uniform'},   // 0 to 1
-    colorInner: {type: 'color', default: '#0080ff', is: 'uniform'},
-    timeMsec: {type:'time', is:'uniform'}
-  },
-  vertexShader: pnoise3 + `
-
-//
-// Based on @thespite's article:
-// 
-// "Vertex displacement with a noise function using GLSL and three.js"
-// Source: https://www.clicktorelease.com/blog/vertex-displacement-noise-3d-webgl-glsl-three-js/
-//
-
-varying float noise;
-uniform float timeMsec; // A-Frame time in milliseconds.
-
+const turbulence = `
 float turbulence( vec3 p ) {
 
   float w = 100.0;
@@ -142,6 +123,68 @@ float turbulence( vec3 p ) {
   return t;
 
 }
+`;
+
+AFRAME.registerShader('smooth-noise', {
+  schema: {
+    colorOuter: {type: 'color', default: '#ff6600', is: 'uniform'},
+    colorOuterActive: {type: 'color', default: '#00ff00', is: 'uniform'},
+    activity: {type: 'float', default: 0.0, is: 'uniform'},   // 0 to 1
+    colorInner: {type: 'color', default: '#0080ff', is: 'uniform'},
+    timeMsec: {type:'time', is:'uniform'}
+  },
+  vertexShader: pnoise3 + turbulence + `
+precision mediump float;
+
+uniform float timeMsec; // A-Frame time in milliseconds.
+
+varying float noise;
+
+void main() {
+  float time = timeMsec / 1000.0; // Convert from A-Frame milliseconds to typical time in seconds.
+  noise = 10.0 *  -.10 * turbulence( .5 * normal + time / 3.0 );
+
+  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}`,
+
+  fragmentShader: `
+uniform vec3 colorOuter;
+uniform vec3 colorOuterActive;
+uniform float activity;
+uniform vec3 colorInner;
+
+varying float noise;
+
+void main() {
+  vec3 colorOut = mix(colorOuter, colorOuterActive, activity);
+  vec3 color = mix(colorOut, colorInner, 2.0 * noise);
+  gl_FragColor = vec4(color, 1.0);
+
+}
+`
+});
+
+
+AFRAME.registerShader('displacement', {
+  schema: {
+    colorOuter: {type: 'color', default: '#ff6600', is: 'uniform'},
+    colorOuterActive: {type: 'color', default: '#00ff00', is: 'uniform'},
+    activity: {type: 'float', default: 0.0, is: 'uniform'},   // 0 to 1
+    colorInner: {type: 'color', default: '#0080ff', is: 'uniform'},
+    timeMsec: {type:'time', is:'uniform'}
+  },
+  vertexShader: pnoise3 + turbulence + `
+
+//
+// Based on @thespite's article:
+// 
+// "Vertex displacement with a noise function using GLSL and three.js"
+// Source: https://www.clicktorelease.com/blog/vertex-displacement-noise-3d-webgl-glsl-three-js/
+//
+
+varying float noise;
+uniform float timeMsec; // A-Frame time in milliseconds.
+
 
 void main() {
   float time = timeMsec / 1000.0; // Convert from A-Frame milliseconds to typical time in seconds.

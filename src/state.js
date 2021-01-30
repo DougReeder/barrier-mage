@@ -32,6 +32,7 @@ AFRAME.registerState({
     trainingEls: [],
     scoreEls: [],
     creatures: [],
+    numCreaturesDefeated: 0,
     isStaffExploding: false,
     progress: {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0}
   },
@@ -286,10 +287,11 @@ AFRAME.registerState({
     },
 
     createCreature: function (state) {
-      const speed = Math.min(Math.max(state.progress.symbols / 6, 1.0), 10.0);   // m/s
-      const creature = new Creature(speed, 5000);
+      const speed = Math.min(Math.max(state.numCreaturesDefeated / 6, 1.0), 10.0);   // m/s
+      const creature = state.numCreaturesDefeated < 6 ? new IrkBall(speed) : new ViolentCloud(speed);
 
-      const groundPosition = this.nearPlayer(state, 50, 100);
+      const distance = Math.max(Math.min(speed * 20, 750), 30);
+      const groundPosition = this.nearPlayer(state, distance, distance + 10);
       creature.place(groundPosition);
       state.creatures.push(creature);
 
@@ -344,6 +346,8 @@ AFRAME.registerState({
         }
       });
       state.creatures.forEach(creature => {
+        const wasDefeated = creature.hitPoints <= 0;
+
         // creature interacts with completed barriers
         creature.clearTickStatus();
         state.barriers.forEach(barrier => {
@@ -351,12 +355,16 @@ AFRAME.registerState({
             barrier.isActing |= creature.barrierTickStatus({barrier, timeDelta})
           }
         });
-        creature.applyTickStatus()
+        creature.applyTickStatus();
+
+        if (creature.hitPoints <= 0 && ! wasDefeated) {
+          ++state.numCreaturesDefeated;
+        }
 
         // creature attacks staff if near
         const terrainY = this.getElevation(creature.el.object3D.position.x, creature.el.object3D.position.z)
         const isNearStaff = creature.tickMove({timeDelta, staffPosition:state.tipPosition, terrainY});
-        if (isNearStaff && ! state.isStaffExploding) {
+        if (creature instanceof ViolentCloud && isNearStaff && ! state.isStaffExploding) {
           state.isStaffExploding = true;
           const particleEl = document.createElement('a-entity');
           particleEl.setAttribute('position', {x: 0, y: 1.00, z: 0});
@@ -377,10 +385,12 @@ AFRAME.registerState({
           }, 3000);
         }
 
-        // grays out player view if near creature
-        const cameraDistance = creature.el.object3D.position.distanceTo(this.cameraPos);
-        const opacity = Math.min(Math.max(1 - (cameraDistance-1) / 2, 0.0), 1.0);
-        this.blackoutEl.setAttribute('material', 'opacity', opacity);
+        if (creature instanceof ViolentCloud) {
+          // grays out player view if near creature
+          const cameraDistance = creature.el.object3D.position.distanceTo(this.cameraPos);
+          const opacity = Math.min(Math.max(1 - (cameraDistance - 1) / 2, 0.0), 1.0);
+          this.blackoutEl.setAttribute('material', 'opacity', opacity);
+        }
       });
       // removes creatures out of play
       for (let i = state.creatures.length-1; i >= 0; --i) {

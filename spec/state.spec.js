@@ -34,6 +34,7 @@ class MockState {
     this.trainingEls = [];
     this.scoreEls = [];
     this.creatures = [];
+    this.numCreaturesDefeated = 0;
     this.isStaffExploding = false;
     this.progress = {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0};
 

@@ -367,13 +367,13 @@ function extractPoints(segments, arcs, circles) {
   }
   const points = [];
   segments.forEach(segment => {
-    points.push(segment.a, segment.b);
+    points.push(segment.a, segment.b, segment.center);
   });
   arcs.forEach(arc => {
     points.push(arc.end1, arc.midpoint, arc.end2);
   });
   circles.forEach(circle => {
-    points.push(circle.p1, circle.p2, circle.p3);
+    points.push(circle.p1, circle.p2, circle.p3, circle.center);
   });
   return points;
 }

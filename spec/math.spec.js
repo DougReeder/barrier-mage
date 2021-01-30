@@ -861,9 +861,10 @@ describe("extractPoints", () => {
 
     const points = extractPoints(segments, arcs, circles);
 
-    expect(points[2]).toEqual(new THREE.Vector3(-16, -4, 12));
-    expect(points[8]).toEqual(new THREE.Vector3(2, 4, 8));
-    expect(points[11]).toEqual(new THREE.Vector3(4, 3, 4));
+    expect(points[3]).toEqual(new THREE.Vector3(-16, -4, 12));
+    expect(points[5]).toEqual(new THREE.Vector3(-4, 9, 12.5));
+    expect(points[10]).toEqual(new THREE.Vector3(2, 4, 8));
+    expect(points[13]).toEqual(new THREE.Vector3(4, 3, 4));
   });
 });
 

@@ -9,16 +9,34 @@ creatures = require('../src/creatures');
 global.distanceToBarrier = math.distanceToBarrier;
 global.triquetraTemplate = math.triquetraTemplate;
 global.brimstoneUpTemplate = math.brimstoneUpTemplate;
-global.Creature = creatures.Creature;
+global.IrkBall = creatures.IrkBall;
+global.ViolentCloud = creatures.ViolentCloud;
 
 describe("creature", () => {
-  it("should set defaults on instantiation without params", () => {
-    const creature = new Creature();
+  it("should set defaults on instantiating Irk Ball without params", () => {
+    const creature = new IrkBall();
 
+    expect(creature.radius).toBeCloseTo(0.25, 2);
+    expect(creature.barrierEffectDist).toBeGreaterThan(0.25, 6);
+    expect(creature.barrierEffectDist).toBeLessThan(1.00, 6);
     expect(creature.el).toBeFalsy();
     expect(creature.speed).toEqual(1.0);
     expect(creature.canMove).toBeTruthy();
-    expect(creature.hitPoints).toBeGreaterThanOrEqual(1000);
+    expect(creature.hitPoints).toBeGreaterThanOrEqual(3000);
+    expect(creature.activityCount).toEqual(0);
+    expect(creature.forceBarriers instanceof Set).toBeTruthy();
+  });
+
+  it("should set defaults on instanting Violent Cloud without params", () => {
+    const creature = new ViolentCloud();
+
+    expect(creature.radius).toEqual(1.0);
+    expect(creature.barrierEffectDist).toBeCloseTo(1.0, 6);
+    expect(creature.el).toBeFalsy();
+    expect(creature.sound).toEqual('#ominous');
+    expect(creature.speed).toEqual(1.0);
+    expect(creature.canMove).toBeTruthy();
+    expect(creature.hitPoints).toBeGreaterThanOrEqual(5000);
     expect(creature.activityCount).toEqual(0);
     expect(creature.forceBarriers instanceof Set).toBeTruthy();
   });
@@ -27,8 +45,9 @@ describe("creature", () => {
     const speed = 1.5;
     const hitPoints = 9000;
 
-    const creature = new Creature(speed, hitPoints);
+    const creature = new IrkBall(speed, hitPoints);
 
+    expect(creature.radius).toBeCloseTo(0.25, 2);
     expect(creature.el).toBeFalsy();
     expect(creature.speed).toEqual(speed);
     expect(creature.hitPoints).toEqual(hitPoints);
@@ -36,7 +55,7 @@ describe("creature", () => {
   });
 
   it("should be placeable", () => {
-    const creature = new Creature(1.2, 2500);
+    const creature = new ViolentCloud(1.2, 2500);
 
     const position = new THREE.Vector3(300, 100, 300);
     creature.place(position);
@@ -49,7 +68,7 @@ describe("creature", () => {
 
   it("should move forward on tickMove", () => {
     const speed = 1.3;
-    const creature = new Creature(speed, 3500);
+    const creature = new IrkBall(speed, 3500);
 
     const position = new THREE.Vector3(300, 100, 300);
     creature.place(position);
@@ -62,12 +81,12 @@ describe("creature", () => {
     const newPosition = position.clone().addScaledVector(velocity, timeDelta / 1000)
     expect(creature.el.object3D.position.x).toBeCloseTo(newPosition.x, 6);
     expect(creature.el.object3D.position.y).toBeCloseTo(newPosition.y, 1);
-    expect(creature.el.object3D.position.z).toBeCloseTo(newPosition.z, 6);
+    expect(creature.el.object3D.position.z).toBeCloseTo(newPosition.z, 1);
   });
 
   it("should clear flags on clearTickStatus", () => {
     const speed = 1.4;
-    const creature = new Creature(speed, 4500);
+    const creature = new ViolentCloud(speed, 4500);
     creature.canMove = false;
     creature.isBurning = true;
     creature.wasBurning = false;
@@ -82,7 +101,7 @@ describe("creature", () => {
   it("should be immobilized by proximity of triquetra", () => {
     const timeDelta = 1000 / 90;
     const speed = 1.4;
-    const creature = new Creature(speed, 4500);
+    const creature = new IrkBall(speed, 4500);
     const position = new THREE.Vector3(0.1, 0.1, 0.2);
     creature.place(position);
 
@@ -107,7 +126,7 @@ describe("creature", () => {
   it("should be active when near brimstone", () => {
     const timeDelta = 1000 / 60;
     const speed = 1.5;
-    const creature = new Creature(speed, 5500);
+    const creature = new ViolentCloud(speed, 5500);
     const position = new THREE.Vector3(-0.1, 0.1, -0.2);
     creature.place(position);
 
@@ -134,7 +153,7 @@ describe("creature", () => {
   it("should flag & clean up when destroyed", () => {
     const timeDelta = 1000 / 75;
     const speed = 1.6;
-    const creature = new Creature(speed, 6500);
+    const creature = new IrkBall(speed, 6500);
     const position = new THREE.Vector3(-0.1, 0.1, -0.2);
     creature.place(position);
 
