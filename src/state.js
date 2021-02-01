@@ -302,7 +302,7 @@ AFRAME.registerState({
           if (creature.hitPoints > 0) {
             creature.el.components.sound.playSound();
           }
-        }, staffDistance * 100);   // 10 m = 1 sec
+        }, Math.max(staffDistance * 100, 5000));   // 10 m = 1 sec
       });
     },
 
@@ -581,7 +581,9 @@ AFRAME.registerState({
 
         ++state.progress.symbols;
 
-        const numCreaturesAttacking = state.creatures.reduce((count, creature) => count + (creature.hitPoints > 0 ? 1 : 0), 0 );
+        const numCreaturesAttacking = state.creatures.reduce(
+            (count, creature) => count + (creature.hitPoints > 0 && creature.canMove ? 1 : 0),
+            0 );
         if (state.progress.brimstones >= 2 && state.progress.pentacles >= 2 && state.progress.triquetras >= 1 && numCreaturesAttacking === 0) {
           this.createCreature(state);
         }
