@@ -525,15 +525,21 @@ AFRAME.registerState({
         switch (template.name) {
           case "brimstone up":
           case "brimstone down":
-            ++state.progress.brimstones;
+            if (score >= 2) {
+              ++state.progress.brimstones;
+            }
             break;
 
           case "pentacle":
-            ++state.progress.pentacles;
+            if (score >= 2) {
+              ++state.progress.pentacles;
+            }
             break;
 
           case "triquetra":
-            ++state.progress.triquetras;
+            if (score >= 2) {
+              ++state.progress.triquetras;
+            }
             break;
 
           case "borromean rings":
