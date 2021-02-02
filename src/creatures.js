@@ -2,7 +2,7 @@
 // Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
 
 const CREATURE_ELEVATION = 1.10;
-const MIN_BARRIER_EFFECT_DIST = 0.60;
+const MIN_BARRIER_EFFECT_DIST = 0.60;   // based on the distance between symbol points, when drawn large
 const COLOR_OUTER = '#c8f307';
 const COLOR_OUTER_BRIMSTONE = '#ff8400';
 const COLOR_INNER_CLOUD = '#0080ff';

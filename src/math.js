@@ -525,7 +525,7 @@ const brimstoneDownTemplate = centerAndSizeTemplate({
   arcs: [],
   circles: [],
   size: null,   // sum of distances from segment endpoints to origin
-  minScore: 6.0,
+  minScore: 7.0,
   manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
@@ -543,7 +543,7 @@ const brimstoneUpTemplate = centerAndSizeTemplate({
   arcs: [],
   circles: [],
   size: null,
-  minScore: 5.0,
+  minScore: 6.0,
   manaUseMultiplier: 1,
   color: 'red',
   audioTag: '#flame',
