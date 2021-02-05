@@ -7,10 +7,19 @@ Gandalf's Staff (https://sketchfab.com/3d-models/gandalfs-staff-5853a4f132af407a
 by "nodoxi" is licensed under Creative Commons Attribution
 
 
+## Textures
+
+TexturesCom_BookOpen0076_6_masked_S.png (https://www.textures.com/download/BookOpen0076/101624)
+is licensed under Creative Commons Attribution
+
+
 ## Sounds
 
 339618__klankbeeld__windy-farmland-march-nl-160310-0868.mp3 (https://freesound.org/people/klankbeeld/sounds/339618/)
 by "klankbeeld" is licensed under Creative Commons Attribution
+
+63318__flag2__page-turn-please-turn-over-pto-paper-turn-over.mp3 (https://freesound.org/people/flag2/sounds/63318/)
+by "flag2" is licensed under Creative Commons Attribution
 
 455289__zembacraftworks__sad-chime-effect.mp3 (https://freesound.org/people/zembacraftworks/sounds/455289/) 
 by "zembacraftworks" is licensed under Creative Commons Attribution

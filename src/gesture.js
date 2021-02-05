@@ -46,7 +46,7 @@ AFRAME.registerComponent('gesture', {
 
   gripdown: function (evt) {
     AFRAME.scenes[0].emit("magicEnd", {handId: this.el.id});
-    if (this.el.children.length) {   // contains staff
+    if (this.el.querySelector('#staff')) {   // contains staff
       AFRAME.scenes[0].emit("dropStaff", {handId: this.el.id});
     } else {
       AFRAME.scenes[0].emit("grabStaff", {handId: this.el.id});
@@ -55,25 +55,25 @@ AFRAME.registerComponent('gesture', {
   },
 
   triggerdown: function (evt) {
-    if (this.el.children.length) {   // contains staff
+    if (this.el.querySelector('#staff')) {   // contains staff
       AFRAME.scenes[0].emit("straightBegin", {handId: this.el.id});
     }
   },
 
   triggerup: function (evt) {
-    if (this.el.children.length) {   // contains staff
+    if (this.el.querySelector('#staff')) {   // contains staff
       AFRAME.scenes[0].emit("straightEnd", {handId: this.el.id});
     }
   },
 
   thumbbuttondown: function (evt) {
-    if (this.el.children.length) {   // contains staff
+    if (this.el.querySelector('#staff')) {   // contains staff
       AFRAME.scenes[0].emit("curveBegin", {handId: this.el.id});
     }
   },
 
   thumbbuttonup: function (evt) {
-    if (this.el.children.length) {   // contains staff
+    if (this.el.querySelector('#staff')) {   // contains staff
       AFRAME.scenes[0].emit("curveEnd", {handId: this.el.id});
     }
   },

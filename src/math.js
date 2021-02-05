@@ -575,9 +575,9 @@ const triquetraTemplate = centerAndSizeTemplate({
   name: "triquetra",
   segments: [],
   arcs: [
-    new Arc(new THREE.Vector3(-HALF_SQRT3, -0.5, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(HALF_SQRT3, -0.5, 0)),
+    new Arc(new THREE.Vector3(HALF_SQRT3, -0.5, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(-HALF_SQRT3, -0.5, 0)),
     new Arc(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(HALF_SQRT3, -0.5, 0)),
-    new Arc(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(-HALF_SQRT3, -0.5, 0))
+    new Arc(new THREE.Vector3(-HALF_SQRT3, -0.5, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0))
   ],
   circles: [],
   size: null,

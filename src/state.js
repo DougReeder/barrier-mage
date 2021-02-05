@@ -71,14 +71,26 @@ AFRAME.registerState({
       state.staffEl = document.createElement('a-entity');
       state.staffEl.setAttribute('id', 'staff');
       state.staffEl.setAttribute('gltf-model', "#staffModel");
+
+      const oldBookHand = state.rigEl.querySelector('[book]');
+      let bookPage = 0;
+      if (oldBookHand) {
+        bookPage = oldBookHand.getAttribute('book').page;
+        oldBookHand.removeAttribute('book');
+      }
+
       if ('leftHand' === evt.handId) {
         state.staffEl.setAttribute('position', '0.01 0 0');
         state.staffEl.setAttribute('rotation', '-40 0 10');
         state.leftHandEl.appendChild(state.staffEl);
+
+        state.rightHandEl.setAttribute('book', {page: bookPage});
       } else {
         state.staffEl.setAttribute('position', '-0.02 0 0');
         state.staffEl.setAttribute('rotation', '-40 0 -10');
         state.rightHandEl.appendChild(state.staffEl);
+
+        state.leftHandEl.setAttribute('book', {page: bookPage});
       }
       state.staffHandId = evt.handId;
     },
@@ -612,22 +624,7 @@ AFRAME.registerState({
 
     showTraining: function (state, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, rawScore, score, centroid, duration) {
       const trainingEl = document.createElement('a-entity');
-      bestSegmentsXformed.forEach((segment, i) => {
-        trainingEl.setAttribute('line__' + i,
-            {start: segment.a, end: segment.b, color: 'black'});
-      });
-      bestArcsXformed.forEach((arc, i) => {
-        const {points} = arcFrom3Points(arc.end1, arc.midpoint, arc.end2);
-        const pointData = points.map(point => point.x.toFixed(3) + ' ' + point.y.toFixed(3) + ' ' + point.z.toFixed(3)).join(',');
-        trainingEl.setAttribute('lines__a' + i,
-            {points: pointData, color: 'black'});
-      });
-      bestCirclesXformed.forEach((circle, i) => {
-        const {points} = circleFrom3Points(circle.p1, circle.p2, circle.p3);
-        const pointData = points.map(point => point.x.toFixed(3) + ' ' + point.y.toFixed(3) + ' ' + point.z.toFixed(3)).join(',');
-        trainingEl.setAttribute('lines__c' + i,
-            {points: pointData, color: 'black'});
-      });
+      drawLinesOnElement(bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, trainingEl);
       AFRAME.scenes[0].appendChild(trainingEl);
       state.trainingEls.push(trainingEl);
 

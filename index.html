@@ -32,6 +32,7 @@
     <script src="src/math.js"></script>
     <script src="src/creatures.js"></script>
     <script src="src/navigation.js"></script>
+    <script src="src/book.js"></script>
     <script src="src/state.js"></script>
     <script src="src/gesture.js"></script>
     <script src="src/displacement-shader.js"></script>
@@ -45,7 +46,9 @@
 <a-scene moving-sun atoll-walk render-order="scene,hud" background="color:#398bc5">
     <a-assets>
         <a-asset-item id="staffModel" src="assets/gandalfs_staff_sized.glb"></a-asset-item>
+        <img id="book" src="assets/TexturesCom_BookOpen0076_6_masked_S.png">
         <audio id="wind" src="assets/339618__klankbeeld__windy-farmland-march-nl-160310-0868.mp3"></audio>
+        <audio id="pageturn" src="assets/63318__flag2__page-turn-please-turn-over-pto-paper-turn-over.mp3"></audio>
         <audio id="fizzle" src="assets/455289__zembacraftworks__sad-chime-effect.mp3"></audio>
         <audio id="force" src="assets/340159__flechabr__magic-click.mp3"></audio>
         <audio id="flame" src="assets/331621__hykenfreak__flame-ignition.mp3"></audio>
@@ -74,7 +77,7 @@
                       geometry="primitive:plane; height:0.15; width:0.30"
                       material="shader:flat; color:#222; transparent:true; opacity:0.0"></a-entity>
         </a-entity>
-        <a-entity id="leftHand"  hand-controls="hand:left;  color:#555" gesture></a-entity>
+        <a-entity id="leftHand"  hand-controls="hand:left;  color:#555" gesture book></a-entity>
         <a-entity id="rightHand" hand-controls="hand:right; color:#555" gesture></a-entity>
     </a-entity>
     <a-entity id="staff" gltf-model="#staffModel" position="0 5.95 -3"></a-entity>

@@ -4,6 +4,7 @@
 require('./support/three.min');
 const {AFRAME, MockElement} = require('./aframe-stub');
 math = require('../src/math');
+const {drawLinesOnElement} = require('../src/book');
 require('../src/state');
 
 global.Segment = math.Segment;

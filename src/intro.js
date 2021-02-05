@@ -23,8 +23,10 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     <div><b>Barrier Mage</b>: Draw mystic symbols &amp; drive off creatures with their various effects!</div>
     <img src="assets/symbols.png" alt="pentacle, brimstone, triquetra, Borromean rings, quicksilver and day-rune"><br>
     Grip button: grab staff<br>
-    Trigger: Press and hold to draw straight segment<br>
-    A or X Button: Press and hold to draw arc or circle<br>
+    Staff hand trigger: Press and hold to draw straight segment<br>
+    Staff hand A or X Button: Press and hold to draw arc or circle<br>
+    Off hand trigger: Page forward<br>
+    Off hand A or X Button: Page backward<br>
     Joystick: walk<br>
     ${requirements}
     <div>
