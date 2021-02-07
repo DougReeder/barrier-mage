@@ -56,31 +56,40 @@ AFRAME.registerComponent('book', {
 
     this.pageLeftEl = document.createElement('a-entity');
     this.pageLeftEl.setAttribute('id', 'pageLeft');
-    this.pageLeftEl.setAttribute('position', {x:-0.085, y:-0.02, z:0.001});
+    this.pageLeftEl.setAttribute('position', {x:-0.085, y:-0.025, z:0.001});
 
     this.pageRightEl = document.createElement('a-entity');
     this.pageRightEl.setAttribute('id', 'pageRight');
-    this.pageRightEl.setAttribute('position', {x:0.085, y:-0.02, z:0.001});
+    this.pageRightEl.setAttribute('position', {x:0.085, y:-0.025, z:0.001});
 
     switch (this.data.page) {
       default:
       case 0:
         this.pageLeftEl.setAttribute('scale', {x:0.08, y:0.08, z:0.08});
+        this.pageLeftEl.setAttribute('text', {value:"Brimstone\nto burn\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5, font:'mozillavr', align:'center'});
         drawLinesOnElement(brimstoneUpTemplate.segments, brimstoneUpTemplate.arcs, brimstoneUpTemplate.circles, this.pageLeftEl);
+
         this.pageRightEl.setAttribute('scale', {x:0.08, y:0.08, z:0.08});
+        this.pageRightEl.setAttribute('text', {value:"Triquetra knot\nto bind\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5, font:'mozillavr', align:'center'});
         drawLinesOnElement(triquetraTemplate.segments, triquetraTemplate.arcs, triquetraTemplate.circles, this.pageRightEl);
         break;
       case 1:
         this.pageLeftEl.setAttribute('scale', {x:0.045, y:0.045, z:0.045});
+        this.pageLeftEl.setAttribute('text', {value:"Borromean rings\nto link\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:8.88888, font:'mozillavr', align:'center'});
         drawLinesOnElement(borromeanRingsTemplate.segments, borromeanRingsTemplate.arcs, borromeanRingsTemplate.circles, this.pageLeftEl);
+
         this.pageRightEl.setAttribute('scale', {x:0.07, y:0.07, z:0.07});
+        this.pageRightEl.setAttribute('text', {value:"Pentacle\nto protect\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5.7142, font:'mozillavr', align:'center'});
         drawLinesOnElement(pentacleTemplate.segments, pentacleTemplate.arcs, pentacleTemplate.circles, this.pageRightEl);
         break;
       case 2:
-        this.pageLeftEl.setAttribute('scale', {x:0.08, y:0.08, z:0.08});
-        drawLinesOnElement(quicksilverTemplate.segments, quicksilverTemplate.arcs, quicksilverTemplate.circles, this.pageLeftEl);
+        this.pageLeftEl.setAttribute('scale', {x:0.075, y:0.075, z:0.075});
+        this.pageLeftEl.setAttribute('text', {value:"Dagaz (day rune)\nto illuminate\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5.33333, font:'mozillavr', align:'center'});
+        drawLinesOnElement(dagazTemplate.segments, dagazTemplate.arcs, dagazTemplate.circles, this.pageLeftEl);
+
         this.pageRightEl.setAttribute('scale', {x:0.08, y:0.08, z:0.08});
-        drawLinesOnElement(dagazTemplate.segments, dagazTemplate.arcs, dagazTemplate.circles, this.pageRightEl);
+        this.pageRightEl.setAttribute('text', {value:"Quicksilver\n???\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5, font:'mozillavr', align:'center'});
+        drawLinesOnElement(quicksilverTemplate.segments, quicksilverTemplate.arcs, quicksilverTemplate.circles, this.pageRightEl);
         break;
     }
     this.bookEl.appendChild(this.pageLeftEl);
