@@ -629,12 +629,15 @@ AFRAME.registerState({
       state.trainingEls.push(trainingEl);
 
       const scoreEl = document.createElement('a-text');
-      scoreEl.setAttribute('value', /* rawScore.toFixed(0) + "   " + */ score.toFixed(0));
       scoreEl.object3D.position.copy(centroid);
+      const cameraPosition = new THREE.Vector3();
+      document.getElementById('blackout').object3D.getWorldPosition(cameraPosition);
+      scoreEl.object3D.lookAt(cameraPosition);
+      scoreEl.object3D.matrixNeedsUpdate = true;
+      scoreEl.setAttribute('value', /* rawScore.toFixed(0) + "   " + */ score.toFixed(0));
       scoreEl.setAttribute('align', 'center');
       scoreEl.setAttribute('baseline', 'top');
       scoreEl.setAttribute('color', 'black');
-      scoreEl.setAttribute('look-at', "#leftHand");
       AFRAME.scenes[0].appendChild(scoreEl);
       state.scoreEls.push(scoreEl);
 
