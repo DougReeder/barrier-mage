@@ -1,12 +1,12 @@
 # Barrier Mage
 In fantasy, a wizard draws mystic symbols to work a magic spell.
-In this VR experience, you can too!
+In this VR demo, you can too!
 
-![pentagram & brimstone screenshot](assets/pentagram-brimstone.jpg)
+![pentacle & Violent Cloud](assets/pentacle-ViolentCloud.jpg)
 
 Live on [github.io](https://dougreeder.github.io/barrier-mage/)
 
-Uses WebXR and [A-Frame](https://aframe.io) and requires a 6-DOF controller.
+Uses WebXR and [A-Frame](https://aframe.io) and requires two 6-DOF controllers.
 
 The six symbols currently supported are:
 ![mystic symbols](assets/symbols.png)
@@ -16,10 +16,12 @@ At present, there is one sad caveat:
 
 
 
-Press and release a grip button to move your staff to that hand.
-Press and hold the trigger on your staff hand to draw a straight segment.
-Press and hold the A or X button on your staff hand to draw an arc or circle.
-~~Press and hold the trigger on your empty hand to fire sparks to annoy creatures.~~
+Grip button: grab staff<br>
+Staff hand trigger: Press and hold to draw straight segment<br>
+Staff hand A or X Button: Press and hold to draw arc or circle<br>
+Off hand trigger: Page forward<br>
+Off hand A or X Button: Page backward<br>
+Left Joystick: walk
 
 
 If you're moved to create a fantasy landscape that can use point light sources, I'd much appreciate such a contribution!

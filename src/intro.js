@@ -27,7 +27,7 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
     Staff hand A or X Button: Press and hold to draw arc or circle<br>
     Off hand trigger: Page forward<br>
     Off hand A or X Button: Page backward<br>
-    Joystick: walk<br>
+    Left Joystick: walk<br>
     ${requirements}
     <div>
       <video controls width="450" height="450">
