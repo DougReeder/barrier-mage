@@ -602,7 +602,7 @@ AFRAME.registerState({
         const numCreaturesAttacking = state.creatures.reduce(
             (count, creature) => count + (creature.hitPoints > 0 && creature.canMove ? 1 : 0),
             0 );
-        if (state.progress.brimstones >= 2 && state.progress.pentacles >= 2 && state.progress.triquetras >= 1 && numCreaturesAttacking === 0) {
+        if (state.progress.brimstones >= 1 && state.progress.pentacles >= 1 && state.progress.triquetras >= 1 && numCreaturesAttacking === 0) {
           this.createCreature(state);
         }
       } else if (template && score >= -2.5) {   // fizzle
