@@ -38,6 +38,7 @@ class MockState {
     this.numCreaturesDefeated = 0;
     this.isStaffExploding = false;
     this.progress = {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0};
+    this.drawAccuratelyHelp = {src: ['#drawaccurately', '', ''], idx: 0, volume: 1.0};
 
     this.inProgress.line = new THREE.Line(this.inProgress.geometry, this.inProgress.material);
   }

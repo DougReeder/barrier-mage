@@ -12,6 +12,8 @@ const STRAIGHT_PROXIMITY_SQ = 0.01;   // when drawing straight sections; square 
 const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved sections; square of 0.05 m
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
 const WHITE = new THREE.Color('white');
+const GOOD_SCORE = 2.0;
+const MIN_FIZZLE_SCORE = -2.5;
 const FADEOUT_DURATION = 15000;
 const TRAINING_DURATION = 6000;
 const TRAINING_FADE_DURATION = 1000;
@@ -34,7 +36,8 @@ AFRAME.registerState({
     creatures: [],
     numCreaturesDefeated: 0,
     isStaffExploding: false,
-    progress: {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0}
+    progress: {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0},
+    drawAccuratelyHelp: {src: ['#drawaccurately', null, null], idx: 0, volume: 1.0},
   },
 
   handlers: {
@@ -537,19 +540,19 @@ AFRAME.registerState({
         switch (template.name) {
           case "brimstone up":
           case "brimstone down":
-            if (score >= 2) {
+            if (score >= GOOD_SCORE) {
               ++state.progress.brimstones;
             }
             break;
 
           case "pentacle":
-            if (score >= 2) {
+            if (score >= GOOD_SCORE) {
               ++state.progress.pentacles;
             }
             break;
 
           case "triquetra":
-            if (score >= 2) {
+            if (score >= GOOD_SCORE) {
               ++state.progress.triquetras;
             }
             break;
@@ -599,17 +602,20 @@ AFRAME.registerState({
 
         ++state.progress.symbols;
 
+        if (score < GOOD_SCORE && (state.progress.brimstones === 0 || state.progress.pentacles === 0 || state.progress.triquetras === 0)) {
+          this.playHelp(state.staffEl, state.drawAccuratelyHelp);
+        }
         const numCreaturesAttacking = state.creatures.reduce(
             (count, creature) => count + (creature.hitPoints > 0 && creature.canMove ? 1 : 0),
             0 );
         if (state.progress.brimstones >= 1 && state.progress.pentacles >= 1 && state.progress.triquetras >= 1 && numCreaturesAttacking === 0) {
           this.createCreature(state);
         }
-      } else if (template && score >= -2.5) {   // fizzle
+      } else if (template && score >= MIN_FIZZLE_SCORE) {   // fizzle
         const line = barrier.lines[barrier.lines.length-1];
         line.el.setAttribute('sound', {src: '#fizzle', autoplay: true, volume: 0.75});
       }
-      if (template && score >= -2.5) {   // success or fizzle
+      if (template && score >= MIN_FIZZLE_SCORE) {   // success or fizzle
         console.log("name:", template.name, "   score:", score, "   minScore:", template.minScore, "   mana:", barrier.mana ? Math.round(barrier.mana) : barrier.mana);
 
         let duration;
@@ -620,6 +626,16 @@ AFRAME.registerState({
         }
         this.showTraining(state, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, rawScore, score, centroid, duration);
       }
+    },
+
+    playHelp(el, help) {
+      const src = help.src[help.idx];
+      const volume = help.volume || 1.0;
+      el.setAttribute('sound', {src: src, volume: volume});
+      if (src) {
+        el.components.sound.playSound();
+      }
+      help.idx = (help.idx + 1) % help.src.length;
     },
 
     showTraining: function (state, bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, rawScore, score, centroid, duration) {
