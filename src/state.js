@@ -37,7 +37,7 @@ AFRAME.registerState({
     numCreaturesDefeated: 0,
     isStaffExploding: false,
     progress: {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0},
-    drawAccuratelyHelp: {src: ['#drawaccurately', null, null], idx: 0, volume: 1.0},
+    drawAccuratelyHelp: {src: ['#proportionsbook', null, '#drawaccurately', null, null], idx: 0, volume: 1.0},
   },
 
   handlers: {
