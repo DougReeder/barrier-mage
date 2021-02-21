@@ -630,7 +630,7 @@ const quicksilverTemplate = centerAndSizeTemplate({
   ).circle],
   size: null,
   minScore: 7.0,
-  manaUseMultiplier: 1,
+  manaUseMultiplier: 30,
   color: 'silver',
   audioTag: '#liquid',
 });

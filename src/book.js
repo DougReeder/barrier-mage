@@ -83,13 +83,13 @@ AFRAME.registerComponent('book', {
         drawLinesOnElement(pentacleTemplate.segments, pentacleTemplate.arcs, pentacleTemplate.circles, this.pageRightEl);
         break;
       case 2:
-        this.pageLeftEl.setAttribute('scale', {x:0.075, y:0.075, z:0.075});
-        this.pageLeftEl.setAttribute('text', {value:"Dagaz (day rune)\nto illuminate\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5.33333, font:'mozillavr', align:'center'});
-        drawLinesOnElement(dagazTemplate.segments, dagazTemplate.arcs, dagazTemplate.circles, this.pageLeftEl);
+        this.pageLeftEl.setAttribute('scale', {x:0.08, y:0.08, z:0.08});
+        this.pageLeftEl.setAttribute('text', {value:"Quicksilver\nto detect\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5, font:'mozillavr', align:'center'});
+        drawLinesOnElement(quicksilverTemplate.segments, quicksilverTemplate.arcs, quicksilverTemplate.circles, this.pageLeftEl);
 
-        this.pageRightEl.setAttribute('scale', {x:0.08, y:0.08, z:0.08});
-        this.pageRightEl.setAttribute('text', {value:"Quicksilver\n???\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5, font:'mozillavr', align:'center'});
-        drawLinesOnElement(quicksilverTemplate.segments, quicksilverTemplate.arcs, quicksilverTemplate.circles, this.pageRightEl);
+        this.pageRightEl.setAttribute('scale', {x:0.075, y:0.075, z:0.075});
+        this.pageRightEl.setAttribute('text', {value:"Dagaz (day rune)\nto illuminate\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5.33333, font:'mozillavr', align:'center'});
+        drawLinesOnElement(dagazTemplate.segments, dagazTemplate.arcs, dagazTemplate.circles, this.pageRightEl);
         break;
     }
     this.bookEl.appendChild(this.pageLeftEl);

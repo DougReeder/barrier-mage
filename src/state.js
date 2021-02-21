@@ -319,6 +319,11 @@ AFRAME.registerState({
           }
         }, Math.max(staffDistance * 100, 5000));   // 10 m = 1 sec
       });
+
+      const detector = document.getElementById('detector');
+      if (detector) {
+        detector.setAttribute('look-at', '#' + creature.el.id);
+      }
     },
 
     nearPlayer: function (state, min = 50, max = 75) {
@@ -598,6 +603,10 @@ AFRAME.registerState({
               state.staffEl.appendChild(glowEl);
             }
             break;
+
+          case "quicksilver":
+            this.createDetector(state, centroid);
+            break;
         }
 
         ++state.progress.symbols;
@@ -692,6 +701,30 @@ AFRAME.registerState({
       });
       console.log("linkEl:", linkEl);
       AFRAME.scenes[0].appendChild(linkEl);
+    },
+
+    createDetector: function(state, centroid) {
+      let detectorEl = document.getElementById('detector');
+      let lookAt;
+      if (detectorEl) {
+        lookAt = detectorEl.getAttribute('look-at');
+        detectorEl.parentNode.removeChild(detectorEl);
+      } else {
+        lookAt = {x: 0, y: 1000, z: 0};
+      }
+
+      const terrainY = this.getElevation(centroid.x, centroid.z);
+      centroid.y = terrainY + 0.40;
+
+      detectorEl = document.createElement('a-cylinder');
+      detectorEl.setAttribute('id', 'detector');
+      detectorEl.setAttribute('src', '#fleurdelis');
+      detectorEl.setAttribute('radius', 0.25);
+      detectorEl.setAttribute('segments-radial', 64);
+      detectorEl.setAttribute('height', 0.02);
+      detectorEl.setAttribute('position', centroid);
+      detectorEl.setAttribute('look-at', lookAt);
+      AFRAME.scenes[0].appendChild(detectorEl);
     }
   }
 });

@@ -12,6 +12,9 @@ by "nodoxi" is licensed under Creative Commons Attribution
 TexturesCom_BookOpen0076_6_masked_S.png (https://www.textures.com/download/BookOpen0076/101624)
 is licensed under Creative Commons Attribution
 
+Fleur-De-Lis-Clip-Art-32658.jpeg (https://cliparting.com/free-fleur-de-lis-clip-art-32658/)
+is licensed under Creative Commons Attribution
+
 
 ## Sounds
 

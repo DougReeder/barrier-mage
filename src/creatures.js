@@ -43,7 +43,7 @@ class Creature {
   place(position) {
     console.log("placing creature at ground position", position)
     this.el = document.createElement('a-sphere');
-    this.el.setAttribute('id', 'creature');
+    this.el.setAttribute('id', 'creature-' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(36));
     this.el.classList.add('creature');
     this.el.setAttribute('radius', this.radius)
     this.el.setAttribute('segments-height', 72);
