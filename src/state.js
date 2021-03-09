@@ -653,22 +653,46 @@ AFRAME.registerState({
       AFRAME.scenes[0].appendChild(trainingEl);
       state.trainingEls.push(trainingEl);
 
-      const scoreEl = document.createElement('a-text');
-      scoreEl.object3D.position.copy(centroid);
-      const cameraPosition = new THREE.Vector3();
-      document.getElementById('blackout').object3D.getWorldPosition(cameraPosition);
-      scoreEl.object3D.lookAt(cameraPosition);
-      scoreEl.object3D.matrixNeedsUpdate = true;
-      scoreEl.setAttribute('value', /* rawScore.toFixed(0) + "   " + */ score.toFixed(0));
-      scoreEl.setAttribute('align', 'center');
-      scoreEl.setAttribute('baseline', 'top');
-      scoreEl.setAttribute('color', 'black');
-      AFRAME.scenes[0].appendChild(scoreEl);
-      state.scoreEls.push(scoreEl);
+      let scoreEl;
+      if (score >= 0) {
+        const cameraPosition = new THREE.Vector3();
+        document.getElementById('blackout').object3D.getWorldPosition(cameraPosition);
+        cameraPosition.y += 1.6;
+        scoreEl = document.createElement('a-entity');
+        scoreEl.object3D.position.copy(centroid);
+        const displacement = new THREE.Vector3();
+        displacement.subVectors(cameraPosition, centroid);
+        displacement.setLength(0.05);
+        scoreEl.object3D.position.add(displacement);
 
+        scoreEl.object3D.lookAt(cameraPosition);
+        scoreEl.object3D.matrixNeedsUpdate = true;
+
+        scoreEl.setAttribute('dial', {
+          size: 0.10,
+          src: '#bezel',
+          radius: 0.95,
+          innerRadius: 0.33,
+          thetaStart: -180,
+          wedgeColor: '#5555ff',
+          backgroundColor: 'black',
+        });
+        scoreEl.setAttribute('animation', {
+          property: 'dial.thetaEnd',
+          from: -180,
+          to: Math.max(Math.min(-180 + score * 18, 180), -180),
+          dur: 500,
+          easing: 'easeOutQuad'
+        });
+
+        AFRAME.scenes[0].appendChild(scoreEl);
+        state.scoreEls.push(scoreEl);
+      }
       setTimeout(() => {
         trainingEl.fadeRemainingMs = TRAINING_FADE_DURATION;
-        scoreEl.fadeRemainingMs = TRAINING_FADE_DURATION;
+        if (scoreEl) {
+          scoreEl.fadeRemainingMs = TRAINING_FADE_DURATION;
+        }
       }, duration - TRAINING_FADE_DURATION);
     },
 
