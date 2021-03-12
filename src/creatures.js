@@ -16,6 +16,10 @@ class Creature {
 
   /**
    * Constructs creature, but not its Entity
+   * @param {String} shader name, such as 'smooth-noise' or 'displacement'
+   * @param {Number} radius in m
+   * @param {String} colorInner CSS color
+   * @param {String} sound selector to <audio> asset
    * @param {Number} speed in m/s
    * @param {Number} hitPoints nominally the number of ms it can take damage
    */

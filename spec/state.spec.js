@@ -1,5 +1,5 @@
 // unit tests for state handling for Barrier Mage
-// Copyright © 2020 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
 
 require('./support/three.min');
 const {AFRAME, MockElement} = require('./aframe-stub');
@@ -309,6 +309,30 @@ describe("straightBegin/straightEnd", () => {
     expect(showTrainingSpy).toHaveBeenCalled();
     expect(showTrainingSpy.calls.argsFor(0)[7]).toEqual(6000);
   });
+
+  it("should start a new barrier if new segment is far from old", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'rightHand'});
+
+    state.staffEl.object3D.position.set(1,2,3);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'rightHand'});
+    state.staffEl.object3D.position.set(1,0.5,3);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'rightHand'});
+    expect(state.barriers[state.barriers.length-1].segments.length).toEqual(1);
+
+    state.staffEl.object3D.position.set(2,3,4);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'rightHand'});
+    state.staffEl.object3D.position.set(3,2,1);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'rightHand'});
+    expect(state.barriers[state.barriers.length-1].segments.length).toEqual(2);
+
+    state.staffEl.object3D.position.set(7,2,1);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'rightHand'});
+    expect(state.barriers[state.barriers.length-1].segments.length).toEqual(0);
+
+    state.staffEl.object3D.position.set(7,2.5,1);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'rightHand'});
+    expect(state.barriers[state.barriers.length-1].segments.length).toEqual(1);
+  });
 });
 
 describe("curveBegin/curveEnd", () => {
@@ -476,6 +500,35 @@ describe("curveBegin/curveEnd", () => {
     expect(showTrainingSpy.calls.argsFor(0)[7]).toEqual(6000);
     expect(state.barriers.length).toBe(2);
     expect(state.progress.symbols).toEqual(1);
+  });
+
+  it("should start a new barrier if new arc is far from old", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+
+    state.staffEl.object3D.position.set(0, 1, 0);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(0, 0, 0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    state.staffEl.object3D.position.set(0, -0.5, -HALF_SQRT3);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[state.barriers.length-1].arcs.length).toEqual(1);
+
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(0, 0, 0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    state.staffEl.object3D.position.set(0, -0.5, HALF_SQRT3);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[state.barriers.length-1].arcs.length).toEqual(2);
+
+
+    state.staffEl.object3D.position.set(4, -0.5, HALF_SQRT3);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[state.barriers.length-1].arcs.length).toEqual(0);
+    state.staffEl.object3D.position.set(4, 0, 0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    state.staffEl.object3D.position.set(4, 0.5, HALF_SQRT3);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[state.barriers.length-1].arcs.length).toEqual(1);
   });
 });
 

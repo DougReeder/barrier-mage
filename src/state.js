@@ -11,6 +11,7 @@ const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const STRAIGHT_PROXIMITY_SQ = 0.01;   // when drawing straight sections; square of 0.1 m
 const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved sections; square of 0.05 m
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
+const MAX_GAP = 3.0;   // drawing a new element this far from the existing implies you want to start over
 const WHITE = new THREE.Color('white');
 const GOOD_SCORE = 2.0;
 const MIN_FIZZLE_SCORE = -2.5;
@@ -108,6 +109,7 @@ AFRAME.registerState({
         arcs: [],
         circles: [],
         mana: null,   // not yet active
+        template: null,   // not yet active
       });
     },
 
@@ -115,6 +117,7 @@ AFRAME.registerState({
       // console.log("straightBegin:", evt.handId);
 
       this.snapTipPosition(state);
+      this.checkGap(state)
 
       state.inProgress.points = [state.tipPosition.clone(), state.tipPosition.clone()];
       state.inProgress.geometry.setFromPoints(state.inProgress.points);
@@ -150,6 +153,7 @@ AFRAME.registerState({
       // console.log("curveBegin:", evt.handId);
 
       this.snapTipPosition(state, CURVE_END_PROXIMITY_SQ);
+      this.checkGap(state)
 
       this.createNewLineIfNeeded(state, CURVE_END_PROXIMITY_SQ);
 
@@ -220,6 +224,18 @@ AFRAME.registerState({
           }
         });
       });
+    },
+
+    checkGap: function (state) {
+      const barrier = state.barriers[state.barriers.length-1];
+      if (barrier.segments.length === 0 && barrier.arcs.length === 0 && barrier.circles.length === 0) {
+        return;
+      }
+      const dist = distanceToBarrier(state.tipPosition, barrier);
+      if (dist > MAX_GAP) {
+        this.magicEnd(state, {handId: state.staffHandId});   // discards elements
+        this.magicBegin(state, {handId: state.staffHandId});
+      }
     },
 
     createNewLineIfNeeded: function (state, proximitySq = STRAIGHT_PROXIMITY_SQ) {
