@@ -395,6 +395,11 @@ AFRAME.registerState({
 
         if (creature.hitPoints <= 0 && ! wasDefeated) {
           ++state.numCreaturesDefeated;
+
+          const detectorEl = document.getElementById('detector');
+          if (detectorEl) {
+            detectorEl.setAttribute('look-at', this.latestDangerousCreature(state));
+          }
         }
 
         // creature attacks staff if near
@@ -745,12 +750,8 @@ AFRAME.registerState({
 
     createDetector: function(state, centroid) {
       let detectorEl = document.getElementById('detector');
-      let lookAt;
       if (detectorEl) {
-        lookAt = detectorEl.getAttribute('look-at');
         detectorEl.parentNode.removeChild(detectorEl);
-      } else {
-        lookAt = {x: 0, y: 1000, z: 0};
       }
 
       const terrainY = this.getElevation(centroid.x, centroid.z);
@@ -763,8 +764,24 @@ AFRAME.registerState({
       detectorEl.setAttribute('segments-radial', 64);
       detectorEl.setAttribute('height', 0.02);
       detectorEl.setAttribute('position', centroid);
-      detectorEl.setAttribute('look-at', lookAt);
+      detectorEl.setAttribute('look-at', this.latestDangerousCreature(state));
       AFRAME.scenes[0].appendChild(detectorEl);
+    },
+
+    latestDangerousCreature: function(state) {
+      for (let i = state.creatures.length - 1; i >= 0; --i) {
+        if (state.creatures[i].hitPoints > 0 && state.creatures[i].canMove) {
+          return '#' + state.creatures[i].el.id;
+        }
+      }
+
+      for (let i = state.creatures.length - 1; i >= 0; --i) {
+        if (state.creatures[i].hitPoints > 0) {
+          return '#' + state.creatures[i].el.id;
+        }
+      }
+
+      return {x: 0, y: 1000, z: 0};
     }
   }
 });
