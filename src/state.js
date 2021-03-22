@@ -18,6 +18,7 @@ const MIN_FIZZLE_SCORE = -2.5;
 const FADEOUT_DURATION = 15000;
 const TRAINING_DURATION = 6000;
 const TRAINING_FADE_DURATION = 1000;
+const PORTAL_DISTANCE = 35;
 
 AFRAME.registerState({
   initialState: {
@@ -724,19 +725,41 @@ AFRAME.registerState({
       displacement.x -= cameraPosition.x;
       displacement.z -= cameraPosition.z;
       displacement.y -= 1;
-      displacement.normalize();   // 1m past barrier
+
+      let position = new THREE.Vector3(), distance, highestPosition = new THREE.Vector3(0, Number.NEGATIVE_INFINITY, 0);
+      for (distance=PORTAL_DISTANCE; distance<=150; ++distance) {
+        displacement.setLength(distance);
+        position.addVectors(centroid, displacement)
+        position.y = this.getElevation(position.x, position.z);
+        if (position.y > highestPosition.y) {
+          highestPosition.copy(position);
+        }
+      }
+      if (highestPosition.y === 0) {   // fall back on land furthest away
+        distance = PORTAL_DISTANCE - 1;
+        do {
+          displacement.setLength(distance);
+          highestPosition.addVectors(centroid, displacement)
+          highestPosition.y = this.getElevation(highestPosition.x, highestPosition.z);
+          // console.log("highestPosition:", highestPosition);
+
+          --distance;
+        } while (highestPosition.y === 0 && distance >= -3);
+      }
+      if (highestPosition.y === 0) {   // fall back on origin, which is guaranteed to have land
+        highestPosition.set(0, 0, 0);
+        highestPosition.y = this.getElevation(highestPosition.x, highestPosition.z);
+      }
 
       const linkEl = document.createElement('a-entity');
+      displacement.setLength(1);   // 1m past barrier
       linkEl.object3D.position.addVectors(centroid, displacement);
-      console.log("centroid:", centroid, "   displacement:", displacement);
       linkEl.object3D.setRotationFromAxisAngle(Y_AXIS, Math.atan2(displacement.x, displacement.z));
       linkEl.setAttribute('link', {
-        href: 'https://dougreeder.github.io/elfland-glider/',
-        title: 'Elfland Glider',
-        image: 'https://dougreeder.github.io/elfland-glider/city/screenshot-city.png',
-        on: 'hitstart',
+        image: 'assets/barrier-mage-equirect.png',
         visualAspectEnabled: true
       });
+      linkEl.setAttribute('portal', {position: highestPosition});
       linkEl.setAttribute('scale', '0.001 0.001 0.001');
       linkEl.setAttribute('animation', {
         property: 'scale',
@@ -744,7 +767,6 @@ AFRAME.registerState({
         easing: 'easeOutSine',
         dur: '2000'   // ms
       });
-      console.log("linkEl:", linkEl);
       AFRAME.scenes[0].appendChild(linkEl);
     },
 
