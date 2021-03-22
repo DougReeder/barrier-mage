@@ -1,6 +1,5 @@
 # Barrier Mage
-In fantasy, a wizard draws mystic symbols to work a magic spell.
-In this VR demo, you can too!
+Draw mystic symbols which burn, protect, bind, detect, illuminate or link. Use these spells to drive off creatures both mundane and magical!
 
 ![pentacle & Violent Cloud](assets/pentacle-ViolentCloud.jpg)
 
