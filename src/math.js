@@ -608,7 +608,7 @@ const borromeanRingsTemplate = centerAndSizeTemplate({
   arcs: [],
   circles: [circle1, circle2, circle3],
   size: null,
-  minScore: 10.0,
+  minScore: 8.0,
   manaUseMultiplier: 30,
   color: 'white',
   audioTag: '#portal',

@@ -19,6 +19,7 @@ const FADEOUT_DURATION = 15000;
 const TRAINING_DURATION = 6000;
 const TRAINING_FADE_DURATION = 1000;
 const PORTAL_DISTANCE = 35;
+const PORTAL_ANIMATION_TIME = 1500;
 
 AFRAME.registerState({
   initialState: {
@@ -67,6 +68,8 @@ AFRAME.registerState({
 
       const terrainGeometry = rigEl.sceneEl.querySelector('a-atoll-terrain').getAttribute('geometry');
       this.getElevation = terrainGeometry.getElevation;
+
+      AFRAME.scenes[0].setAttribute('screenshot', {width: 1024, height: 512});   // lower-res for speed
     },
 
     /** event from gesture component on hand */
@@ -724,7 +727,7 @@ AFRAME.registerState({
       const cameraPosition = document.querySelector('[camera]').object3D.position;
       displacement.x -= cameraPosition.x;
       displacement.z -= cameraPosition.z;
-      displacement.y -= 1;
+      displacement.y -= 1.6;
 
       let position = new THREE.Vector3(), distance, highestPosition = new THREE.Vector3(0, Number.NEGATIVE_INFINITY, 0);
       for (distance=PORTAL_DISTANCE; distance<=150; ++distance) {
@@ -752,22 +755,28 @@ AFRAME.registerState({
       }
 
       const linkEl = document.createElement('a-entity');
-      displacement.setLength(1);   // 1m past barrier
+      displacement.setLength(0.75);   // 0.75m past symbol
       linkEl.object3D.position.addVectors(centroid, displacement);
       linkEl.object3D.setRotationFromAxisAngle(Y_AXIS, Math.atan2(displacement.x, displacement.z));
-      linkEl.setAttribute('link', {
-        image: 'assets/barrier-mage-equirect.png',
-        visualAspectEnabled: true
-      });
-      linkEl.setAttribute('portal', {position: highestPosition});
+      linkEl.setAttribute('link', {visualAspectEnabled: true});   // used only for visual effect
+      linkEl.setAttribute('portal', {position: highestPosition});   // actual teleportation
       linkEl.setAttribute('scale', '0.001 0.001 0.001');
       linkEl.setAttribute('animation', {
         property: 'scale',
-        from: '0.001 0.001 0.001', to:'1 1 0.001',
+        from: '0.001 0.001 0.001', to:'0.5 0.5 0.001',
         easing: 'easeOutSine',
-        dur: '2000'   // ms
+        dur: PORTAL_ANIMATION_TIME   // ms
       });
       AFRAME.scenes[0].appendChild(linkEl);
+
+      requestIdleCallback(() => {
+        const oldRigPos = state.rigEl.object3D.position.clone();
+        state.rigEl.object3D.position.copy(highestPosition);
+        state.rigEl.object3D.position.y += 2.0;
+        linkEl.setAttribute('link', 'image',
+            document.querySelector('a-scene').components.screenshot.getCanvas('equirectangular').toDataURL());
+        state.rigEl.object3D.position.copy(oldRigPos);
+      }, { timeout: PORTAL_ANIMATION_TIME });
     },
 
     createDetector: function(state, centroid) {
