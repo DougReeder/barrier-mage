@@ -1,6 +1,8 @@
 // portal.js - teleportation for Barrier Mage
 // Copyright © 2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
 
+const ANIMATION_DURATION = 400;
+
 AFRAME.registerComponent('portal', {
   schema: {
     position: {type:'vec3', default: {x:0, z:0, y:100}},
@@ -9,6 +11,7 @@ AFRAME.registerComponent('portal', {
 
   init: function () {
     this.rigEl = document.getElementById('rig');
+    this.blackoutEl = document.getElementById('blackout');
 
     this.handlers = {
       teleport: this.teleport.bind(this),
@@ -31,6 +34,12 @@ AFRAME.registerComponent('portal', {
   },
 
   teleport: function () {
-    this.rigEl.object3D.position.copy(this.data.position);
+    this.blackoutEl.setAttribute('animation',
+        {property: 'material.opacity', from:0.0, to:1.0, dur:ANIMATION_DURATION, easing: 'linear'});
+    setTimeout(() => {
+      this.rigEl.object3D.position.copy(this.data.position);
+      this.blackoutEl.setAttribute('animation',
+          {property: 'material.opacity', from:1.0, to:0.0, dur:ANIMATION_DURATION, easing: 'linear'});
+    }, ANIMATION_DURATION);
   }
 });
