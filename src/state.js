@@ -729,8 +729,22 @@ AFRAME.registerState({
       displacement.z -= cameraPosition.z;
       displacement.y -= 1.6;
 
-      let position = new THREE.Vector3(), distance, highestPosition = new THREE.Vector3(0, Number.NEGATIVE_INFINITY, 0);
-      for (distance=PORTAL_DISTANCE; distance<=150; ++distance) {
+      let position = new THREE.Vector3();
+      let distance = PORTAL_DISTANCE;
+      let highestPosition = new THREE.Vector3(0, Number.NEGATIVE_INFINITY, 0);
+      let lastY;
+      displacement.setLength(distance);
+      position.addVectors(centroid, displacement)
+      position.y = this.getElevation(position.x, position.z);
+      do {   // skips an initial downward slope
+        lastY = position.y;
+        displacement.setLength(++distance);
+        position.addVectors(centroid, displacement)
+        position.y = this.getElevation(position.x, position.z);
+      } while (position.y < lastY);
+      highestPosition.copy(position);
+
+      for (++distance; distance<=150; ++distance) {   // finds local maximum
         displacement.setLength(distance);
         position.addVectors(centroid, displacement)
         position.y = this.getElevation(position.x, position.z);
@@ -738,8 +752,8 @@ AFRAME.registerState({
           highestPosition.copy(position);
         }
       }
-      if (highestPosition.y === 0) {   // fall back on land furthest away
-        distance = PORTAL_DISTANCE - 1;
+      if (highestPosition.y === 0) {   // falls back on land furthest away
+        distance = PORTAL_DISTANCE;
         do {
           displacement.setLength(distance);
           highestPosition.addVectors(centroid, displacement)
