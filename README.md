@@ -20,7 +20,14 @@ Staff hand trigger: Press and hold to draw straight segment<br>
 Staff hand A or X Button: Press and hold to draw arc or circle<br>
 Off hand trigger: Page forward<br>
 Off hand A or X Button: Page backward<br>
-Left Joystick: walk
+Joystick: walk
+
+Brimstone to burn<br>
+Triquetra knot to bind<br>
+Borromean rings to link<br>
+Pentacle to protect<br>
+Quicksilver to detect<br>
+Dagaz (day rune) to illuminate
 
 
 If you're moved to create a fantasy landscape that can use point light sources, I'd much appreciate such a contribution!
