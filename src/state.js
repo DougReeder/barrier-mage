@@ -768,6 +768,17 @@ AFRAME.registerState({
         highestPosition.y = this.getElevation(highestPosition.x, highestPosition.z);
       }
 
+      const destinationEl = document.createElement('a-entity');
+      destinationEl.object3D.position.copy(highestPosition);
+      destinationEl.object3D.position.y += 1.0;
+      destinationEl.object3D.setRotationFromEuler(
+          new THREE.Euler(0,
+              Math.atan2(displacement.x, displacement.z),
+              Math.random()*2*Math.PI));
+      destinationEl.setAttribute('geometry', {primitive:'ring', radiusInner:0.40, radiusOuter:0.50, segmentsTheta:64});
+      destinationEl.setAttribute('material', {side:'double', shader:'flat', src:'#clouds', transparent:true, opacity:0.70});
+      AFRAME.scenes[0].appendChild(destinationEl);
+
       const linkEl = document.createElement('a-entity');
       displacement.setLength(0.75);   // 0.75m past symbol
       linkEl.object3D.position.addVectors(centroid, displacement);
