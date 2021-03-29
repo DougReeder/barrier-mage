@@ -474,18 +474,9 @@ AFRAME.registerState({
         }
         trainingEl.fadeRemainingMs -= timeDelta;
         const opacity = Math.max(trainingEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
-        for (let j=0; j<5; ++j) {   // Templates have at most 5 segments.
-          const lineAtrbt = trainingEl.getAttribute('line__'+j);
-          if (lineAtrbt) {
-            Object.assign(lineAtrbt, {opacity: opacity})
-            trainingEl.setAttribute('line__'+j, lineAtrbt);
-          }
-        }
-        for (let j=0; j<5; ++j) {   // Templates have at most 5 arcs.
-          const linesAtrbt = trainingEl.getAttribute('lines__'+j);
-          if (linesAtrbt) {
-            Object.assign(linesAtrbt, {opacity: opacity})
-            trainingEl.setAttribute('lines__'+j, linesAtrbt);
+        for (const name of Object.keys(trainingEl.components)) {
+          if (/^line/.test(name)) {
+            trainingEl.setAttribute(name, 'opacity', opacity)
           }
         }
 
