@@ -52,6 +52,7 @@ describe("nearPlayer", () => {
     AFRAME.stateParam.handlers.cameraEl = new MockElement();
     AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
     AFRAME.stateParam.handlers.getElevation = () => 100;
+    AFRAME.stateParam.handlers.fadeEls = [];
   });
 
   it("should return a position near, but not too near, the player", () => {
@@ -78,6 +79,7 @@ describe("straightBegin/straightEnd", () => {
     state = new MockState();
     AFRAME.stateParam.handlers.cameraEl = new MockElement();
     AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
+    AFRAME.stateParam.handlers.fadeEls = [];
   });
 
   it("should add a new line and a segment when new segment *is not* continuous", () => {
@@ -343,6 +345,7 @@ describe("curveBegin/curveEnd", () => {
     state = new MockState();
     AFRAME.stateParam.handlers.cameraEl = new MockElement();
     AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
+    AFRAME.stateParam.handlers.fadeEls = [];
   });
 
   it("should end barrier when template w/ arcs recognized", () => {
@@ -539,6 +542,7 @@ describe("destroyStaff", () => {
     state = new MockState();
     AFRAME.stateParam.handlers.cameraEl = new MockElement();
     AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
+    AFRAME.stateParam.handlers.fadeEls = [];
   });
 
   it("should prevent magic", () => {

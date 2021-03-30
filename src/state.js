@@ -34,8 +34,6 @@ AFRAME.registerState({
     lastTipPosition: null,
     inProgress: {},
     barriers: [],
-    trainingEls: [],
-    scoreEls: [],
     creatures: [],
     numCreaturesDefeated: 0,
     isStaffExploding: false,
@@ -68,6 +66,8 @@ AFRAME.registerState({
 
       const terrainGeometry = rigEl.sceneEl.querySelector('a-atoll-terrain').getAttribute('geometry');
       this.getElevation = terrainGeometry.getElevation;
+
+      this.fadeEls = [];
 
       AFRAME.scenes[0].setAttribute('screenshot', {width: 1024, height: 512});   // lower-res for speed
     },
@@ -468,38 +468,22 @@ AFRAME.registerState({
         }
       });
 
-      state.trainingEls.forEach((trainingEl, i) => {
-        if (! trainingEl.hasOwnProperty('fadeRemainingMs')) {
+      this.fadeEls.forEach((fadeEl, i) => {
+        if (! fadeEl.hasOwnProperty('fadeRemainingMs')) {
           return;
         }
-        trainingEl.fadeRemainingMs -= timeDelta;
-        const opacity = Math.max(trainingEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
-        for (const name of Object.keys(trainingEl.components)) {
-          if (/^line/.test(name)) {
-            trainingEl.setAttribute(name, 'opacity', opacity)
+        fadeEl.fadeRemainingMs -= timeDelta;
+        const opacity = Math.max(fadeEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
+        for (const name of Object.keys(fadeEl.components)) {
+          if (/^(line|material)/.test(name)) {
+            fadeEl.setAttribute(name, 'opacity', opacity)
           }
         }
 
-        if (trainingEl.fadeRemainingMs <= 0) {
-          trainingEl.parentNode.removeChild(trainingEl);
+        if (fadeEl.fadeRemainingMs <= 0) {
+          fadeEl.parentNode.removeChild(fadeEl);
           // Yes, this skips the next element, but on the next iteration things will be fine.
-          state.trainingEls.splice(i, 1);
-        }
-      });
-
-      state.scoreEls.forEach((scoreEl, i) => {
-        if (! scoreEl.hasOwnProperty('fadeRemainingMs')) {
-          return;
-        }
-        scoreEl.fadeRemainingMs -= timeDelta;
-        const opacity = Math.max(scoreEl.fadeRemainingMs / TRAINING_FADE_DURATION, 0);
-        scoreEl.setAttribute('transparent', true);
-        scoreEl.setAttribute('opacity', opacity);
-
-        if (scoreEl.fadeRemainingMs <= 0) {
-          scoreEl.parentNode.removeChild(scoreEl);
-          // Yes, this skips the next element, but on the next iteration things will be fine.
-          state.scoreEls.splice(i, 1);
+          this.fadeEls.splice(i, 1);
         }
       });
     },
@@ -579,7 +563,7 @@ AFRAME.registerState({
             break;
 
           case "borromean rings":
-            this.createPortal(state, centroid);
+            this.createPortal(state, centroid, barrier.mana);
             break;
 
           case "dagaz":
@@ -667,7 +651,7 @@ AFRAME.registerState({
       const trainingEl = document.createElement('a-entity');
       drawLinesOnElement(bestSegmentsXformed, bestArcsXformed, bestCirclesXformed, trainingEl);
       AFRAME.scenes[0].appendChild(trainingEl);
-      state.trainingEls.push(trainingEl);
+      this.fadeEls.push(trainingEl);
 
       let scoreEl;
       if (score >= 0) {
@@ -702,7 +686,7 @@ AFRAME.registerState({
         });
 
         AFRAME.scenes[0].appendChild(scoreEl);
-        state.scoreEls.push(scoreEl);
+        this.fadeEls.push(scoreEl);
       }
       setTimeout(() => {
         trainingEl.fadeRemainingMs = TRAINING_FADE_DURATION;
@@ -712,7 +696,7 @@ AFRAME.registerState({
       }, duration - TRAINING_FADE_DURATION);
     },
 
-    createPortal: function (state, centroid) {
+    createPortal: function (state, centroid, duration) {
       const displacement = new THREE.Vector3();
       displacement.subVectors(centroid, state.rigEl.object3D.position);
       const cameraPosition = document.querySelector('[camera]').object3D.position;
@@ -768,6 +752,12 @@ AFRAME.registerState({
               Math.random()*2*Math.PI));
       destinationEl.setAttribute('geometry', {primitive:'ring', radiusInner:0.40, radiusOuter:0.50, segmentsTheta:64});
       destinationEl.setAttribute('material', {side:'double', shader:'flat', src:'#clouds', transparent:true, opacity:0.70});
+      destinationEl.setAttribute('animation', {
+        property: 'scale',
+        from: '0.0 0.0 0.0', to:'1.0 1.0 1.0',
+        easing: 'easeOutSine',
+        dur: PORTAL_ANIMATION_TIME   // ms
+      });
       AFRAME.scenes[0].appendChild(destinationEl);
 
       const linkEl = document.createElement('a-entity');
@@ -793,6 +783,25 @@ AFRAME.registerState({
             document.querySelector('a-scene').components.screenshot.getCanvas('equirectangular').toDataURL());
         state.rigEl.object3D.position.copy(oldRigPos);
       }, { timeout: PORTAL_ANIMATION_TIME });
+
+      setTimeout(() => {
+        destinationEl.setAttribute('animation', {
+          property: 'scale',
+          from: '1.0 1.0 1.0', to: '0.0 0.0 0.0',
+          easing: 'easeInSine',
+          dur: PORTAL_ANIMATION_TIME   // ms
+        });
+        linkEl.setAttribute('animation', {
+          property: 'scale',
+          from: '0.5 0.5 0.001', to: '0.001 0.001 0.001',
+          easing: 'easeInSine',
+          dur: PORTAL_ANIMATION_TIME   // ms
+        });
+      }, duration - PORTAL_ANIMATION_TIME);
+      setTimeout(() => {
+        destinationEl.parentNode.removeChild(linkEl);
+        linkEl.parentNode.removeChild(linkEl);
+      }, duration);
     },
 
     createDetector: function(state, centroid) {
