@@ -340,10 +340,9 @@ AFRAME.registerState({
         }, Math.max(staffDistance * 100, 5000));   // 10 m = 1 sec
       });
 
-      const detector = document.getElementById('detector');
-      if (detector) {
-        detector.setAttribute('look-at', '#' + creature.el.id);
-      }
+      document.querySelectorAll('.detector').forEach( detectorEl => {
+        detectorEl.setAttribute('look-at', '#' + creature.el.id);
+      });
     },
 
     nearPlayer: function (state, min = 50, max = 75) {
@@ -400,10 +399,10 @@ AFRAME.registerState({
         if (creature.hitPoints <= 0 && ! wasDefeated) {
           ++state.numCreaturesDefeated;
 
-          const detectorEl = document.getElementById('detector');
-          if (detectorEl) {
-            detectorEl.setAttribute('look-at', this.latestDangerousCreature(state));
-          }
+          const dangerousCreature = this.latestDangerousCreature(state);
+          document.querySelectorAll('.detector').forEach( detectorEl => {
+            detectorEl.setAttribute('look-at', dangerousCreature);
+          });
         }
 
         // creature attacks staff if near
@@ -605,7 +604,7 @@ AFRAME.registerState({
             break;
 
           case "quicksilver":
-            this.createDetector(state, centroid);
+            this.createDetector(state, centroid, barrier.mana);
             break;
         }
 
@@ -804,24 +803,37 @@ AFRAME.registerState({
       }, duration);
     },
 
-    createDetector: function(state, centroid) {
-      let detectorEl = document.getElementById('detector');
-      if (detectorEl) {
-        detectorEl.parentNode.removeChild(detectorEl);
-      }
-
+    createDetector: function(state, centroid, duration) {
       const terrainY = this.getElevation(centroid.x, centroid.z);
       centroid.y = terrainY + 0.40;
 
-      detectorEl = document.createElement('a-cylinder');
-      detectorEl.setAttribute('id', 'detector');
+      let detectorEl = document.createElement('a-cylinder');
+      detectorEl.setAttribute('class', 'detector');
       detectorEl.setAttribute('src', '#fleurdelis');
       detectorEl.setAttribute('radius', 0.25);
       detectorEl.setAttribute('segments-radial', 64);
       detectorEl.setAttribute('height', 0.02);
       detectorEl.setAttribute('position', centroid);
       detectorEl.setAttribute('look-at', this.latestDangerousCreature(state));
+      detectorEl.setAttribute('animation', {
+        property: 'scale',
+        from: '0.0 0.0 0.0', to: '1.0 1.0 1.0',
+        easing: 'easeOutSine',
+        dur: TRAINING_FADE_DURATION   // ms
+      });
       AFRAME.scenes[0].appendChild(detectorEl);
+
+      setTimeout(() => {
+        detectorEl.setAttribute('animation', {
+          property: 'scale',
+          from: '1.0 1.0 1.0', to: '0.0 0.0 0.0',
+          easing: 'easeInSine',
+          dur: TRAINING_FADE_DURATION   // ms
+        });
+      }, duration - TRAINING_FADE_DURATION);
+      setTimeout(() => {
+        detectorEl.parentNode.removeChild(detectorEl);
+      }, duration);
     },
 
     latestDangerousCreature: function(state) {
