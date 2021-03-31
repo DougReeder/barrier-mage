@@ -69,11 +69,16 @@ AFRAME.registerState({
 
       this.fadeEls = [];
 
+      this.lightTimeout = null;
+
       AFRAME.scenes[0].setAttribute('screenshot', {width: 1024, height: 512});   // lower-res for speed
     },
 
     /** event from gesture component on hand */
     grabStaff: function (state, evt) {
+      clearTimeout(this.lightTimeout);
+      this.lightTimeout = null;
+
       if (! state.staffEl) { return; }
       state.staffEl.parentNode.removeChild(state.staffEl);
       state.staffEl = document.createElement('a-entity');
@@ -292,6 +297,9 @@ AFRAME.registerState({
       state.rigEl.sceneEl.appendChild(state.staffEl);
 
       state.staffHandId = '';
+
+      clearTimeout(this.lightTimeout);
+      this.lightTimeout = null;
     },
 
     destroyStaff: function(state, evt) {
@@ -301,6 +309,9 @@ AFRAME.registerState({
       state.tipPosition = new THREE.Vector3(1000, 1.1, 1000);
       state.staffHandId = '';
       state.isStaffExploding = false;
+
+      clearTimeout(this.lightTimeout);
+      this.lightTimeout = null;
 
       setTimeout(() => {
         console.log("staff re-created");
@@ -566,41 +577,9 @@ AFRAME.registerState({
             break;
 
           case "dagaz":
+            this.createLight(state, barrier.mana);   // duration of light based on accuracy of drawing
             barrier.mana = FADEOUT_DURATION;
 
-            let lightEl = state.staffEl.querySelector('[light]');
-            if (!lightEl) {
-              // console.log("making staff glow");
-              lightEl = document.createElement('a-entity');
-              lightEl.setAttribute('light', {type: 'point', intensity: 3.0, distance: 20});
-              lightEl.setAttribute('material', {shader: 'flat', color: '#F3E5AB'});
-              lightEl.setAttribute('geometry', {
-                primitive: 'sphere',
-                radius: 0.03,
-                segmentsHeight: 12,
-                segmentsWidth: 24
-              });
-              lightEl.setAttribute('position', '0, 1.18, 0');   // relative to hand
-              lightEl.setAttribute('animation', {
-                property: 'geometry.radius',
-                from: 0.001, to: 0.03,
-                easing: 'easeOutSine',
-                dur: '2000'   // ms
-              });
-              state.staffEl.appendChild(lightEl);
-
-              const glowEl = document.createElement('a-entity');
-              glowEl.setAttribute('material', {color: '#F3E5AB', transparent: true, opacity: 0.25});
-              glowEl.setAttribute('geometry', {primitive: 'sphere', radius: 0.10});
-              glowEl.setAttribute('position', '0, 1.18, 0');   // relative to hand
-              glowEl.setAttribute('animation', {
-                property: 'geometry.radius',
-                from: 0.001, to: 0.10,
-                easing: 'easeOutSine',
-                dur: '2000'   // ms
-              });
-              state.staffEl.appendChild(glowEl);
-            }
             break;
 
           case "quicksilver":
@@ -801,6 +780,63 @@ AFRAME.registerState({
         destinationEl.parentNode.removeChild(linkEl);
         linkEl.parentNode.removeChild(linkEl);
       }, duration);
+    },
+
+    createLight: function (state, duration) {
+      let lightEl;
+      if (this.lightTimeout) {
+        clearTimeout(this.lightTimeout);
+        lightEl = state.staffEl.querySelector('[light]');
+      } else {   // Either there is no light, or it's already fading out
+        lightEl = document.createElement('a-entity');
+        lightEl.setAttribute('light', {type: 'point', intensity: 0, distance: 20});
+        lightEl.setAttribute('material', {shader: 'flat', color: '#F3E5AB'});
+        lightEl.setAttribute('geometry', {
+          primitive: 'sphere',
+          radius: 0.03,
+          segmentsHeight: 12,
+          segmentsWidth: 24
+        });
+        lightEl.setAttribute('position', '0, 1.18, 0');   // relative to hand
+        lightEl.setAttribute('animation__scale', {
+          property: 'scale',
+          from: '0 0 0', to: '1 1 1',
+          easing: 'easeOutSine',
+          dur: PORTAL_ANIMATION_TIME   // ms
+        });
+        lightEl.setAttribute('animation__light', {
+          property: 'light.intensity',
+          from: 0, to: 2.0,
+          easing: 'easeOutSine',
+          dur: PORTAL_ANIMATION_TIME   // ms
+        });
+        state.staffEl.appendChild(lightEl);
+
+        const glowEl = document.createElement('a-entity');
+        glowEl.setAttribute('material', {color: '#F3E5AB', transparent: true, opacity: 0.25});
+        glowEl.setAttribute('geometry', {primitive: 'sphere', radius: 0.10});
+        lightEl.appendChild(glowEl);
+      }
+
+      this.lightTimeout = setTimeout(() => {
+        this.lightTimeout = null;
+        lightEl.setAttribute('animation__scale', {
+          property: 'scale',
+          from: '1 1 1', to: '0 0 0',
+          easing: 'easeInSine',
+          dur: PORTAL_ANIMATION_TIME   // ms
+        });
+        lightEl.setAttribute('animation__light', {
+          property: 'light.intensity',
+          from: 2.0, to: 0,
+          easing: 'easeInSine',
+          dur: PORTAL_ANIMATION_TIME   // ms
+        });
+
+        setTimeout(() => {
+          lightEl.parentNode.removeChild(lightEl);
+        }, PORTAL_ANIMATION_TIME);
+      }, duration - PORTAL_ANIMATION_TIME);
     },
 
     createDetector: function(state, centroid, duration) {

@@ -647,7 +647,7 @@ const dagazTemplate = centerAndSizeTemplate({
   circles: [],
   size: null,
   minScore: 9.0,
-  manaUseMultiplier: 8,
+  manaUseMultiplier: 10.0,
   color: 'yellow',
   audioTag: '#light',
 });
