@@ -3,7 +3,7 @@
 In fantasy, a wizard draws mystic symbols to work a magic spell.
 In this demo, you can too! 
 
-A 6-DOF controller is required.
+Two 6-DOF controllers are required.
 
 At present, there are a few sad caveats:
 * The barriers don't actually do anything yet!

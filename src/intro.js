@@ -11,7 +11,7 @@ This browser lacks <a href="https://caniuse.com/#search=webxr">native WebXR</a>,
 
     if (! AFRAME.utils.device.checkHeadsetConnected() || (AFRAME.utils.device.isMobile() && ! AFRAME.utils.device.isMobileVR())) {
       requirements = `<div style="color:red">
-This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
+This webapp requires a VR headset and two 6-DOF controllers. Sorry.</div>`
     }
 
     const mt = atob("ZS1tYWlsOiA8YSBocmVmPSJtYWlsdG86dnJAaG9taW5pZHNvZnR3YXJlLmNvbT9zdWJqZWN0PUJhcnJpZXIlMjBNYWdlJmJvZHk9") +
@@ -22,12 +22,6 @@ This webapp requires a VR headset and a 6-DOF controller. Sorry.</div>`
 <div class="wrapper">
     <div><b>Barrier Mage</b>: Draw mystic symbols to burn, protect, or detect &amp; drive off creatures!</div>
     <img src="assets/symbols.png" alt="pentacle, brimstone, triquetra, Borromean rings, quicksilver and day-rune"><br>
-    Grip button: grab staff<br>
-    Staff hand trigger: Press and hold to draw straight segment<br>
-    Staff hand A or X Button: Press and hold to draw arc or circle<br>
-    Off hand trigger: Page forward<br>
-    Off hand A or X Button: Page backward<br>
-    Joystick: walk<br>
     ${requirements}
     <div>
       <video controls width="450" height="450">

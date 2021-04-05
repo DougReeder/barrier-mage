@@ -14,6 +14,7 @@ At present, there is one sad caveat:
 * My landscape component doesn't respond to point light sources, so the only effect of writing the day rune is to light up your hands and staff.
 
 
+![controls diagram](assets/book_controls_diagram.png)
 
 Grip button: grab staff<br>
 Staff hand trigger: Press and hold to draw straight segment<br>
