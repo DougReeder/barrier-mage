@@ -135,6 +135,11 @@ AFRAME.registerState({
       state.inProgress.geometry.setFromPoints(state.inProgress.points);
       state.inProgress.geometry.computeBoundingSphere();
 
+      const barrier = state.barriers[state.barriers.length-1];
+      const line = barrier.lines[barrier.lines.length-1];
+      if (line) {
+        line.previousPointsLength = line.points.length;
+      }
       this.createNewLineIfNeeded(state, STRAIGHT_PROXIMITY_SQ);
 
       state.lastTipPosition.copy(state.tipPosition);
@@ -152,13 +157,17 @@ AFRAME.registerState({
       state.inProgress.geometry.setFromPoints(state.inProgress.points);
       state.inProgress.geometry.computeBoundingSphere();
 
-      this.appendTipPositionToBarrier(state);
-
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      barrier.segments.push(new Segment(line.points[line.points.length-2],line.points[line.points.length-1]));
+      if (this.appendTipPositionToLineIfMoved(state)) {
+         barrier.segments.push(new Segment(line.points[line.points.length - 2], line.points[line.points.length - 1]));
 
-      this.matchAndDisplayTemplates(state);
+        this.matchAndDisplayTemplates(state);
+      } else {
+        line.points.length = line.previousPointsLength;
+        line.geometry.setFromPoints(line.points);
+        line.geometry.computeBoundingSphere();
+      }
     },
 
     curveBegin: function (state, evt) {
@@ -167,12 +176,16 @@ AFRAME.registerState({
       this.snapTipPosition(state, CURVE_END_PROXIMITY_SQ);
       this.checkGap(state)
 
+      const barrier = state.barriers[state.barriers.length-1];
+      let line = barrier.lines[barrier.lines.length-1];
+      if (line) {
+        line.previousPointsLength = line.points.length;
+      }
       this.createNewLineIfNeeded(state, CURVE_END_PROXIMITY_SQ);
 
       state.lastTipPosition.copy(state.tipPosition);
-      const barrier = state.barriers[state.barriers.length-1];
-      const line = barrier.lines[barrier.lines.length-1];
-      line.curveBeginInd = line.points.length-1;
+      line = barrier.lines[barrier.lines.length-1];
+      line.curveBeginInd = line.points.length-1;   // equal or 1 less than previousPointsLength
 
       state.curving = true;
     },
@@ -183,40 +196,49 @@ AFRAME.registerState({
 
       this.snapTipPosition(state, CURVE_END_PROXIMITY_SQ);
 
-      this.appendTipPositionToBarrier(state);
+      this.appendTipPositionToLineIfMoved(state);
 
       // smooths the curve
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      const beginPoint = line.points[line.curveBeginInd];
-      const midPoint = line.points[line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 2)];
-      const circleThreshold = Math.max((beginPoint.distanceToSquared(midPoint) / 16), STRAIGHT_PROXIMITY_SQ);
-      let points;
-      if (state.tipPosition.distanceToSquared(beginPoint) > circleThreshold) {
-        let arc;
-        ({arc, points} = arcFrom3Points(
-            beginPoint,
-            midPoint,
-            line.points[line.points.length - 1]
-        ));
+      try {
+        if (line.points.length - line.curveBeginInd < 3) {
+          throw new Error("not enough points");
+        }
+        const beginPoint = line.points[line.curveBeginInd];
+        const midPoint = line.points[line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 2)];
+        const circleThreshold = Math.max((beginPoint.distanceToSquared(midPoint) / 16), STRAIGHT_PROXIMITY_SQ);
+        let points;
+        if (state.tipPosition.distanceToSquared(beginPoint) > circleThreshold) {
+          let arc;
+          ({arc, points} = arcFrom3Points(
+              beginPoint,
+              midPoint,
+              line.points[line.points.length - 1]
+          ));
 
-        barrier.arcs.push(arc);
-      } else {   // circle
-        const secondInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 3);
-        const thirdInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) * 2 / 3);
-        let circle;
-        ({circle, points} = circleFrom3Points(
-            beginPoint,
-            line.points[secondInd],
-            line.points[thirdInd]
-        ));
-        barrier.circles.push(circle);
+          barrier.arcs.push(arc);
+        } else {   // circle
+          const secondInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 3);
+          const thirdInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) * 2 / 3);
+          let circle;
+          ({circle, points} = circleFrom3Points(
+              beginPoint,
+              line.points[secondInd],
+              line.points[thirdInd]
+          ));
+          barrier.circles.push(circle);
+        }
+        line.points.splice(line.curveBeginInd, line.points.length, ...points);
+        line.geometry.setFromPoints(line.points);
+        line.geometry.computeBoundingSphere();
+
+        this.matchAndDisplayTemplates(state);
+      } catch (err) {
+        line.points.length = line.previousPointsLength;
+        line.geometry.setFromPoints(line.points);
+        line.geometry.computeBoundingSphere();
       }
-      line.points.splice(line.curveBeginInd, line.points.length, ...points);
-      line.geometry.setFromPoints(line.points);
-      line.geometry.computeBoundingSphere();
-
-      this.matchAndDisplayTemplates(state);
     },
 
     snapTipPosition: function (state, proximitySq = STRAIGHT_PROXIMITY_SQ) {
@@ -265,6 +287,7 @@ AFRAME.registerState({
         // console.log("creating new line", barrier.lines.length, barrier.color);
         barrier.lines.push({
           points: [state.tipPosition.clone()],
+          previousPointsLength: 0,
           geometry: new THREE.BufferGeometry(),
           material: new THREE.LineBasicMaterial({color: barrier.color, transparent: true}),
         });
@@ -381,12 +404,7 @@ AFRAME.registerState({
           state.inProgress.geometry.setFromPoints(state.inProgress.points);
           state.inProgress.geometry.computeBoundingSphere();
         } else if (state.curving) {
-          const distSq = state.tipPosition.distanceToSquared(state.lastTipPosition);
-          // console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
-          if (distSq >= CURVE_PROXIMITY_SQ) {
-            this.appendTipPositionToBarrier(state);
-            state.lastTipPosition.copy(state.tipPosition);
-          }
+          this.appendTipPositionToLineIfMoved(state);
         }
       }
 
@@ -516,22 +534,30 @@ AFRAME.registerState({
       });
     },
 
-    appendTipPositionToBarrier: function updateBarrier(state) {
-      const barrier = state.barriers[state.barriers.length-1];
-      const line = barrier.lines[barrier.lines.length-1];
-      line.points.push(state.tipPosition.clone());
+    appendTipPositionToLineIfMoved: function (state) {
+      const distSq = state.tipPosition.distanceToSquared(state.lastTipPosition);
+      // console.log("tipPosition:", JSON.stringify(state.tipPosition), "   distSq:", distSq);
+      if (distSq >= CURVE_PROXIMITY_SQ) {
+        const barrier = state.barriers[state.barriers.length-1];
+        const line = barrier.lines[barrier.lines.length-1];
+        line.points.push(state.tipPosition.clone());
 
-      if (line.points.length >= 2) {   // TODO: when code is complete this should always true by now
-        line.geometry.setFromPoints(line.points);
-        line.geometry.computeBoundingSphere();
+        if (line.points.length >= 2) {   // TODO: when code is complete this should always true by now
+          line.geometry.setFromPoints(line.points);
+          line.geometry.computeBoundingSphere();
 
-        if (!line.line) {
-          line.line = new THREE.Line(line.geometry, line.material);
-          line.el = document.createElement('a-entity');
-          line.el.setObject3D('line', line.line);
-          AFRAME.scenes[0].appendChild(line.el);
-          // console.log("line.el.object3D.position:", line.el.object3D.position);
+          if (!line.line) {
+            line.line = new THREE.Line(line.geometry, line.material);
+            line.el = document.createElement('a-entity');
+            line.el.setObject3D('line', line.line);
+            AFRAME.scenes[0].appendChild(line.el);
+            // console.log("line.el.object3D.position:", line.el.object3D.position);
+          }
         }
+        state.lastTipPosition.copy(state.tipPosition);
+        return true;
+      } else {
+        return false;
       }
     },
 

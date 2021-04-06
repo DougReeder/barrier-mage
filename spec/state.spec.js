@@ -84,6 +84,53 @@ describe("straightBegin/straightEnd", () => {
     AFRAME.stateParam.handlers.lightTimeout = null;
   });
 
+  it("should discard 0-length segments", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(0);
+
+    state.staffEl.object3D.position.set(1, 2, 3);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(1);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+
+    state.staffEl.object3D.position.set(1, 2, 3);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(0);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
+  it("should discard 0-length segments without discarding previous points", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(0);
+    state.staffEl.object3D.position.set(1, 2, 3);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(1);
+    state.staffEl.object3D.position.set(2, 2, 3);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+    expect(state.barriers[0].segments.length).toEqual(1);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+    expect(state.barriers[0].segments.length).toEqual(1);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+    expect(state.barriers[0].segments.length).toEqual(1);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
   it("should add a new line and a segment when new segment *is not* continuous", () => {
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
 
@@ -351,11 +398,139 @@ describe("curveBegin/curveEnd", () => {
     AFRAME.stateParam.handlers.lightTimeout = null;
   });
 
+  it("should discard circles where all points same", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(0);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+
+    state.staffEl.object3D.position.set(0, 1, 0);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(1);
+
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(0);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
+  it("should discard circles where all points same, without removing previous points", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(1,2,3);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(1,2,4);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+    expect(state.barriers[0].segments.length).toEqual(1);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);   // re-uses point
+
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+    expect(state.barriers[0].segments.length).toEqual(1);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
+  it("should discard arcs where second point same as first", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(0);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+
+    state.staffEl.object3D.position.set(0, 1, 0);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(1);
+
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    expect(state.barriers[0].lines[0].points.length).toEqual(1);
+
+    state.staffEl.object3D.position.set(0, 0, 0);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(0);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
+  it("should discard arcs where third point same as second", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(0);
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+
+    state.staffEl.object3D.position.set(0, 1, 0);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(1);
+
+    state.staffEl.object3D.position.set(0, 0, 0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(0);   // discards points
+    expect(state.barriers[0].segments.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);   // discards arc
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
+  it("should discard arcs where third point same as second, without removing previous points", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(1,2,3);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(0, 1, 0);
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+    expect(state.barriers[0].segments.length).toEqual(1);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);   // re-uses point
+
+    state.staffEl.object3D.position.set(0, 2, 0);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    expect(state.barriers[0].lines[0].points.length).toEqual(3);
+
+    state.staffEl.object3D.position.set(0, 2, 0);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);   // discards points
+    expect(state.barriers[0].segments.length).toEqual(1);
+    expect(state.barriers[0].arcs.length).toEqual(0);   // discards arc
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
   it("should end barrier when template w/ arcs recognized", () => {
     const showTrainingSpy = spyOn(AFRAME.stateParam.handlers, 'showTraining');
 
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(0);
     expect(state.barriers[0].segments.length).toEqual(0);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
@@ -370,6 +545,8 @@ describe("curveBegin/curveEnd", () => {
     AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
 
     expect(state.barriers.length).toEqual(1);
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toBeGreaterThan(10);
     expect(state.barriers[0].segments.length).toEqual(0);
     expect(state.barriers[0].arcs.length).toEqual(1);
     expect(state.barriers[0].circles.length).toEqual(0);
