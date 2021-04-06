@@ -780,7 +780,7 @@ AFRAME.registerState({
         });
       }, duration - PORTAL_ANIMATION_TIME);
       setTimeout(() => {
-        destinationEl.parentNode.removeChild(linkEl);
+        destinationEl.parentNode.removeChild(destinationEl);
         linkEl.parentNode.removeChild(linkEl);
       }, duration);
     },
