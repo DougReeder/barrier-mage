@@ -72,6 +72,9 @@ AFRAME.registerState({
       this.lightTimeout = null;
 
       AFRAME.scenes[0].setAttribute('screenshot', {width: 1024, height: 512});   // lower-res for speed
+
+      this.grabStaff(state, {handId: 'rightHand'});
+      this.magicBegin(state, {handId: 'rightHand'});
     },
 
     /** event from gesture component on hand */
