@@ -131,6 +131,19 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].circles.length).toEqual(0);
   });
 
+  it("should discard tiny segments", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(1,2,3);
+    AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(1);
+    expect(state.barriers[0].segments.length).toEqual(0);
+
+    state.staffEl.object3D.position.set(1.19,2,3);   // < twice snap distance
+    AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines[0].points.length).toEqual(0);
+    expect(state.barriers[0].segments.length).toEqual(0);
+  });
+
   it("should add a new line and a segment when new segment *is not* continuous", () => {
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
 
@@ -522,6 +535,48 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].lines[0].points.length).toEqual(2);   // discards points
     expect(state.barriers[0].segments.length).toEqual(1);
     expect(state.barriers[0].arcs.length).toEqual(0);   // discards arc
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
+  it("should discard tiny arcs", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(1, 2, 3);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(1);
+
+    state.staffEl.object3D.position.set(1, 2.01, 3.09);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+
+    state.staffEl.object3D.position.set(1, 2, 3.18);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
+    expect(state.barriers[0].circles.length).toEqual(0);
+  });
+
+  it("should discard tiny circles", () => {
+    AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
+    state.staffEl.object3D.position.set(1, 2, 3);
+    AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(1);
+
+    state.staffEl.object3D.position.set(1,2.14,3.00);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    expect(state.barriers[0].lines[0].points.length).toEqual(2);
+
+    state.staffEl.object3D.position.set(1,2.14,3.14);
+    AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
+    expect(state.barriers[0].lines[0].points.length).toEqual(3);
+
+    state.staffEl.object3D.position.set(1, 2, 3.09);
+    AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
+    expect(state.barriers[0].lines.length).toEqual(1);
+    expect(state.barriers[0].lines[0].points.length).toEqual(0);
+    expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
   });
 

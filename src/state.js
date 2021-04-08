@@ -8,7 +8,8 @@ function isDesktop() {
 }
 
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
-const STRAIGHT_PROXIMITY_SQ = 0.01;   // when drawing straight sections; square of 0.1 m
+const SNAP_DISTANCE = 0.10;
+const STRAIGHT_PROXIMITY_SQ = SNAP_DISTANCE * SNAP_DISTANCE;   // when drawing straight sections
 const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved sections; square of 0.05 m
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
 const MAX_GAP = 3.0;   // drawing a new element this far from the existing implies you want to start over
@@ -159,7 +160,8 @@ AFRAME.registerState({
 
       const barrier = state.barriers[state.barriers.length-1];
       const line = barrier.lines[barrier.lines.length-1];
-      if (this.appendTipPositionToLineIfMoved(state)) {
+      if (this.appendTipPositionToLineIfMoved(state) &&
+          line.points[line.points.length-2].distanceTo(line.points[line.points.length-1]) >= SNAP_DISTANCE * 2) {
          barrier.segments.push(new Segment(line.points[line.points.length - 2], line.points[line.points.length - 1]));
 
         this.matchAndDisplayTemplates(state);
@@ -210,6 +212,9 @@ AFRAME.registerState({
         const circleThreshold = Math.max((beginPoint.distanceToSquared(midPoint) / 16), STRAIGHT_PROXIMITY_SQ);
         let points;
         if (state.tipPosition.distanceToSquared(beginPoint) > circleThreshold) {
+          if (beginPoint.distanceTo(midPoint) < SNAP_DISTANCE) {
+            throw new Error("arc too tiny");
+          }
           let arc;
           ({arc, points} = arcFrom3Points(
               beginPoint,
@@ -219,6 +224,9 @@ AFRAME.registerState({
 
           barrier.arcs.push(arc);
         } else {   // circle
+          if (beginPoint.distanceTo(midPoint) < SNAP_DISTANCE * 2) {
+            throw new Error("circle too tiny");
+          }
           const secondInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) / 3);
           const thirdInd = line.curveBeginInd + Math.round((line.points.length - 1 - line.curveBeginInd) * 2 / 3);
           let circle;
