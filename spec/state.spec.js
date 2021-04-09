@@ -37,7 +37,7 @@ class MockState {
     this.creatures = [];
     this.numCreaturesDefeated = 0;
     this.isStaffExploding = false;
-    this.progress = {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0};
+    this.progress = {goodSymbols: 0, pentacles: 0, brimstones: 0, triquetras: 0};
     this.drawLargerSegmentHelp = {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0};
     this.drawLargerCurveHelp = {src: ['#holdbuttondown', null, '#drawlarger', null, null], idx: 0, volume: 1.0};
     this.drawAccuratelyHelp = {src: ['#drawaccurately', '', ''], idx: 0, volume: 1.0};
@@ -342,7 +342,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers.length).toEqual(2);
     expect(showTrainingSpy).toHaveBeenCalled();
     expect(showTrainingSpy.calls.argsFor(0)[7]).toEqual(6000);
-    expect(state.progress.symbols).toEqual(1);
+    expect(state.progress.goodSymbols).toEqual(1);
     expect(state.progress.pentacles).toEqual(1);
   });
 
@@ -686,7 +686,7 @@ describe("curveBegin/curveEnd", () => {
     expect(showTrainingSpy).toHaveBeenCalled();
     expect(showTrainingSpy.calls.argsFor(0)[7]).toEqual(6000);
     expect(state.barriers.length).toEqual(2);
-    expect(state.progress.symbols).toEqual(1);
+    expect(state.progress.goodSymbols).toEqual(1);
     expect(state.progress.triquetras).toEqual(1);
   });
 
@@ -775,7 +775,7 @@ describe("curveBegin/curveEnd", () => {
     expect(showTrainingSpy).toHaveBeenCalled();
     expect(showTrainingSpy.calls.argsFor(0)[7]).toEqual(6000);
     expect(state.barriers.length).toBe(2);
-    expect(state.progress.symbols).toEqual(1);
+    expect(state.progress.goodSymbols).toEqual(1);
   });
 
   it("should start a new barrier if new arc is far from old", () => {

@@ -39,7 +39,7 @@ AFRAME.registerState({
     creatures: [],
     numCreaturesDefeated: 0,
     isStaffExploding: false,
-    progress: {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0},
+    progress: {goodSymbols: 0, pentacles: 0, brimstones: 0, triquetras: 0},
     drawLargerSegmentHelp: {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
     drawLargerCurveHelp: {src: ['#holdbuttondown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
     drawAccuratelyHelp: {src: ['#proportionsbook', null, '#drawaccurately', null, null], idx: 0, volume: 1.0},
@@ -370,8 +370,6 @@ AFRAME.registerState({
         // removes creatures
         state.creatures.map(creature => creature.destroy());
         state.creatures.length = 0;
-
-        state.progress.symbols = 0;   // resets the speed of creatures
       }, 45_000)
     },
 
@@ -633,15 +631,15 @@ AFRAME.registerState({
             break;
         }
 
-        ++state.progress.symbols;
-
-        if (score < GOOD_SCORE && (state.progress.brimstones === 0 || state.progress.pentacles === 0 || state.progress.triquetras === 0)) {
+        if (score >= GOOD_SCORE) {
+          ++state.progress.goodSymbols;
+        } else if (state.progress.goodSymbols < 12) {
           this.playHelp(state.staffEl, state.drawAccuratelyHelp);
         }
         const numCreaturesAttacking = state.creatures.reduce(
             (count, creature) => count + (creature.hitPoints > 0 && creature.canMove ? 1 : 0),
             0 );
-        if (state.progress.brimstones >= 1 && state.progress.pentacles >= 1 && state.progress.triquetras >= 1 && numCreaturesAttacking === 0) {
+        if ((state.progress.goodSymbols >= 12 || state.progress.brimstones >= 1 && state.progress.pentacles >= 1 && state.progress.triquetras >= 1) && numCreaturesAttacking === 0) {
           this.createCreature(state);
         }
       } else if (template && score >= MIN_FIZZLE_SCORE) {   // fizzle
