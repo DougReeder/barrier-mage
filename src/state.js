@@ -21,6 +21,7 @@ const TRAINING_DURATION = 6000;
 const TRAINING_FADE_DURATION = 1000;
 const PORTAL_DISTANCE = 35;
 const PORTAL_ANIMATION_TIME = 1500;
+const NUM_PRACTICE_CREATURES = 6;
 
 AFRAME.registerState({
   initialState: {
@@ -39,6 +40,8 @@ AFRAME.registerState({
     numCreaturesDefeated: 0,
     isStaffExploding: false,
     progress: {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0},
+    drawLargerSegmentHelp: {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
+    drawLargerCurveHelp: {src: ['#holdbuttondown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
     drawAccuratelyHelp: {src: ['#proportionsbook', null, '#drawaccurately', null, null], idx: 0, volume: 1.0},
   },
 
@@ -169,6 +172,9 @@ AFRAME.registerState({
         line.points.length = line.previousPointsLength;
         line.geometry.setFromPoints(line.points);
         line.geometry.computeBoundingSphere();
+        if (state.numCreaturesDefeated < NUM_PRACTICE_CREATURES+2) {
+          this.playHelp(state.staffEl, state.drawLargerSegmentHelp);
+        }
       }
     },
 
@@ -246,6 +252,9 @@ AFRAME.registerState({
         line.points.length = line.previousPointsLength;
         line.geometry.setFromPoints(line.points);
         line.geometry.computeBoundingSphere();
+        if (state.numCreaturesDefeated < NUM_PRACTICE_CREATURES+2) {
+          this.playHelp(state.staffEl, state.drawLargerCurveHelp);
+        }
       }
     },
 
@@ -367,8 +376,8 @@ AFRAME.registerState({
     },
 
     createCreature: function (state) {
-      const speed = Math.min(Math.max(state.numCreaturesDefeated / 6, 1.0), 10.0);   // m/s
-      const creature = state.numCreaturesDefeated < 6 ? new IrkBall(speed) : new ViolentCloud(speed);
+      const speed = Math.min(Math.max(state.numCreaturesDefeated / NUM_PRACTICE_CREATURES, 1.0), 10.0);   // m/s
+      const creature = state.numCreaturesDefeated < NUM_PRACTICE_CREATURES ? new IrkBall(speed) : new ViolentCloud(speed);
 
       const distance = Math.max(Math.min(speed * 20, 750), 30);
       const groundPosition = this.nearPlayer(state, distance, distance + 10);

@@ -38,6 +38,8 @@ class MockState {
     this.numCreaturesDefeated = 0;
     this.isStaffExploding = false;
     this.progress = {symbols: 0, pentacles: 0, brimstones: 0, triquetras: 0};
+    this.drawLargerSegmentHelp = {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0};
+    this.drawLargerCurveHelp = {src: ['#holdbuttondown', null, '#drawlarger', null, null], idx: 0, volume: 1.0};
     this.drawAccuratelyHelp = {src: ['#drawaccurately', '', ''], idx: 0, volume: 1.0};
 
     this.inProgress.line = new THREE.Line(this.inProgress.geometry, this.inProgress.material);
@@ -85,6 +87,8 @@ describe("straightBegin/straightEnd", () => {
   });
 
   it("should discard 0-length segments", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     expect(state.barriers[0].lines.length).toEqual(0);
 
@@ -101,9 +105,12 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].segments.length).toEqual(0);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerSegmentHelp);
   });
 
   it("should discard 0-length segments without discarding previous points", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     expect(state.barriers[0].lines.length).toEqual(0);
     state.staffEl.object3D.position.set(1, 2, 3);
@@ -129,9 +136,12 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].segments.length).toEqual(1);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerSegmentHelp);
   });
 
   it("should discard tiny segments", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     state.staffEl.object3D.position.set(1,2,3);
     AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
@@ -142,9 +152,12 @@ describe("straightBegin/straightEnd", () => {
     AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
     expect(state.barriers[0].lines[0].points.length).toEqual(0);
     expect(state.barriers[0].segments.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerSegmentHelp);
   });
 
   it("should add a new line and a segment when new segment *is not* continuous", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
 
 
@@ -172,7 +185,7 @@ describe("straightBegin/straightEnd", () => {
     expect(segment.angle).toBeCloseTo(Math.PI/2, 6);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
-
+    expect(playHelpSpy).not.toHaveBeenCalled();
 
     state.staffEl.object3D.position.set(2,3,4);
 
@@ -412,6 +425,8 @@ describe("curveBegin/curveEnd", () => {
   });
 
   it("should discard circles where all points same", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     expect(state.barriers.length).toEqual(1);
     expect(state.barriers[0].lines.length).toEqual(0);
@@ -431,9 +446,12 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].segments.length).toEqual(0);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerCurveHelp);
   });
 
   it("should discard circles where all points same, without removing previous points", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     state.staffEl.object3D.position.set(1,2,3);
     AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
@@ -456,9 +474,12 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].segments.length).toEqual(1);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerCurveHelp);
   });
 
   it("should discard arcs where second point same as first", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     expect(state.barriers.length).toEqual(1);
     expect(state.barriers[0].lines.length).toEqual(0);
@@ -481,9 +502,12 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].segments.length).toEqual(0);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerCurveHelp);
   });
 
   it("should discard arcs where third point same as second", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     expect(state.barriers.length).toEqual(1);
     expect(state.barriers[0].lines.length).toEqual(0);
@@ -506,9 +530,12 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].segments.length).toEqual(0);
     expect(state.barriers[0].arcs.length).toEqual(0);   // discards arc
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerCurveHelp);
   });
 
   it("should discard arcs where third point same as second, without removing previous points", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     state.staffEl.object3D.position.set(1,2,3);
     AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
@@ -536,9 +563,12 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].segments.length).toEqual(1);
     expect(state.barriers[0].arcs.length).toEqual(0);   // discards arc
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerCurveHelp);
   });
 
   it("should discard tiny arcs", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     state.staffEl.object3D.position.set(1, 2, 3);
     AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
@@ -555,9 +585,12 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].lines[0].points.length).toEqual(0);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerCurveHelp);
   });
 
   it("should discard tiny circles", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
+
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
     state.staffEl.object3D.position.set(1, 2, 3);
     AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
@@ -578,9 +611,11 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].lines[0].points.length).toEqual(0);
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(0);
+    expect(playHelpSpy).toHaveBeenCalledWith(state.staffEl, state.drawLargerCurveHelp);
   });
 
   it("should end barrier when template w/ arcs recognized", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
     const showTrainingSpy = spyOn(AFRAME.stateParam.handlers, 'showTraining');
 
     AFRAME.stateParam.handlers.magicBegin(state, {handId: 'leftHand'});
@@ -606,6 +641,7 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].arcs.length).toEqual(1);
     expect(state.barriers[0].circles.length).toEqual(0);
     expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(playHelpSpy).not.toHaveBeenCalled();
     expect(showTrainingSpy).not.toHaveBeenCalled();
 
     AFRAME.stateParam.handlers.curveBegin(state, {handId: 'leftHand'});
@@ -655,6 +691,7 @@ describe("curveBegin/curveEnd", () => {
   });
 
   it("should end barrier when template w/ circles recognized", () => {
+    const playHelpSpy = spyOn(AFRAME.stateParam.handlers, 'playHelp');
     const createPortalSpy = spyOn(AFRAME.stateParam.handlers, 'createPortal');
     const showTrainingSpy = spyOn(AFRAME.stateParam.handlers, 'showTraining');
 
@@ -681,6 +718,7 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].arcs.length).toEqual(0);
     expect(state.barriers[0].circles.length).toEqual(1);
     expect(WHITE.equals(state.barriers[0].color)).toBeTruthy();
+    expect(playHelpSpy).not.toHaveBeenCalled();
     expect(createPortalSpy).not.toHaveBeenCalled();
     expect(showTrainingSpy).not.toHaveBeenCalled();
 
