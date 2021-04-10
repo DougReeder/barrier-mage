@@ -20,7 +20,7 @@ This webapp requires a VR headset and two 6-DOF controllers. Sorry.</div>`
 
     let html = `
 <div class="wrapper">
-    <div><b>Barrier Mage</b>: Draw mystic symbols to burn, protect, or detect &amp; drive off creatures!</div>
+    <div><b>Barrier Mage</b>: Draw mystic symbols to burn, protect, or detect &amp; drive off fantastic creatures!</div>
     <img src="assets/symbols.png" alt="pentacle, brimstone, triquetra, Borromean rings, quicksilver and day-rune"><br>
     ${requirements}
     <div>
