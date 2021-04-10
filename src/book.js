@@ -22,7 +22,7 @@ function drawLinesOnElement(segments, arcs, circles, el, color = 'black') {
 }
 
 AFRAME.registerComponent('book', {
-  NUM_PAGES: 4,
+  NUM_PAGES: 5,
 
   schema: {
     page: {default: 0}
@@ -73,6 +73,14 @@ AFRAME.registerComponent('book', {
         this.pageLeftEl.setAttribute('height', 0.25977);
         break;
       case 1:
+        this.pageLeftEl = document.createElement('a-image');
+        this.pageLeftEl.setAttribute('id', 'pageLeft');
+        this.pageLeftEl.setAttribute('position', {x:0, y:0, z:0.001});
+        this.pageLeftEl.setAttribute('src', '#symbol_quality');
+        this.pageLeftEl.setAttribute('width', 0.4);
+        this.pageLeftEl.setAttribute('height', 0.25977);
+        break;
+      case 2:
         this.pageLeftEl.setAttribute('scale', {x:0.08, y:0.08, z:0.08});
         this.pageLeftEl.setAttribute('text', {value:"Brimstone\nto burn\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5, font:'mozillavr', align:'center'});
         drawLinesOnElement(brimstoneUpTemplate.segments, brimstoneUpTemplate.arcs, brimstoneUpTemplate.circles, this.pageLeftEl);
@@ -81,7 +89,7 @@ AFRAME.registerComponent('book', {
         this.pageRightEl.setAttribute('text', {value:"Triquetra knot\nto bind\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5, font:'mozillavr', align:'center'});
         drawLinesOnElement(triquetraTemplate.segments, triquetraTemplate.arcs, triquetraTemplate.circles, this.pageRightEl);
         break;
-      case 2:
+      case 3:
         this.pageLeftEl.setAttribute('scale', {x:0.045, y:0.045, z:0.045});
         this.pageLeftEl.setAttribute('text', {value:"Borromean rings\nto link\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:8.88888, font:'mozillavr', align:'center'});
         drawLinesOnElement(borromeanRingsTemplate.segments, borromeanRingsTemplate.arcs, borromeanRingsTemplate.circles, this.pageLeftEl);
@@ -90,7 +98,7 @@ AFRAME.registerComponent('book', {
         this.pageRightEl.setAttribute('text', {value:"Pentacle\nto protect\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5.7142, font:'mozillavr', align:'center'});
         drawLinesOnElement(pentacleTemplate.segments, pentacleTemplate.arcs, pentacleTemplate.circles, this.pageRightEl);
         break;
-      case 3:
+      case 4:
         this.pageLeftEl.setAttribute('scale', {x:0.08, y:0.08, z:0.08});
         this.pageLeftEl.setAttribute('text', {value:"Quicksilver\nto detect\n\n\n\n\n\n\n\n\n\n\n\n\n\n", color:'black', width:5, font:'mozillavr', align:'center'});
         drawLinesOnElement(quicksilverTemplate.segments, quicksilverTemplate.arcs, quicksilverTemplate.circles, this.pageLeftEl);
