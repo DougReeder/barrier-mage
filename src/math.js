@@ -582,7 +582,7 @@ const triquetraTemplate = centerAndSizeTemplate({
   circles: [],
   size: null,
   minScore: 5.0,
-  manaUseMultiplier: 1,
+  manaUseMultiplier: 4,
   color: 'gold',
   audioTag: '#bind',
 });
