@@ -22,6 +22,7 @@ const TRAINING_FADE_DURATION = 1000;
 const PORTAL_DISTANCE = 35;
 const PORTAL_ANIMATION_TIME = 1500;
 const NUM_PRACTICE_CREATURES = 6;
+const SIGNBOARD_DURATION = 7000;
 
 AFRAME.registerState({
   initialState: {
@@ -445,6 +446,11 @@ AFRAME.registerState({
 
         if (creature.hitPoints <= 0 && ! wasDefeated) {
           ++state.numCreaturesDefeated;
+          if (state.numCreaturesDefeated % NUM_PRACTICE_CREATURES === 0) {
+            this.displaySignboard(state, `${state.numCreaturesDefeated} creatures defeated!`);
+            this.cameraEl.setAttribute('sound', {src:'#fanfare', volume:0.90, autoplay: false});
+            this.cameraEl.components.sound.playSound();
+          }
 
           const dangerousCreature = this.latestDangerousCreature(state);
           document.querySelectorAll('.detector').forEach( detectorEl => {
@@ -930,7 +936,31 @@ AFRAME.registerState({
       }
 
       return {x: 0, y: 1000, z: 0};
-    }
+    },
+
+    displaySignboard: function (state, text) {
+      const theta = this.cameraEl.object3D.rotation._y;
+      const distance = -1.0;
+      const x = Math.sin(theta) * distance + state.rigEl.object3D.position.x;
+      const z = Math.cos(theta) * distance + state.rigEl.object3D.position.z;
+      const y = this.getElevation(state.rigEl.object3D.position.x, state.rigEl.object3D.position.z) + 2.0;
+
+      const signboard = document.getElementById('signboard');
+      signboard.object3D.position.set(x, y, z);
+      signboard.object3D.rotation.set(0, theta, 0);
+      signboard.setAttribute('text', 'value', text);
+      signboard.object3D.visible = true;
+      signboard.setAttribute('animation',
+          {property:'text.opacity', from:0, to:1, dur:1000, easing:'easeOutQuad'});
+
+      setTimeout(() => {
+        signboard.setAttribute('animation',
+            {property:'text.opacity', from:1, to:0, dur:1000, easing:'easeInQuad'});
+      }, SIGNBOARD_DURATION - 1000);
+      setTimeout(() => {
+        signboard.object3D.visible = false;
+      }, SIGNBOARD_DURATION);
+    },
   }
 });
 
