@@ -8,7 +8,7 @@ function isDesktop() {
 }
 
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
-const SNAP_DISTANCE = 0.10;
+const SNAP_DISTANCE = 0.05;
 const STRAIGHT_PROXIMITY_SQ = SNAP_DISTANCE * SNAP_DISTANCE;   // when drawing straight sections
 const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved sections; square of 0.05 m
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m

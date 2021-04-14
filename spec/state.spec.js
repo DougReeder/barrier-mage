@@ -17,6 +17,7 @@ global.borromeanRingsTemplate = math.borromeanRingsTemplate;
 
 const TIP_LENGTH = 1.09;
 const WHITE = new THREE.Color('white');
+const SNAP_DISTANCE = 0.05;
 
 class MockState {
   constructor() {
@@ -148,7 +149,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].lines[0].points.length).toEqual(1);
     expect(state.barriers[0].segments.length).toEqual(0);
 
-    state.staffEl.object3D.position.set(1.19,2,3);   // < twice snap distance
+    state.staffEl.object3D.position.set(1 + 2*SNAP_DISTANCE - 0.01, 2, 3);
     AFRAME.stateParam.handlers.straightEnd(state, {handId: 'leftHand'});
     expect(state.barriers[0].lines[0].points.length).toEqual(0);
     expect(state.barriers[0].segments.length).toEqual(0);
@@ -242,7 +243,7 @@ describe("straightBegin/straightEnd", () => {
     expect(state.barriers[0].circles.length).toEqual(0);
 
 
-    state.staffEl.object3D.position.set(2.03, 3.03, 4.03);   // snaps to 2, 3, 4
+    state.staffEl.object3D.position.set(2.02, 3.02, 4.02);   // snaps to 2, 3, 4
 
     AFRAME.stateParam.handlers.straightBegin(state, {handId: 'leftHand'});
 
@@ -575,11 +576,11 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].lines.length).toEqual(1);
     expect(state.barriers[0].lines[0].points.length).toEqual(1);
 
-    state.staffEl.object3D.position.set(1, 2.01, 3.09);
+    state.staffEl.object3D.position.set(1, 2.01, 3 + SNAP_DISTANCE - 0.01);
     AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
     expect(state.barriers[0].lines[0].points.length).toEqual(2);
 
-    state.staffEl.object3D.position.set(1, 2, 3.18);
+    state.staffEl.object3D.position.set(1, 2, 3 + SNAP_DISTANCE*2 - 0.01);
     AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
     expect(state.barriers[0].lines.length).toEqual(1);
     expect(state.barriers[0].lines[0].points.length).toEqual(0);
@@ -597,15 +598,15 @@ describe("curveBegin/curveEnd", () => {
     expect(state.barriers[0].lines.length).toEqual(1);
     expect(state.barriers[0].lines[0].points.length).toEqual(1);
 
-    state.staffEl.object3D.position.set(1,2.14,3.00);
+    state.staffEl.object3D.position.set(1, 2 + 0.7*SNAP_DISTANCE*2, 3.00);
     AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
     expect(state.barriers[0].lines[0].points.length).toEqual(2);
 
-    state.staffEl.object3D.position.set(1,2.14,3.14);
+    state.staffEl.object3D.position.set(1, 2 + 0.7*SNAP_DISTANCE*2, 3 + 0.7*SNAP_DISTANCE*2);
     AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});
     expect(state.barriers[0].lines[0].points.length).toEqual(3);
 
-    state.staffEl.object3D.position.set(1, 2, 3.09);
+    state.staffEl.object3D.position.set(1, 2, 3 + SNAP_DISTANCE - 0.01);
     AFRAME.stateParam.handlers.curveEnd(state, {handId: 'leftHand'});
     expect(state.barriers[0].lines.length).toEqual(1);
     expect(state.barriers[0].lines[0].points.length).toEqual(0);
