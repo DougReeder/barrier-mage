@@ -21,10 +21,10 @@ This webapp requires a VR headset and two 6-DOF controllers. Sorry.</div>`
     let html = `
 <div class="wrapper">
     <div><b>Barrier Mage</b>: Draw mystic symbols to burn, protect, or detect &amp; drive off fantastic creatures!</div>
-    <img src="assets/symbols.png" alt="pentacle, brimstone, triquetra, Borromean rings, quicksilver and day-rune"><br>
+    <img src="assets/symbols.png" width="288" height="58" alt="pentacle, brimstone, triquetra, Borromean rings, quicksilver and day-rune"><br>
     ${requirements}
     <div>
-      <video controls width="450" height="450">
+      <video controls width="460" height="460">
           <source src="assets/barrier-mage-basic-play-4.mp4" type="video/mp4">
           Sorry, your browser doesn't support embedded videos.
       </video>
