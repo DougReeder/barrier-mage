@@ -693,7 +693,7 @@ AFRAME.registerState({
         displacement.setLength(0.05);
         scoreEl.object3D.position.add(displacement);
 
-        scoreEl.object3D.lookAt(cameraPosition);
+        scoreEl.object3D.rotation.set(0, this.cameraEl.object3D.rotation._y, 0);
         scoreEl.object3D.matrixNeedsUpdate = true;
 
         scoreEl.setAttribute('dial', {
