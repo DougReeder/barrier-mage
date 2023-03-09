@@ -157,8 +157,8 @@ varying float noise;
 
 void main() {
   vec3 colorOut = mix(colorOuter, colorOuterActive, activity);
-  vec3 color = mix(colorOut, colorInner, 2.0 * noise);
-  gl_FragColor = vec4(color, 1.0);
+  vec3 mixedColor = mix(colorOut, colorInner, 2.0 * noise);
+  gl_FragColor = vec4(mixedColor, 1.0);
 
 }
 `

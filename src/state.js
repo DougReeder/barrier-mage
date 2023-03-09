@@ -1,5 +1,5 @@
 // state.js - state model for Barrier Mage
-// Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020-2023 Doug Reeder; Licensed under the GNU GPL-3.0
 
 // math.js and creatures.js must be in a script before this.
 
@@ -102,13 +102,13 @@ AFRAME.registerState({
 
       if ('leftHand' === evt.handId) {
         state.staffEl.setAttribute('position', '0.01 0 0');
-        state.staffEl.setAttribute('rotation', '-40 0 10');
+        state.staffEl.setAttribute('rotation', '-95 0 10');
         state.leftHandEl.appendChild(state.staffEl);
 
         state.rightHandEl.setAttribute('book', {page: bookPage});
       } else {
-        state.staffEl.setAttribute('position', '-0.02 0 0');
-        state.staffEl.setAttribute('rotation', '-40 0 -10');
+        state.staffEl.setAttribute('position', '-0.01 0 0');
+        state.staffEl.setAttribute('rotation', '-95 0 -10');
         state.rightHandEl.appendChild(state.staffEl);
 
         state.leftHandEl.setAttribute('book', {page: bookPage});

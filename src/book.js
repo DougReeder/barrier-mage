@@ -1,6 +1,6 @@
 // book.js - book of help in off hand for Barrier Mage
 // A-Frame doesn't support any module system well, so functions are just defined globally.
-// Copyright © 2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2021, 2023 Doug Reeder; Licensed under the GNU GPL-3.0
 
 function drawLinesOnElement(segments, arcs, circles, el, color = 'black') {
   segments.forEach((segment, i) => {
@@ -36,10 +36,10 @@ AFRAME.registerComponent('book', {
     this.bookEl.setAttribute('height', 0.25977);
     if ('leftHand' === this.el.id) {
       this.bookEl.setAttribute('position', {x:0.055, y:0, z:0});
-      this.bookEl.setAttribute('rotation', {x:0, y:90, z:-45});
+      this.bookEl.setAttribute('rotation', {x:0, y:90, z:-90});
     } else {   // right hand
       this.bookEl.setAttribute('position', {x:-0.055, y:0, z:0});
-      this.bookEl.setAttribute('rotation', {x:0, y:-90, z:45});
+      this.bookEl.setAttribute('rotation', {x:0, y:-90, z:90});
     }
     this.bookEl.setAttribute('sound', {src: '#pageturn', poolSize: 2});
     this.el.appendChild(this.bookEl);

@@ -1,1 +1,1 @@
-surge --domain https://barrier-mage.surge.sh
+surge . --domain https://barrier-mage.surge.sh
