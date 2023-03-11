@@ -365,13 +365,13 @@ AFRAME.registerState({
         const position = this.nearPlayer(state, 5, 10);
         position.y += 1;
         state.staffEl.setAttribute('position', position);
-        state.staffEl.setAttribute('sound', {src:'#tryagain', volume:2, autoplay: true});
+        state.staffEl.setAttribute('sound', {src:'#newstaff', volume:2, autoplay: true});
         state.rigEl.sceneEl.appendChild(state.staffEl);
 
         // removes creatures
         state.creatures.map(creature => creature.destroy());
         state.creatures.length = 0;
-      }, 45_000)
+      }, 30_000);
     },
 
     createCreature: function (state) {
