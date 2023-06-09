@@ -29,6 +29,7 @@ This webapp requires a VR headset and two 6-DOF controllers. Sorry.</div>`
           Sorry, your browser doesn't support embedded videos.
       </video>
     </div>
+    <div><a href="https://www.oculus.com/open_url/?url=https%3A%2F%2Fdougreeder.github.io/barrier-mage/">Send this page</a> to your Quest headset</div>
     <div style="font-family:serif; font-size: 0.75rem">
         <div>${mt}</div>
         <div><a href="CREDITS.md">Credits</a></div>
