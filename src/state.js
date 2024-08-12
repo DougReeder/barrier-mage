@@ -102,13 +102,13 @@ AFRAME.registerState({
 
       if ('leftHand' === evt.handId) {
         state.staffEl.setAttribute('position', '0.01 0 0');
-        state.staffEl.setAttribute('rotation', '-40 0 10');
+        state.staffEl.setAttribute('rotation', '-90 0 0');
         state.leftHandEl.appendChild(state.staffEl);
 
         state.rightHandEl.setAttribute('book', {page: bookPage});
       } else {
         state.staffEl.setAttribute('position', '-0.02 0 0');
-        state.staffEl.setAttribute('rotation', '-40 0 -10');
+        state.staffEl.setAttribute('rotation', '-90 0 0');
         state.rightHandEl.appendChild(state.staffEl);
 
         state.leftHandEl.setAttribute('book', {page: bookPage});
@@ -347,7 +347,7 @@ AFRAME.registerState({
     },
 
     destroyStaff: function(state, evt) {
-      console.log("staff destroyed");
+      // console.log("staff destroyed");
       state.staffEl.parentNode.removeChild(state.staffEl);
       state.staffEl = null;
       state.tipPosition = new THREE.Vector3(1000, 1.1, 1000);
@@ -542,7 +542,7 @@ AFRAME.registerState({
 
     removeBarrier: function (state, barrierInd) {
       const barrier = state.barriers[barrierInd];
-      console.log("removing barrier:", barrier);
+      // console.log("removing barrier:", barrier);
       barrier.lines.forEach(line => {
         line.el.removeObject3D('line');
         line.el.parentNode.removeChild(line.el);
@@ -653,7 +653,7 @@ AFRAME.registerState({
         line.el.setAttribute('sound', {src: '#fizzle', autoplay: true, volume: 0.75});
       }
       if (template && score >= MIN_FIZZLE_SCORE) {   // success or fizzle
-        console.log("name:", template.name, "   score:", score, "   minScore:", template.minScore, "   mana:", barrier.mana ? Math.round(barrier.mana) : barrier.mana);
+        // console.log("name:", template.name, "   score:", score, "   minScore:", template.minScore, "   mana:", barrier.mana ? Math.round(barrier.mana) : barrier.mana);
 
         let duration;
         if (barrier.mana) {

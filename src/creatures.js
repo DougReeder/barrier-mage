@@ -45,7 +45,7 @@ class Creature {
    * @param position {THREE.Vector3} the location of the ground underneath the creature
    */
   place(position) {
-    console.log("placing creature at ground position", position)
+    // console.log("placing creature at ground position", position)
     this.el = document.createElement('a-sphere');
     this.el.setAttribute('id', 'creature-' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(36));
     this.el.classList.add('creature');
@@ -150,7 +150,7 @@ class Creature {
    * removes entity from scene; does not remove from array of creatures
    */
   destroy() {
-    console.log("creature destroyed");
+    // console.log("creature destroyed");
     this.el.parentNode.removeChild(this.el);
     this.hitPoints = 0;
     this.forceBarriers = undefined;   // removes references to barriers

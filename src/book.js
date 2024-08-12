@@ -29,18 +29,21 @@ AFRAME.registerComponent('book', {
   },
 
   init: function () {
-    this.bookEl = document.createElement('a-image');
+    this.bookEl = document.createElement('a-box');
     this.bookEl.setAttribute('id', 'book');
-    this.bookEl.setAttribute('src', '#book');
+    this.bookEl.setAttribute('color', '#D0BFAE');   // backstop
+    this.bookEl.setAttribute('src', '#openBook');
     this.bookEl.setAttribute('width', 0.4);
     this.bookEl.setAttribute('height', 0.25977);
+    this.bookEl.setAttribute('depth', 0.01);
     if ('leftHand' === this.el.id) {
       this.bookEl.setAttribute('position', {x:0.055, y:0, z:0});
-      this.bookEl.setAttribute('rotation', {x:0, y:90, z:-45});
+      this.bookEl.setAttribute('rotation', {x:0, y:90, z:-90});
     } else {   // right hand
       this.bookEl.setAttribute('position', {x:-0.055, y:0, z:0});
-      this.bookEl.setAttribute('rotation', {x:0, y:-90, z:45});
+      this.bookEl.setAttribute('rotation', {x:0, y:-90, z:90});
     }
+    this.bookEl.setAttribute('side', 'back');
     this.bookEl.setAttribute('sound', {src: '#pageturn', poolSize: 2});
     this.el.appendChild(this.bookEl);
 
