@@ -1,16 +1,16 @@
-Most code by P. Douglas Reeder
-displacement shader by Stefan Gustavson
+Most code by P. Douglas Reeder.
+Displacement shader by Stefan Gustavson.
 
 ## Models
 
 Gandalf's Staff (https://sketchfab.com/3d-models/gandalfs-staff-5853a4f132af407ab36791f037c2d2ff)
 by "nodoxi" is licensed under Creative Commons Attribution
 
+books (https://sketchfab.com/3d-models/books-d86018bd056f4059be790853f8636e41) 
+by "lamborado" is licensed under Creative Commons Attribution 4.0 International
+
 
 ## Textures
-
-TexturesCom_BookOpen0076_6_masked_S.png (https://www.textures.com/download/BookOpen0076/101624)
-is licensed under Creative Commons Attribution
 
 Fleur-De-Lis-Clip-Art-32658.jpeg (https://cliparting.com/free-fleur-de-lis-clip-art-32658/)
 is licensed under Creative Commons Attribution

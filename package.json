@@ -1,6 +1,6 @@
 {
   "name": "barrier-mage",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A VR game using WebXR and A-Frame. Use your staff to trace magical barriers to constrain creatures.",
   "browser": "index.js",
   "scripts": {
