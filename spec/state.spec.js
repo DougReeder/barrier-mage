@@ -36,7 +36,8 @@ class MockState {
     this.trainingEls = [];
     this.scoreEls = [];
     this.creatures = [];
-    this.numCreaturesDefeated = 0;
+    this.consecutiveCreaturesDefeated = 0;
+    this.totalCreaturesDefeated = 0;
     this.isStaffExploding = false;
     this.progress = {goodSymbols: 0, pentacles: 0, brimstones: 0, triquetras: 0};
     this.drawLargerSegmentHelp = {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0};
@@ -811,9 +812,12 @@ describe("curveBegin/curveEnd", () => {
 
 describe("destroyStaff", () => {
   let state;
+  const OLD_CREATURES_DEFEATED = 10;
 
   beforeEach(() => {
     state = new MockState();
+    state.consecutiveCreaturesDefeated = OLD_CREATURES_DEFEATED;
+    state.totalCreaturesDefeated = OLD_CREATURES_DEFEATED;
     AFRAME.stateParam.handlers.cameraEl = new MockElement();
     AFRAME.stateParam.handlers.cameraPos = new THREE.Vector3();
     AFRAME.stateParam.handlers.fadeEls = [];
@@ -828,6 +832,8 @@ describe("destroyStaff", () => {
     expect(state.tipPosition.z).toBeGreaterThanOrEqual(1000);
     expect(state.tipPosition.y).toBeGreaterThanOrEqual(1);
     expect(state.staffHandId).toEqual("");
+    expect(state.consecutiveCreaturesDefeated).toEqual(0);
+    expect(state.totalCreaturesDefeated).toEqual(OLD_CREATURES_DEFEATED);
 
     state.straighting = true;
     AFRAME.stateParam.handlers.iterate(state, {timeDelta: 1000});

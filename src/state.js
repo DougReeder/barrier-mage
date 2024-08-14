@@ -38,7 +38,8 @@ AFRAME.registerState({
     inProgress: {},
     barriers: [],
     creatures: [],
-    numCreaturesDefeated: 0,
+    consecutiveCreaturesDefeated: 0,
+    totalCreaturesDefeated: 0,
     isStaffExploding: false,
     progress: {goodSymbols: 0, pentacles: 0, brimstones: 0, triquetras: 0},
     drawLargerSegmentHelp: {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
@@ -173,7 +174,7 @@ AFRAME.registerState({
         line.points.length = line.previousPointsLength;
         line.geometry.setFromPoints(line.points);
         line.geometry.computeBoundingSphere();
-        if (state.numCreaturesDefeated < NUM_PRACTICE_CREATURES+2) {
+        if (state.totalCreaturesDefeated < NUM_PRACTICE_CREATURES+2) {
           this.playHelp(state.staffEl, state.drawLargerSegmentHelp);
         }
       }
@@ -253,7 +254,7 @@ AFRAME.registerState({
         line.points.length = line.previousPointsLength;
         line.geometry.setFromPoints(line.points);
         line.geometry.computeBoundingSphere();
-        if (state.numCreaturesDefeated < NUM_PRACTICE_CREATURES+2) {
+        if (state.totalCreaturesDefeated < NUM_PRACTICE_CREATURES+2) {
           this.playHelp(state.staffEl, state.drawLargerCurveHelp);
         }
       }
@@ -356,6 +357,7 @@ AFRAME.registerState({
 
       clearTimeout(this.lightTimeout);
       this.lightTimeout = null;
+      state.consecutiveCreaturesDefeated = 0;
 
       setTimeout(() => {
         console.log("staff re-created");
@@ -365,7 +367,7 @@ AFRAME.registerState({
         const position = this.nearPlayer(state, 5, 10);
         position.y += 1;
         state.staffEl.setAttribute('position', position);
-        state.staffEl.setAttribute('sound', {src:'#newstaff', volume:2, autoplay: true});
+        state.staffEl.setAttribute('sound', {src:'#newstaff', volume:3, autoplay: true});
         state.rigEl.sceneEl.appendChild(state.staffEl);
 
         // removes creatures
@@ -375,8 +377,8 @@ AFRAME.registerState({
     },
 
     createCreature: function (state) {
-      const speed = Math.min(Math.max(state.numCreaturesDefeated / NUM_PRACTICE_CREATURES, 1.0), 10.0);   // m/s
-      const creature = state.numCreaturesDefeated < NUM_PRACTICE_CREATURES ? new IrkBall(speed) : new ViolentCloud(speed);
+      const speed = Math.min(Math.max(state.totalCreaturesDefeated / NUM_PRACTICE_CREATURES, 1.0), 10.0);   // m/s
+      const creature = state.totalCreaturesDefeated < NUM_PRACTICE_CREATURES ? new IrkBall(speed) : new ViolentCloud(speed);
 
       const distance = Math.max(Math.min(speed * 20, 750), 30);
       const groundPosition = this.nearPlayer(state, distance, distance + 10);
@@ -445,9 +447,10 @@ AFRAME.registerState({
         creature.applyTickStatus();
 
         if (creature.hitPoints <= 0 && ! wasDefeated) {
-          ++state.numCreaturesDefeated;
-          if (state.numCreaturesDefeated % NUM_PRACTICE_CREATURES === 0) {
-            this.displaySignboard(state, `${state.numCreaturesDefeated} creatures defeated!`);
+          ++state.consecutiveCreaturesDefeated;
+          ++state.totalCreaturesDefeated;
+          if (state.consecutiveCreaturesDefeated % NUM_PRACTICE_CREATURES === 0) {
+            this.displaySignboard(state, `${state.consecutiveCreaturesDefeated} creatures defeated!`);
             this.cameraEl.setAttribute('sound', {src:'#fanfare', volume:0.90, autoplay: false});
             this.cameraEl.components.sound.playSound();
           }
@@ -465,6 +468,7 @@ AFRAME.registerState({
           state.isStaffExploding = true;
           const particleEl = document.createElement('a-entity');
           particleEl.setAttribute('position', {x: 0, y: 1.00, z: 0});
+          particleEl.setAttribute('sound', {src:'#smash', autoplay: true, refDistance:1.0});
           particleEl.setAttribute('particle-system', {
             velocityValue: "0 1 0",
             maxAge: 1,
@@ -473,7 +477,6 @@ AFRAME.registerState({
             size: 0.2,
             texture: "assets/smokeparticle.png"
           });
-          particleEl.setAttribute('sound', {src:'#smash', autoplay: true, refDistance:1.0});
           document.getElementById('staff').appendChild(particleEl);
 
           setTimeout(() => {
