@@ -469,14 +469,7 @@ AFRAME.registerState({
           const particleEl = document.createElement('a-entity');
           particleEl.setAttribute('position', {x: 0, y: 1.00, z: 0});
           particleEl.setAttribute('sound', {src:'#smash', autoplay: true, refDistance:1.0});
-          particleEl.setAttribute('particle-system', {
-            velocityValue: "0 1 0",
-            maxAge: 1,
-            dragValue: 1.0,
-            color: "#ff1811,#1d18ff,#1d18ff",
-            size: 0.2,
-            texture: "assets/smokeparticle.png"
-          });
+          particleEl.setAttribute('particle-system', 'velocityValue: 0 1 0; maxAge: 1; dragValue: 1.0; color: #ff1811,#1d18ff,#1d18ff; size: 0.2; texture: assets/smokeparticle.png');
           document.getElementById('staff').appendChild(particleEl);
 
           setTimeout(() => {
@@ -547,8 +540,8 @@ AFRAME.registerState({
       const barrier = state.barriers[barrierInd];
       // console.log("removing barrier:", barrier);
       barrier.lines.forEach(line => {
-        line.el.removeObject3D('line');
-        line.el.parentNode.removeChild(line.el);
+        line?.el?.removeObject3D('line');
+        line?.el?.parentNode.removeChild(line.el);
       });
       barrier.template = null;
       state.barriers[barrierInd] = null;  // can't splice out if we're looping
