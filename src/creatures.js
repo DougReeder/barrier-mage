@@ -1,5 +1,5 @@
 // creatures.js - fantasy creatures for Barrier Mage
-// Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020–2024 Doug Reeder; Licensed under the GNU GPL-3.0
 
 const CREATURE_ELEVATION = 1.10;
 const MIN_BARRIER_EFFECT_DIST = 0.60;   // based on the distance between symbol points, when drawn large
@@ -116,7 +116,7 @@ class Creature {
   barrierTickStatus({barrier, timeDelta}) {
     const dist = distanceToBarrier(this.el.object3D.position, barrier);
     if ("triquetra" === barrier.template.name && dist <= this.barrierEffectDist) {
-      this.canMove = false;
+      this.canMove = this.hitPoints <= 0;
       return true;
     } else if ("pentacle" === barrier.template.name) {
       // actual effect calculated using plane.distanceToPoint()

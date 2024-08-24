@@ -1,5 +1,5 @@
 // unit tests for Barrier Mage creatures
-// Copyright © 2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2021–2024 Doug Reeder; Licensed under the GNU GPL-3.0
 
 require('./support/three.min');
 const {AFRAME, MockElement} = require('./aframe-stub');
@@ -27,7 +27,7 @@ describe("creature", () => {
     expect(creature.forceBarriers instanceof Set).toBeTruthy();
   });
 
-  it("should set defaults on instanting Violent Cloud without params", () => {
+  it("should set defaults on instantiating Violent Cloud without params", () => {
     const creature = new ViolentCloud();
 
     expect(creature.radius).toEqual(1.0);
@@ -121,6 +121,32 @@ describe("creature", () => {
     creature.applyTickStatus();
     expect(creature.activityCount).toEqual(0);
     expect(creature.canMove).toBeFalsy();
+  });
+
+  it("should be freed when defeated", () => {
+    const timeDelta = 1000 / 90;
+    const speed = 1.4;
+    const creature = new IrkBall(speed, 4500);
+    const position = new THREE.Vector3(0.1, 0.1, 0.2);
+    creature.place(position);
+    creature.hitPoints = 0;
+
+    creature.clearTickStatus();
+    const barrier = {
+      lines: [],
+      segments: triquetraTemplate.segments.slice(0),
+      arcs: triquetraTemplate.arcs.slice(0),
+      circles: triquetraTemplate.circles.slice(0),
+      template: triquetraTemplate,
+    }
+    const isActing = creature.barrierTickStatus({barrier, timeDelta});
+
+    expect(isActing).toBeTruthy();
+    expect(creature.canMove).toBeTruthy();
+
+    creature.applyTickStatus();
+    expect(creature.activityCount).toEqual(0);
+    expect(creature.canMove).toBeTruthy();
   });
 
   it("should be active when near brimstone", () => {
