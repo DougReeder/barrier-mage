@@ -7,6 +7,7 @@ function isDesktop() {
   return ! (AFRAME.utils.device.isMobile() || AFRAME.utils.device.isMobileVR());
 }
 
+const AVG_PLAYER_HEIGHT = 1.6;
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const SNAP_DISTANCE = 0.05;
 const STRAIGHT_PROXIMITY_SQ = SNAP_DISTANCE * SNAP_DISTANCE;   // when drawing straight sections
@@ -449,8 +450,12 @@ AFRAME.registerState({
         if (creature.hitPoints <= 0 && ! wasDefeated) {
           ++state.consecutiveCreaturesDefeated;
           ++state.totalCreaturesDefeated;
-          if (state.consecutiveCreaturesDefeated % NUM_PRACTICE_CREATURES === 0) {
+          if (1 === state.consecutiveCreaturesDefeated) {
+            this.displaySignboard(state, `1 creature defeated!`);
+          } else {
             this.displaySignboard(state, `${state.consecutiveCreaturesDefeated} creatures defeated!`);
+          }
+          if (state.totalCreaturesDefeated <= NUM_PRACTICE_CREATURES || state.consecutiveCreaturesDefeated % NUM_PRACTICE_CREATURES === 0) {
             this.cameraEl.setAttribute('sound', {src:'#fanfare', volume:0.90, autoplay: false});
             this.cameraEl.components.sound.playSound();
           }
@@ -681,7 +686,7 @@ AFRAME.registerState({
       if (score >= 0) {
         const cameraPosition = new THREE.Vector3();
         document.getElementById('blackout').object3D.getWorldPosition(cameraPosition);
-        cameraPosition.y += 1.6;
+        cameraPosition.y += AVG_PLAYER_HEIGHT;
         scoreEl = document.createElement('a-entity');
         scoreEl.object3D.position.copy(centroid);
         const displacement = new THREE.Vector3();
@@ -726,7 +731,7 @@ AFRAME.registerState({
       const cameraPosition = document.querySelector('[camera]').object3D.position;
       displacement.x -= cameraPosition.x;
       displacement.z -= cameraPosition.z;
-      displacement.y -= 1.6;
+      displacement.y -= AVG_PLAYER_HEIGHT;
 
       let position = new THREE.Vector3();
       let distance = PORTAL_DISTANCE;
@@ -939,7 +944,7 @@ AFRAME.registerState({
       const distance = -1.0;
       const x = Math.sin(theta) * distance + state.rigEl.object3D.position.x;
       const z = Math.cos(theta) * distance + state.rigEl.object3D.position.z;
-      const y = this.getElevation(state.rigEl.object3D.position.x, state.rigEl.object3D.position.z) + 2.0;
+      const y = this.getElevation(state.rigEl.object3D.position.x, state.rigEl.object3D.position.z) + AVG_PLAYER_HEIGHT + 0.1;
 
       const signboard = document.getElementById('signboard');
       signboard.object3D.position.set(x, y, z);
