@@ -16,6 +16,7 @@ const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 
 const MAX_GAP = 3.0;   // drawing a new element this far from the existing implies you want to start over
 const WHITE = new THREE.Color('white');
 const GOOD_SCORE = 2.0;
+const NUM_COMPETENT = 4;   // help does not play for every poor symbol
 const MIN_FIZZLE_SCORE = -2.5;
 const FADEOUT_DURATION = 30_000;
 const TRAINING_DURATION = 6000;
@@ -42,7 +43,7 @@ AFRAME.registerState({
     consecutiveCreaturesDefeated: 0,
     totalCreaturesDefeated: 0,
     isStaffExploding: false,
-    progress: {goodSymbols: 0, pentacles: 0, brimstones: 0, triquetras: 0},
+    progress: {goodSymbols: 0, pentacles: 0, brimstones: 0, triquetras: 0, borromeanRings: 0, dagazes: 0, quicksilvers: 0},
     drawLargerSegmentHelp: {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
     drawLargerCurveHelp: {src: ['#holdbuttondown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
     drawAccuratelyHelp: {src: ['#proportionsbook', null, '#drawaccurately', null, null], idx: 0, volume: 1.0},
@@ -456,7 +457,7 @@ AFRAME.registerState({
             this.displaySignboard(state, `${state.consecutiveCreaturesDefeated} creatures defeated!`);
           }
           if (state.totalCreaturesDefeated <= NUM_PRACTICE_CREATURES || state.consecutiveCreaturesDefeated % NUM_PRACTICE_CREATURES === 0) {
-            this.cameraEl.setAttribute('sound', {src:'#fanfare', volume:0.90, autoplay: false});
+            this.cameraEl.setAttribute('sound', {src:'#fanfare', volume:0.75, autoplay: false});
             this.cameraEl.components.sound.playSound();
           }
 
@@ -608,45 +609,58 @@ AFRAME.registerState({
           case "brimstone down":
             if (score >= GOOD_SCORE) {
               ++state.progress.brimstones;
+            } else if (state.progress.brimstones < NUM_COMPETENT) {
+              this.playHelp(state.staffEl, state.drawAccuratelyHelp);
             }
             break;
 
           case "pentacle":
             if (score >= GOOD_SCORE) {
               ++state.progress.pentacles;
+            } else if (state.progress.pentacles < NUM_COMPETENT) {
+              this.playHelp(state.staffEl, state.drawAccuratelyHelp);
             }
             break;
 
           case "triquetra":
             if (score >= GOOD_SCORE) {
               ++state.progress.triquetras;
+            } else if (state.progress.triquetras < NUM_COMPETENT) {
+              this.playHelp(state.staffEl, state.drawAccuratelyHelp);
             }
             break;
 
           case "borromean rings":
             this.createPortal(state, centroid, barrier.mana);
+            if (score < GOOD_SCORE && state.progress.borromeanRings < NUM_COMPETENT) {
+              this.playHelp(state.staffEl, state.drawAccuratelyHelp);
+            }
             break;
 
           case "dagaz":
             this.createLight(state, barrier.mana);   // duration of light based on accuracy of drawing
             barrier.mana = FADEOUT_DURATION;
+            if (score < GOOD_SCORE && state.progress.dagazes < NUM_COMPETENT) {
+              this.playHelp(state.staffEl, state.drawAccuratelyHelp);
+            }
 
             break;
 
           case "quicksilver":
             this.createDetector(state, centroid, barrier.mana);
+            if (score < GOOD_SCORE && state.progress.quicksilvers < NUM_COMPETENT) {
+              this.playHelp(state.staffEl, state.drawAccuratelyHelp);
+            }
             break;
         }
 
         if (score >= GOOD_SCORE) {
           ++state.progress.goodSymbols;
-        } else if (state.progress.goodSymbols < 12) {
-          this.playHelp(state.staffEl, state.drawAccuratelyHelp);
         }
         const numCreaturesAttacking = state.creatures.reduce(
             (count, creature) => count + (creature.hitPoints > 0 && creature.canMove ? 1 : 0),
             0 );
-        if ((state.progress.goodSymbols >= 12 || state.progress.brimstones >= 1 && state.progress.pentacles >= 1 && state.progress.triquetras >= 1) && numCreaturesAttacking === 0) {
+        if ((state.progress.goodSymbols >= 8 || state.progress.brimstones >= 1 && state.progress.pentacles >= 1 && state.progress.triquetras >= 1) && numCreaturesAttacking === 0) {
           this.createCreature(state);
         }
       } else if (template && score >= MIN_FIZZLE_SCORE) {   // fizzle
@@ -684,17 +698,19 @@ AFRAME.registerState({
 
       let scoreEl;
       if (score >= 0) {
-        const cameraPosition = new THREE.Vector3();
-        document.getElementById('blackout').object3D.getWorldPosition(cameraPosition);
-        cameraPosition.y += AVG_PLAYER_HEIGHT;
+        const blackoutPosition = new THREE.Vector3();
+        document.getElementById('blackout').object3D.getWorldPosition(blackoutPosition);
+        blackoutPosition.y += AVG_PLAYER_HEIGHT;
         scoreEl = document.createElement('a-entity');
         scoreEl.object3D.position.copy(centroid);
         const displacement = new THREE.Vector3();
-        displacement.subVectors(cameraPosition, centroid);
+        displacement.subVectors(blackoutPosition, centroid);
         displacement.setLength(0.05);
         scoreEl.object3D.position.add(displacement);
 
-        scoreEl.object3D.rotation.set(0, this.cameraEl.object3D.rotation._y, 0);
+        const cameraPosition = new THREE.Vector3();
+        this.cameraEl.object3D.getWorldPosition(cameraPosition);
+        scoreEl.object3D.lookAt(cameraPosition);
         scoreEl.object3D.matrixNeedsUpdate = true;
 
         scoreEl.setAttribute('dial', {
@@ -940,23 +956,28 @@ AFRAME.registerState({
     },
 
     displaySignboard: function (state, text) {
-      const theta = this.cameraEl.object3D.rotation._y;
-      const distance = -1.0;
-      const x = Math.sin(theta) * distance + state.rigEl.object3D.position.x;
-      const z = Math.cos(theta) * distance + state.rigEl.object3D.position.z;
-      const y = this.getElevation(state.rigEl.object3D.position.x, state.rigEl.object3D.position.z) + AVG_PLAYER_HEIGHT + 0.1;
+      const position = new THREE.Vector3();
+      this.cameraEl.object3D.getWorldDirection(position);
+      position.y = 0;
+      position.negate();
+      position.add(state.rigEl.object3D.position);
+      position.y += AVG_PLAYER_HEIGHT + 0.1;
 
       const signboard = document.getElementById('signboard');
-      signboard.object3D.position.set(x, y, z);
-      signboard.object3D.rotation.set(0, theta, 0);
+      signboard.object3D.position.copy(position);
+
+      const cameraPosition = new THREE.Vector3();
+      this.cameraEl.object3D.getWorldPosition(cameraPosition);
+      signboard.object3D.lookAt(cameraPosition);
+
       signboard.setAttribute('text', 'value', text);
       signboard.object3D.visible = true;
       signboard.setAttribute('animation',
-          {property:'text.opacity', from:0, to:1, dur:1000, easing:'easeOutQuad'});
+        {property:'text.opacity', from:0, to:1, dur:1000, easing:'easeOutQuad'});
 
       setTimeout(() => {
         signboard.setAttribute('animation',
-            {property:'text.opacity', from:1, to:0, dur:1000, easing:'easeInQuad'});
+          {property:'text.opacity', from:1, to:0, dur:1000, easing:'easeInQuad'});
       }, SIGNBOARD_DURATION - 1000);
       setTimeout(() => {
         signboard.object3D.visible = false;
