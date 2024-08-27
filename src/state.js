@@ -15,7 +15,7 @@ const CURVE_END_PROXIMITY_SQ = 0.0025;   // when beginning/ending curved section
 const CURVE_PROXIMITY_SQ = 0.0004;   // when drawing curved sections; square of 0.02 m
 const MAX_GAP = 3.0;   // drawing a new element this far from the existing implies you want to start over
 const WHITE = new THREE.Color('white');
-const GOOD_SCORE = 2.0;
+const GOOD_SCORE = 4.0;
 const NUM_COMPETENT = 4;   // help does not play for every poor symbol
 const MIN_FIZZLE_SCORE = -2.5;
 const FADEOUT_DURATION = 30_000;
@@ -46,7 +46,8 @@ AFRAME.registerState({
     progress: {goodSymbols: 0, pentacles: 0, brimstones: 0, triquetras: 0, borromeanRings: 0, dagazes: 0, quicksilvers: 0},
     drawLargerSegmentHelp: {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
     drawLargerCurveHelp: {src: ['#holdbuttondown', null, '#drawlarger', null, null], idx: 0, volume: 1.0},
-    drawAccuratelyHelp: {src: ['#proportionsbook', null, '#drawaccurately', null, null], idx: 0, volume: 1.0},
+    drawAccuratelyHelp: {src: ['#drawlikeexample', null, '#proportionsbook', null, '#drawaccurately', null, null], idx: 0, volume: 1.0},
+    encouragementHelp: {src: ['#good', '#yes', null, '#practiceall', null, '#keepgoing', null, '#drawmore', null], idx: 0, volume: 1.0},
   },
 
   handlers: {
@@ -657,10 +658,14 @@ AFRAME.registerState({
         if (score >= GOOD_SCORE) {
           ++state.progress.goodSymbols;
         }
+        const tutorialDone = state.progress.goodSymbols >= 8 || state.progress.brimstones >= 1 && state.progress.pentacles >= 1 && state.progress.triquetras >= 1;
+        if (state.progress.goodSymbols < state.encouragementHelp.src.length || !tutorialDone) {
+          this.playHelp(state.staffEl, state.encouragementHelp);
+        }
         const numCreaturesAttacking = state.creatures.reduce(
             (count, creature) => count + (creature.hitPoints > 0 && creature.canMove ? 1 : 0),
             0 );
-        if ((state.progress.goodSymbols >= 8 || state.progress.brimstones >= 1 && state.progress.pentacles >= 1 && state.progress.triquetras >= 1) && numCreaturesAttacking === 0) {
+        if (tutorialDone && numCreaturesAttacking === 0) {
           this.createCreature(state);
         }
       } else if (template && score >= MIN_FIZZLE_SCORE) {   // fizzle

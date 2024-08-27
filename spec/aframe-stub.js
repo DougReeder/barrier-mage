@@ -54,11 +54,20 @@ AFRAME = {
     }
 };
 
+class MockComponent {
+    playSound() {}
+}
 
 class MockElement {
     constructor(attributes) {
+        this.components = {};
         if (attributes instanceof Object) {
             this._attributes = attributes;
+            for (const attrName of Object.keys(attributes)) {
+                if (! ['tagName'].includes(attrName)) {
+                    this.components[attrName] = new MockComponent();
+                }
+            }
         } else {
             this._attributes = {};
         }
@@ -75,6 +84,7 @@ class MockElement {
 
     setAttribute(name, value) {
         this._attributes[name] = value;
+        this.components[name] = new MockComponent();
         switch (name) {
             case 'position':
                 if (value instanceof THREE.Vector3) {

@@ -43,6 +43,7 @@ class MockState {
     this.drawLargerSegmentHelp = {src: ['#holdtriggerdown', null, '#drawlarger', null, null], idx: 0, volume: 1.0};
     this.drawLargerCurveHelp = {src: ['#holdbuttondown', null, '#drawlarger', null, null], idx: 0, volume: 1.0};
     this.drawAccuratelyHelp = {src: ['#drawaccurately', '', ''], idx: 0, volume: 1.0};
+    this.encouragementHelp = {src: ['#good', '#yes', null, '#practiceall', null, '#keepgoing', null, '#drawmore', null], idx: 0, volume: 1.0},
 
     this.inProgress.line = new THREE.Line(this.inProgress.geometry, this.inProgress.material);
   }
