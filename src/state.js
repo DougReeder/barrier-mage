@@ -1,5 +1,5 @@
 // state.js - state model for Barrier Mage
-// Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020–2024 Doug Reeder; Licensed under the GNU GPL-3.0
 
 // math.js and creatures.js must be in a script before this.
 

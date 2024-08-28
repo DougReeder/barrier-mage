@@ -1,6 +1,6 @@
 // aframe-lines.js -A component and primitive to draw a series of lines, for A-Frame WebXR.
 // Similar to the line primitive, but draws multiple connected lines.
-// Copyright © 2020 by P. Douglas Reeder under the MIT License
+// Copyright © 2020 by Doug Reeder under the MIT License
 
 AFRAME.registerComponent('lines', {
   schema: {

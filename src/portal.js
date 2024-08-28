@@ -1,5 +1,5 @@
 // portal.js - teleportation for Barrier Mage
-// Copyright © 2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2021 Doug Reeder; Licensed under the GNU GPL-3.0
 
 const ANIMATION_DURATION = 400;
 

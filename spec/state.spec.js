@@ -1,5 +1,5 @@
 // unit tests for state handling for Barrier Mage
-// Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020–2024 Doug Reeder; Licensed under the GNU GPL-3.0
 
 require('./support/three.min');
 const {AFRAME, MockElement} = require('./aframe-stub');

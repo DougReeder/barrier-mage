@@ -1,4 +1,4 @@
-Most code by P. Douglas Reeder.
+Most code by Doug Reeder.
 Displacement shader by Stefan Gustavson.
 
 ## Models
@@ -48,7 +48,7 @@ by TaranP is licensed under Creative Commons Attribution
 193478__skyklan47__rrmx-wood-metal-glass-explode.mp3 (https://freesound.org/people/skyklan47/sounds/193478/)
 by skyklan47 is licensed under Creative Commons Attribution
 
-try-again.mp3 by P. Douglas Reeder is licensed under the GNU GPL v3
-
 44554__pocket__kookaburra.mp3 (https://freesound.org/people/pocket/sounds/44554/)
 by "pocket" is licensed under Creative Commons Attribution
+
+sounds by Doug Reeder are licensed under the GNU GPL v3

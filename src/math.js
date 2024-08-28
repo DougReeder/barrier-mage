@@ -1,6 +1,6 @@
 // math.js - math utilities for Barrier Mage
 // A-Frame doesn't support any module system well, so functions are just defined globally.
-// Copyright © 2020-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020–2024 Doug Reeder; Licensed under the GNU GPL-3.0
 
 try {
   THREE;   // in the browser, A-Frame includes threeJS

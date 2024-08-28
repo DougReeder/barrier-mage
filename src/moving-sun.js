@@ -1,5 +1,5 @@
 // moving-sun.js - sun movement component for Barrier Mage
-// Copyright © 2020 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2020 Doug Reeder; Licensed under the GNU GPL-3.0
 
 AFRAME.registerComponent('moving-sun', {
   init: function () {

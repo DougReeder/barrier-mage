@@ -1,5 +1,5 @@
 // aframe-stub.js - allows testing app code that uses A-Frame
-// Copyright © 2017-2021 P. Douglas Reeder; Licensed under the GNU GPL-3.0
+// Copyright © 2017–2024 Doug Reeder; Licensed under the GNU GPL-3.0
 
 AFRAME = {
     scenes: [{
