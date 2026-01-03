@@ -5,7 +5,7 @@
   "browser": "index.js",
   "scripts": {
     "test": "jasmine",
-    "start": "http-server -p 4443 -d --no-dotfiles --cors -c-1 --tls --key ~/sysadmin/moa.local+5-key.pem --cert ~/sysadmin/moa.local+5.pem -o"
+    "start": "http-server -p 4443 -d --no-dotfiles --cors -c-1 --tls --key ~/sysadmin/certificates/moa.local+5-key.pem --cert ~/sysadmin/certificates/moa.local+5.pem -o"
   },
   "repository": {
     "type": "git",

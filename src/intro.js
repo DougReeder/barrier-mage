@@ -34,7 +34,7 @@ This webapp requires a VR headset and two 6-DOF controllers. Sorry.</div>`
         <div>${mt}</div>
         <div><a href="CREDITS.md">Credits</a></div>
         <div>Uses <a href="https://caniuse.com/#search=webxr">WebXR</a>, and the <a href="https://aframe.io" style="white-space: nowrap;">A-Frame</a> framework.</div>
-        <div>Copyright © 2020–2024 by Doug Reeder; Licensed under the GNU GPL-3.0</div>
+        <div>Copyright © 2020–2026 by Doug Reeder; Licensed under the GNU GPL-3.0</div>
         <div><a href="https://github.com/DougReeder/barrier-mage">View source code and contribute</a> </div>
       </div>
 </div>
